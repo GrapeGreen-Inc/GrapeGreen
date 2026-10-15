@@ -1897,6 +1897,93 @@ $("copy").onclick = async () => {
     };
   }
 })();
+/* Temporary side-tab support for the Rift — paste at the end of dashboard JS */
+(function () {
+  const TEMP_TAB = "rift";
+  const TEMP_LABEL = "Rift";
+
+  // find the nav and tabs array used by the app
+  const nav = document.querySelector("nav.side");
+  // 'tabs' array is created earlier in the file; if not found, create a local one to keep same API
+  window.tabs = window.tabs || [...document.querySelectorAll(".side-item")];
+
+  function createTempSideTab() {
+    // if already present, return it
+    let existing = document.querySelector(`.side-item[data-tab="${TEMP_TAB}"]`);
+    if (existing) return existing;
+
+    const btn = document.createElement("button");
+    btn.className = "side-item";
+    btn.dataset.tab = TEMP_TAB;
+    btn.textContent = TEMP_LABEL;
+    btn.style.display = ""; // visible
+    btn.addEventListener("click", () => {
+      if (typeof switchTab === "function") switchTab(TEMP_TAB);
+      else document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === TEMP_TAB));
+    });
+
+    // Option: insert near the top (after dashboard) or at end — adjust insertion point if you like
+    nav.appendChild(btn);
+
+    // update the tabs array used by the app so the existing switchTab tab-highlighting works
+    window.tabs.push(btn);
+
+    return btn;
+  }
+
+  function removeTempSideTab() {
+    const btn = document.querySelector(`.side-item[data-tab="${TEMP_TAB}"]`);
+    if (!btn) return;
+    // remove from DOM
+    btn.remove();
+    // remove from tabs array
+    const idx = window.tabs.findIndex(b => b.dataset && b.dataset.tab === TEMP_TAB);
+    if (idx !== -1) window.tabs.splice(idx, 1);
+  }
+
+  // Wrap/patch switchTab so opening the rift adds the temp tab first (so built-in tab-highlighting works),
+  // and leaving the rift removes it after switching.
+  if (typeof switchTab === "function") {
+    const _switch = switchTab;
+    window.switchTab = function (id) {
+      try {
+        if (id === TEMP_TAB) {
+          createTempSideTab();
+        }
+      } catch (e) { /* ignore */ }
+
+      const res = _switch(id);
+
+      try {
+        if (id !== TEMP_TAB) {
+          // leaving rift -> remove temp tab
+          removeTempSideTab();
+        }
+      } catch (e) { /* ignore */ }
+
+      return res;
+    };
+  } else {
+    // fallback: if switchTab doesn't exist for some reason, ensure clicking shortcut manually shows view
+    const openBtn = document.getElementById("open-rift");
+    if (openBtn) openBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      createTempSideTab();
+      document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === TEMP_TAB));
+    });
+    // and the close button should hide it
+    const closeBtn = document.getElementById("rift-close");
+    if (closeBtn) closeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "tos"));
+      removeTempSideTab();
+    });
+  }
+
+  // If user opened the Rift by other means (e.g. page load with rift active), create the tab now
+  if (document.getElementById(TEMP_TAB)?.classList.contains("active")) createTempSideTab();
+
+})();
 </script>
 </body>
 </html>
