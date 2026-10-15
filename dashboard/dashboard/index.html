@@ -1849,8 +1849,11 @@ $("copy").onclick = async () => {
   // also update once DOM is fully ready (harmless if already executed)
   document.addEventListener("DOMContentLoaded", updateOwnerSpan);
 })();
-/* RIFT: wiring — paste at the end of dashboard JS, just before */
+/* RIFT wiring: paste at the VERY END of the dashboard*/
 (function () {
+  const openBtn = document.getElementById("open-rift");
+  const closeBtn = document.getElementById("rift-close");
+
   function ensureOverlay() {
     if (!document.querySelector(".rift-static")) {
       const s = document.createElement("div");
@@ -1858,37 +1861,48 @@ $("copy").onclick = async () => {
       document.body.appendChild(s);
     }
   }
+  function removeOverlay() {
+    const ov = document.querySelector(".rift-static");
+    if (ov) ov.remove();
+  }
 
-  const open = document.getElementById("open-rift");
-  if (open) open.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (typeof switchTab === "function") switchTab("rift");
+  function openRift(e) {
+    if (e) e.preventDefault();
+    if (typeof switchTab === "function") {
+      switchTab("rift");
+    } else { // fallback: show/hide views manually
+      document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "rift"));
+    }
     ensureOverlay();
-  });
+  }
 
-  const close = document.getElementById("rift-close");
-  if (close) close.addEventListener("click", (e) => {
-    e.preventDefault();
+  function closeRift(e) {
+    if (e) e.preventDefault();
     if (typeof switchTab === "function") switchTab("tos");
-  });
+    else document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "tos"));
+  }
 
-  // Patch switchTab to remove overlay when leaving the rift (keeps behaviour consistent).
+  if (openBtn) openBtn.addEventListener("click", openRift);
+  if (closeBtn) closeBtn.addEventListener("click", closeRift);
+
+  // Patch switchTab to manage overlay automatically
   if (typeof switchTab === "function") {
-    const _switchTab = switchTab;
+    const _switch = switchTab;
     window.switchTab = function (id) {
-      const res = _switchTab(id);
+      const res = _switch(id);
       try {
-        const ov = document.querySelector(".rift-static");
-        if (ov) {
-          if (id === "rift") ov.style.display = ""; else ov.remove();
-        }
+        if (id === "rift") ensureOverlay(); else removeOverlay();
       } catch (err) { /* ignore */ }
       return res;
     };
   }
 
-  // If the rift is already active on load (edge-case), ensure overlay exists.
-  if (document.querySelector("#rift")?.classList.contains("active")) ensureOverlay();
+  // If the rift is already active on load, show the overlay
+  if (document.getElementById("rift")?.classList.contains("active")) ensureOverlay();
+
+  // Clean up overlay if the page is hidden/unloaded
+  addEventListener("visibilitychange", () => { if (document.hidden) removeOverlay(); });
+  addEventListener("pagehide", () => removeOverlay());
 })();
 </script>
 </body>
