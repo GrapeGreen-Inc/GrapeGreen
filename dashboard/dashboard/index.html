@@ -1702,6 +1702,38 @@ $("copy").onclick = async () => {
   catch { $("copy").textContent = "Press Ctrl+C"; }
   setTimeout(() => $("copy").textContent = "Copy", 1500);
 };
+  /* Sync the "hello its me" span with the OwnerName variable and current owner user */
+(function () {
+  function updateOwnerSpan() {
+    const el = document.getElementById("OwnerName");
+    if (!el) return;
+    // If the signed-in user is the owner, prefer the signed-in name (me.name).
+    // Otherwise fall back to the OwnerName variable, the span's "var" attr, or current text.
+    const name = (typeof me !== "undefined" && me.role === "owner" && me.name)
+      ? me.name
+      : (typeof OwnerName !== "undefined" ? OwnerName : el.getAttribute("var") || el.textContent);
+    el.textContent = name;
+  }
+
+  // expose helper in case you want to call it from console
+  window.updateOwnerSpan = updateOwnerSpan;
+
+  // run now
+  updateOwnerSpan();
+
+  // ensure it's updated whenever the app's enter() function runs (user login / enter)
+  if (typeof enter === "function") {
+    const _enter = enter;
+    enter = function (u, d) {
+      const res = _enter(u, d);
+      try { updateOwnerSpan(); } catch (e) { /* ignore */ }
+      return res;
+    };
+  }
+
+  // also update once DOM is fully ready (harmless if already executed)
+  document.addEventListener("DOMContentLoaded", updateOwnerSpan);
+})();
 </script>
 </body>
 </html>
