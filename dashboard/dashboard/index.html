@@ -131,6 +131,64 @@ td img{display:block;margin-top:6px;border:1px solid var(--line);border-radius:6
 .ch.chg{background:#fff6d6;border-color:#e0a800;color:#6b4e00}
 .ch.rem{background:#fde8e8;border-color:#d63b3b;color:#7f1d1d}
 .ch.pl{border-color:var(--line)}
+/* --- RIFT: styles (paste into site-wide <style>) --- */
+.rift-shortcut { display:block; text-decoration:none; margin-top:16px; }
+.rift-card { display:flex; gap:16px; align-items:center; background: linear-gradient(90deg,#0f52c6 0%, #2a8df0 60%); padding:18px; border-radius:12px; box-shadow: 0 10px 30px rgba(10,40,90,0.5); color:#fff; width:min(100%,520px); }
+.rift-card .rip { font-weight:900; font-size:40px; letter-spacing:6px; color:#e8f7ff; display:flex; align-items:center; gap:8px; }
+.rift-card .i-dot { width:18px; height:18px; border-radius:50%; background: radial-gradient(circle at 30% 30%, #b355ff 0%, #4a0055 35%, #000 65%); box-shadow:0 0 18px #9b3cff inset; border:1px solid rgba(255,255,255,0.06); }
+
+/* RIFT page */
+.rift-view { background: linear-gradient(180deg,#03152a,#04162a 35%, #021022); color:#dff4ff; min-height:60vh; padding:48px 24px; position:relative; overflow:hidden; }
+.rift-panel { max-width:980px; margin:0 auto; text-align:center; padding:48px; border-radius:18px; background:
+  linear-gradient(180deg, rgba(32,64,110,0.18), rgba(6,6,12,0.18));
+  border:1px solid rgba(140,190,255,0.06);
+  box-shadow: 0 30px 80px rgba(2,6,18,0.8), inset 0 1px 0 rgba(255,255,255,0.02);
+}
+.rift-title { font-size:70px; font-weight:900; color:#bfe9ff; letter-spacing:8px; margin: 0 0 12px; text-transform:uppercase; }
+.rift-sub { color:#b1dfff; margin-bottom:18px; font-size:16px; }
+.rift-main { display:flex; gap:28px; align-items:center; justify-content:center; flex-wrap:wrap; }
+
+/* corruption texture panels */
+.corrupt-box { width:100%; max-width:720px; margin:0 auto; padding:18px; border-radius:12px;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(179,85,255,0.28), transparent 18%),
+    linear-gradient(135deg, rgba(35,0,50,0.75), rgba(0,0,0,0.85));
+  color:#fff; border:1px solid rgba(140,40,180,0.12);
+  box-shadow: 0 12px 40px rgba(10,0,30,0.7);
+}
+
+/* the 'rip' visual: a blue torn seam */
+.rift-seam { width:240px; height:380px; border-radius:10px; background:
+  linear-gradient(180deg,#0b4ba0,#0f74d6);
+  box-shadow: 0 20px 60px rgba(10,40,120,0.6);
+  position:relative; display:flex; align-items:center; justify-content:center; color:#e6f7ff; font-weight:900; font-size:36px;
+  overflow:hidden;
+}
+.rift-seam::after { content:""; position:absolute; inset: -10% -20%; transform: rotate(12deg); background:
+  radial-gradient(closest-side, rgba(147,71,255,0.45), transparent 30%),
+  repeating-linear-gradient(135deg, rgba(0,0,0,0.06) 0 2px, rgba(255,255,255,0.02) 2px 4px);
+  mix-blend-mode: overlay; opacity:0.9; pointer-events:none;
+}
+
+/* static overlay (subtle, animated) */
+.rift-static { position:fixed; inset:0; pointer-events:none; z-index:9999; mix-blend-mode:screen; opacity:0.18;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.01) 0 2px, transparent 2px 6px),
+    linear-gradient(180deg, rgba(20,30,50,0.08), rgba(0,0,0,0.12));
+  animation: staticMove 0.7s steps(2) infinite, staticFade 6s linear infinite;
+}
+@keyframes staticMove { from { background-position: 0 0, 0 0, 0 0; } to { background-position: 120px 80px, -90px -180px, 0 0; } }
+@keyframes staticFade { 0% { opacity:0.08 } 50% { opacity:0.22 } 100% { opacity:0.12 } }
+
+/* close/back link */
+.rift-close { display:inline-block; margin-top:18px; padding:8px 12px; background:rgba(255,255,255,0.06); color:#e8f7ff; border-radius:8px; text-decoration:none; border:1px solid rgba(255,255,255,0.03); }
+
+/* small responsive tweaks */
+@media (max-width:760px) {
+  .rift-title { font-size:38px; }
+  .rift-seam { width:160px; height:260px; font-size:26px; }
+}
 @media(max-width:760px){#gate{grid-template-columns:1fr}.brand{display:none}.side{width:120px}main{margin-left:120px}}
 </style>
 </head>
@@ -384,6 +442,21 @@ td img{display:block;margin-top:6px;border:1px solid var(--line);border-radius:6
   <section id="tos" class="view">
     <h1>Terms of Service</h1>
     <div id="tos-text" class="card" style="max-width:640px;white-space:pre-wrap"></div>
+    <!-- RIFT shortcut: paste inside the TOS section (e.g., under #tos-text) -->
+<div style="margin-top:18px">
+  <a href="#" id="open-rift" class="rift-shortcut" aria-label="Open the Rift">
+    <div class="rift-card" role="button">
+      <div style="display:flex;flex-direction:column">
+        <div style="font-size:12px;color:#cfe9ff;font-weight:700">Shortcut</div>
+        <div class="rip"><span style="opacity:0.88">R</span><span class="i-dot" aria-hidden="true"></span><span style="opacity:0.88">FT</span></div>
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:900;font-size:16px;letter-spacing:1px">THE RIFT</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.9)">A tear in the dashboard — click to enter</div>
+      </div>
+    </div>
+  </a>
+</div>
     <div id="tos-edit" class="hide" style="max-width:640px">
       <textarea class="fld" id="tos-area" rows="12"></textarea>
       <button class="btn" id="tos-save">Save</button> <span class="mute" id="tos-msg"></span>
@@ -425,7 +498,29 @@ Furthermore, under no circumstances should you click any external links, weird p
     <h3>Transferred tickets</h3><div id="lg-trans"></div>
     <h3>Deleted accounts</h3><div id="lg-bin"></div>
   </section>
+<!-- RIFT view: paste after the TOS section inside <main> -->
+<section id="rift" class="view">
+  <div class="rift-view">
+    <div class="rift-panel">
+      <div class="rift-title">THE RIFT</div>
+      <div class="rift-sub">A shimmering blue tear with corrupting echoes.</div>
 
+      <div class="rift-main">
+        <div class="rift-seam" aria-hidden="true">
+          R<span class="i-dot" style="width:26px;height:26px;border-radius:50%;
+              background: radial-gradient(circle at 25% 25%, #b355ff 0%, #2a002b 30%, #000 60%);
+              box-shadow:0 0 22px #9b3cff inset;border:1px solid rgba(255,255,255,0.04);display:inline-block;margin-left:6px;margin-right:6px;"></span>FT
+        </div>
+
+        <div class="corrupt-box">
+          <p style="margin:0 0 10px;font-weight:700">Reality near the seam fractures — purple-black corruption blooms across the surface.</p>
+          <p style="margin:0;color:#d0eaff">This is a static, atmospheric page. Use the button below to return to the Terms.</p>
+          <a href="#" id="rift-close" class="rift-close">Back to TOS</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
   <section id="updates" class="view">
     <h1>Update log</h1>
     <div id="upl"></div>
@@ -1753,6 +1848,53 @@ $("copy").onclick = async () => {
 
   // also update once DOM is fully ready (harmless if already executed)
   document.addEventListener("DOMContentLoaded", updateOwnerSpan);
+})();
+  /* RIFT: wiring (paste at end of dashboard JS) */
+(function () {
+  // open the rift when the shortcut is clicked
+  const open = document.getElementById("open-rift");
+  if (open) open.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (typeof switchTab === "function") switchTab("rift");
+    // ensure the static overlay exists
+    if (!document.querySelector(".rift-static")) {
+      const s = document.createElement("div");
+      s.className = "rift-static";
+      document.body.appendChild(s);
+      // remove overlay after a while? keep it permanent while rift is open:
+    }
+  });
+
+  // close rift back to tos
+  const close = document.getElementById("rift-close");
+  if (close) close.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (typeof switchTab === "function") switchTab("tos");
+  });
+
+  // remove static overlay when leaving rift
+  // watch tab switches (monkey-patch switchTab to remove overlay when leaving)
+  if (typeof switchTab === "function") {
+    const _switch = switchTab;
+    window.switchTab = function (id) {
+      const res = _switch(id);
+      try {
+        const overlay = document.querySelector(".rift-static");
+        if (overlay) {
+          if (id === "rift") overlay.style.display = ""; else overlay.remove();
+        }
+      } catch (e) {}
+      return res;
+    };
+  }
+
+  // also remove overlay on page navigation (safety)
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      const ov = document.querySelector(".rift-static");
+      if (ov) ov.remove();
+    }
+  });
 })();
 </script>
 </body>
