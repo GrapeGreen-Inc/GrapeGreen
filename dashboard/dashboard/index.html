@@ -1854,11 +1854,7 @@ $("copy").onclick = async () => {
   // also update once DOM is fully ready (harmless if already executed)
   document.addEventListener("DOMContentLoaded", updateOwnerSpan);
 })();
-/* RIFT wiring: paste at the VERY END of the dashboard*/
 (function () {
-  const openBtn = document.getElementById("open-rift");
-  const closeBtn = document.getElementById("rift-close");
-
   function ensureOverlay() {
     if (!document.querySelector(".rift-static")) {
       const s = document.createElement("div");
@@ -1871,43 +1867,33 @@ $("copy").onclick = async () => {
     if (ov) ov.remove();
   }
 
-  function openRift(e) {
-    if (e) e.preventDefault();
-    if (typeof switchTab === "function") {
-      switchTab("rift");
-    } else { // fallback: show/hide views manually
-      document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "rift"));
-    }
-    ensureOverlay();
-  }
+  const openBtn = document.getElementById("open-rift");
+  const closeBtn = document.getElementById("rift-close");
 
-  function closeRift(e) {
-    if (e) e.preventDefault();
+  if (openBtn) openBtn.addEventListener("click", e => {
+    e.preventDefault();
+    if (typeof switchTab === "function") switchTab("rift");
+    else document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "rift"));
+    ensureOverlay();
+  });
+
+  if (closeBtn) closeBtn.addEventListener("click", e => {
+    e.preventDefault();
     if (typeof switchTab === "function") switchTab("tos");
     else document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "tos"));
-  }
+    removeOverlay();
+  });
 
-  if (openBtn) openBtn.addEventListener("click", openRift);
-  if (closeBtn) closeBtn.addEventListener("click", closeRift);
-
-  // Patch switchTab to manage overlay automatically
   if (typeof switchTab === "function") {
     const _switch = switchTab;
     window.switchTab = function (id) {
       const res = _switch(id);
       try {
         if (id === "rift") ensureOverlay(); else removeOverlay();
-      } catch (err) { /* ignore */ }
+      } catch (err) {}
       return res;
     };
   }
-
-  // If the rift is already active on load, show the overlay
-  if (document.getElementById("rift")?.classList.contains("active")) ensureOverlay();
-
-  // Clean up overlay if the page is hidden/unloaded
-  addEventListener("visibilitychange", () => { if (document.hidden) removeOverlay(); });
-  addEventListener("pagehide", () => removeOverlay());
 })();
 </script>
 </body>
