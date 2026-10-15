@@ -1849,52 +1849,46 @@ $("copy").onclick = async () => {
   // also update once DOM is fully ready (harmless if already executed)
   document.addEventListener("DOMContentLoaded", updateOwnerSpan);
 })();
-  /* RIFT: wiring (paste at end of dashboard JS) */
+/* RIFT: wiring — paste at the end of dashboard JS, just before */
 (function () {
-  // open the rift when the shortcut is clicked
-  const open = document.getElementById("open-rift");
-  if (open) open.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (typeof switchTab === "function") switchTab("rift");
-    // ensure the static overlay exists
+  function ensureOverlay() {
     if (!document.querySelector(".rift-static")) {
       const s = document.createElement("div");
       s.className = "rift-static";
       document.body.appendChild(s);
-      // remove overlay after a while? keep it permanent while rift is open:
     }
+  }
+
+  const open = document.getElementById("open-rift");
+  if (open) open.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (typeof switchTab === "function") switchTab("rift");
+    ensureOverlay();
   });
 
-  // close rift back to tos
   const close = document.getElementById("rift-close");
   if (close) close.addEventListener("click", (e) => {
     e.preventDefault();
     if (typeof switchTab === "function") switchTab("tos");
   });
 
-  // remove static overlay when leaving rift
-  // watch tab switches (monkey-patch switchTab to remove overlay when leaving)
+  // Patch switchTab to remove overlay when leaving the rift (keeps behaviour consistent).
   if (typeof switchTab === "function") {
-    const _switch = switchTab;
+    const _switchTab = switchTab;
     window.switchTab = function (id) {
-      const res = _switch(id);
+      const res = _switchTab(id);
       try {
-        const overlay = document.querySelector(".rift-static");
-        if (overlay) {
-          if (id === "rift") overlay.style.display = ""; else overlay.remove();
+        const ov = document.querySelector(".rift-static");
+        if (ov) {
+          if (id === "rift") ov.style.display = ""; else ov.remove();
         }
-      } catch (e) {}
+      } catch (err) { /* ignore */ }
       return res;
     };
   }
 
-  // also remove overlay on page navigation (safety)
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      const ov = document.querySelector(".rift-static");
-      if (ov) ov.remove();
-    }
-  });
+  // If the rift is already active on load (edge-case), ensure overlay exists.
+  if (document.querySelector("#rift")?.classList.contains("active")) ensureOverlay();
 })();
 </script>
 </body>
