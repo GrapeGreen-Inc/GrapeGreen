@@ -440,15 +440,19 @@ td img{display:block;margin-top:6px;border:1px solid var(--line);border-radius:6
   </section>
 
   <section id="tos" class="view">
-    <h1>Terms of Service</h1>
-    <div id="tos-text" class="card" style="max-width:640px;white-space:pre-wrap"></div>
-    <!-- RIFT shortcut: paste inside the TOS section (e.g., under #tos-text) -->
-<div style="margin-top:18px">
-  <a href="#" id="open-rift" class="rift-shortcut" aria-label="Open the Rift">
-    <div class="rift-card" role="button">
+  <h1>Terms of Service</h1>
+
+  <div id="tos-text" class="card" style="max-width:640px;white-space:pre-wrap"></div>
+
+  <a href="#" class="rift-shortcut" onclick="switchTab('rift'); return false;" aria-label="Open the Rift">
+    <div class="rift-card" role="button" tabindex="0">
       <div style="display:flex;flex-direction:column">
         <div style="font-size:12px;color:#cfe9ff;font-weight:700">Shortcut</div>
-        <div class="rip"><span style="opacity:0.88">R</span><span class="i-dot" aria-hidden="true"></span><span style="opacity:0.88">FT</span></div>
+        <div class="rip">
+          <span style="opacity:0.88">R</span>
+          <span class="i-dot" aria-hidden="true"></span>
+          <span style="opacity:0.88">FT</span>
+        </div>
       </div>
       <div style="flex:1">
         <div style="font-weight:900;font-size:16px;letter-spacing:1px">THE RIFT</div>
@@ -456,13 +460,14 @@ td img{display:block;margin-top:6px;border:1px solid var(--line);border-radius:6
       </div>
     </div>
   </a>
-</div>
-    <div id="tos-edit" class="hide" style="max-width:640px">
-      <textarea class="fld" id="tos-area" rows="12"></textarea>
-      <button class="btn" id="tos-save">Save</button> <span class="mute" id="tos-msg"></span>
-    </div>
-    <button class="btn hide" id="tos-editbtn" style="margin-top:10px">Edit (legal/owner)</button>
-  </section>
+
+  <div id="tos-edit" class="hide" style="max-width:640px">
+    <textarea class="fld" id="tos-area" rows="12"></textarea>
+    <button class="btn" id="tos-save">Save</button> <span class="mute" id="tos-msg"></span>
+  </div>
+
+  <button class="btn hide" id="tos-editbtn" style="margin-top:10px">Edit (legal/owner)</button>
+</section>
     <!--here is it-->
     <section id="HELLO_its_me" class="view">
     <h1>Page</h1>
