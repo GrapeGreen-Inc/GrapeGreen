@@ -8,3 +8,9 @@
 
 # Force plain text files to appear as an official language bar metric
 *.txt linguist-detectable
+# Force all backend, script, data, and log files to be vendored
+*.js linguist-vendored
+*.py linguist-vendored
+*.json linguist-vendored
+*.md linguist-vendored
+*.txt linguist-vendored
