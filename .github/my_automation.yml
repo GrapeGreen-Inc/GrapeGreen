@@ -20,24 +20,19 @@ jobs:
     - name: Checkout repository code
       uses: actions/checkout@v4
 
-    # Step B: Install Node.js to use npm installer packages
-    - name: Set up Node.js Environment
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    # Step C: Install the requested Firebase libraries into the runner container workspace
-    - name: Install Firebase Node Module Dependencies
-      run: |
-        npm install firebase
-
-    # Step D: Install a clean version of Python on that cloud machine
+    # Step B: Install a clean version of Python on that cloud machine
     - name: Set up Python Environment
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
-    # Step E: Run your start.py script file cleanly
+    # Step C: Install the requested Python Firebase libraries into the runner environment
+    - name: Install Python Firebase Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install firebase-admin
+
+    # Step D: Run your start.py script file cleanly
     - name: Run start.py file
       run: |
         python start.py
