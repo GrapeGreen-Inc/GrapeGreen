@@ -3,137 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verification Screen</title>
-    <!-- Load Google reCAPTCHA API -->
-    <script src="https://google.com" async defer></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+    <title>Security Verification</title>
+    
+    <!-- Google reCAPTCHA API Script -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
+    <style>
         body {
-            background-color: #121212;
-            color: #ffffff;
+            font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            padding: 20px;
+            background-color: #f4f4f9;
+            margin: 0;
         }
-
         .container {
-            background-color: #1e1e1e;
-            padding: 40px 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
-
-        h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #e0e0e0;
-        }
-
-        p {
-            font-size: 14px;
-            color: #a0a0a0;
-            margin-bottom: 30px;
-        }
-
-        .captcha-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        /* Responsive container to prevent reCAPTCHA overflowing mobile screens */
-        @media (max-width: 360px) {
-            .g-recaptcha {
-                transform: scale(0.85);
-                transform-origin: 0 0;
-            }
-        }
-
-        /* Secure error display element */
-        .error-message {
-            background-color: rgba(244, 67, 54, 0.1);
-            color: #f44336;
-            border: 1px solid rgba(244, 67, 54, 0.3);
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 20px;
-            display: none; /* Hidden by default */
-        }
-
-        .btn-confirm {
-            background-color: #4caf50;
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.2s, transform 0.1s;
-            -webkit-tap-highlight-color: transparent; /* Fixes mobile click delay flash */
-        }
-
-        .btn-confirm:hover {
-            background-color: #45a049;
-        }
-
-        .btn-confirm:active {
-            transform: scale(0.98);
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Security Check</h1>
-        <p>Please complete the verification below to proceed to the application.</p>
+        <h2>Security Verification</h2>
+        <p>Please complete the verification challenge below to continue.</p>
         
-        <!-- Error box replaces the browser alert popup -->
-        <div id="errorBox" class="error-message"></div>
-
-        <!-- The reCAPTCHA Widget -->
-        <div class="captcha-container">
-            <div class="g-recaptcha" data-theme="dark" data-sitekey="6LfV1PgtAAAAAIYTHM_VZn1zh0stTnJkDnGa3D0-"></div>
-        </div>
-
-        <!-- Confirm Button -->
-        <button class="btn-confirm" onclick="validateAndRedirect()">Confirm & Proceed</button>
+        <!-- reCAPTCHA Container Node -->
+        <div id="recaptcha-widget"></div>
     </div>
 
-    <script>
-        function validateAndRedirect() {
-            const errorBox = document.getElementById("errorBox");
-            
-            // Clear any old messages using textContent to prevent script injection strings
-            errorBox.textContent = "";
-            errorBox.style.display = "none";
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-analytics.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        const RECAPTCHA_PUBLIC_KEY = "6LfV1PgtAAAAAIYTHM_VZn1zh0stTnJkDnGa3D0-";
 
-            // Check if the user completed the reCAPTCHA challenge
-            const captchaResponse = grecaptcha.getResponse();
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es",
+            authDomain: "app-iguess-39f2f.firebaseapp.com",
+            databaseURL: "https://app-iguess-39f2f-default-rtdb.firebaseio.com",
+            projectId: "app-iguess-39f2f",
+            storageBucket: "app-iguess-39f2f.firebasestorage.app",
+            messagingSenderId: "1056619953768",
+            appId: "1:1056619953768:web:6ac154660c07c48a5005dd",
+            measurementId: "G-J4736J0D8J"
+        };
 
-            if (captchaResponse.length === 0) {
-                // Safely insert plain text warning into the DOM layout
-                errorBox.textContent = "Please check the reCAPTCHA box before continuing!";
-                errorBox.style.display = "block";
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+
+        // Global verification window callback executes on successful completion
+        window.onVerificationSuccess = function(token) {
+            console.log("reCAPTCHA validation completed successfully!");
+            // Automatically switch window path to destination file
+            window.location.href = "redirect.html";
+        };
+
+        // Explicitly render widget using our hardcoded front-end key parameters
+        function mountRecaptchaWidget() {
+            if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.render === 'function') {
+                grecaptcha.render("recaptcha-widget", {
+                    "sitekey": RECAPTCHA_PUBLIC_KEY,
+                    "callback": window.onVerificationSuccess
+                });
             } else {
-                // Clean execution redirect inside the exact same folder structure
-                window.location.href = "redirect.html";
+                // If the external script is still downloading, wait 200ms and try again
+                setTimeout(mountRecaptchaWidget, 200);
             }
         }
-    </script>
 
+        // Initialize script environment tracking
+        mountRecaptchaWidget();
+    </script>
 </body>
 </html>
