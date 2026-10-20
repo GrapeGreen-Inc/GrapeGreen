@@ -1,45 +1,49 @@
 # GrapeGreen
 
-GrapeGreen is a colorful multi-page web app and dashboard focused on community features like chat, profile settings, QR generation, meme browsing, and account management. The project is built as a front-end-only experience with Firebase-powered data for user accounts, chat, and other community features.
+GrapeGreen is a colorful community dashboard where people can sign in, chat with others, personalize their profile, browse memes, and explore a few useful tools in one friendly social space. It is designed for casual interaction, self-expression, and an easygoing online community experience.
 
 ## Overview
 
 This project includes:
 
-- A login/sign-up flow with account creation and guest access
-- A dashboard home screen with community messaging and status panels
-- Global chat and moderation tools
-- User profiles, avatars, and appearance customization
+- A quick login and sign-up flow with guest access
+- A dashboard home screen with community updates and status panels
+- A moderated global chat experience
+- Personal profile customization, avatars, and appearance settings
 - QR code generation and simple utility pages
-- A meme gallery / wall of memes
-- Admin, legal, and support flows for community management
-
-
+- A meme gallery and community browsing features
+- Help, support, and account settings for users
 
 ## Features
 
 ### Authentication and accounts
 
 - Username-based sign up and login
-- Guest mode
-- User roles such as guest, member, mod, admin, legal, dev, and owner
-- Password handling with salted hashing and account security checks
-- Account deletion and retention workflow
+- Guest mode for quick access
+- Personalized profile settings and avatar choices
+- Password updates and account security checks
+- Account deletion and self-service management options
 
 ### Community and chat
 
-- Public/global chat feed
-- Staff chat area for higher-role users
-- DM-style interactions and moderation tools
-- Notification and ticket/report flows
+- Public chat feed for conversations and community interaction
+- Friendly social experience for members
+- Moderated spaces to keep discussions respectful and safe
+- Reporting tools and support options for issues
+- Warnings or temporary restrictions for disruptive behavior
 
 ### Dashboard experience
 
 - Searchable tab navigation
 - Settings panel for profile, theme, brightness, and text size
-- QR code page and simple science/coding subpages
-- Update log and help screen
-- Memes wall and support bot interface
+- QR code page and utility sections
+- Update log and help resources
+- Meme wall and support-style interface
+
+## Community
+
+GrapeGreen is built to be welcoming, engaging, and easy to explore. The community is moderated to help keep conversations respectful and safe, and users may receive warnings or restrictions if they violate community guidelines.
 
 ## Contributing
-Contributions are welcome if you want to improve the app's UX, add features, tighten security, or clean up the frontend structure.
+
+Contributions are welcome if you want to improve the app's user experience, refine the design, add new community features, or make the platform smoother and more enjoyable for everyone.
