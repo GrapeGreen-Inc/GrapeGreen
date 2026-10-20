@@ -1,5 +1,23 @@
 jobs:
-  execute-start-script:
+  run-verification:
     runs-on: ubuntu-latest
-    # 🛡️ ONLY runs if the execution happens on YOUR profile, completely breaking fork runners!
-    if: github.repository == 'GreatGamesGuy67/GrapeGreen'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Requests Library
+        run: |
+          pip install requests
+
+      - name: Execute Separate Python Script
+        env:
+          # Securely passes your GitHub repository secret to the separate script
+          RECAPTCHA_SECRET_KEY: ${{ secrets.RECAPTCHA_SECRET_KEY }}
+        run: |
+          # Runs your standalone script and passes a placeholder or a token variable
+          python verify_recaptcha.py "YOUR_CAPTCHA_TOKEN_HERE"
