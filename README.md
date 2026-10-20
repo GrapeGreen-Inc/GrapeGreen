@@ -43,7 +43,3 @@ This project includes:
 ## Community
 
 GrapeGreen is built to be welcoming, engaging, and easy to explore. The community is moderated to help keep conversations respectful and safe, and users may receive warnings or restrictions if they violate community guidelines.
-
-## Contributing
-
-Contributions are welcome if you want to improve the app's user experience, refine the design, add new community features, or make the platform smoother and more enjoyable for everyone.
