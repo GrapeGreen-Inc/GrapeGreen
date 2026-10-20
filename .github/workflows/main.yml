@@ -1,0 +1,5 @@
+jobs:
+  execute-start-script:
+    runs-on: ubuntu-latest
+    # 🛡️ ONLY runs if the execution happens on YOUR profile, completely breaking fork runners!
+    if: github.repository == 'GreatGamesGuy67/GrapeGreen'
