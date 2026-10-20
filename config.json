@@ -1,0 +1,24 @@
+{
+  "appName": "GrapeGreen",
+  "version": "1.4",
+  "environment": "production",
+  "bots": {
+    "nightbot": {
+      "name": "Nightbot",
+      "role": "mod",
+      "purpose": "General chat commands, utility, and basic spam filtering",
+      "enabled": true
+    },
+    "linkbot": {
+      "name": "LinkBot",
+      "role": "admin",
+      "purpose": "Strict link scanning and safety boundary enforcement",
+      "checkIntervalMs": 800,
+      "enabled": true,
+      "blockAllLinksInUnder13Rooms": true
+    }
+  },
+  "safetyMode": {
+    "under13StrictPrivacy": true
+  }
+}
