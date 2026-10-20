@@ -9,7 +9,9 @@
 ---
 
 ## To-Do
-- [ ] Fix staff chat
+- [ ] Fix staff chat.
+
+- [ ] get site indexed.
 
 - [ ] Fix users lookup.
 
