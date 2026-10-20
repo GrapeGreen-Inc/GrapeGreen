@@ -13,19 +13,16 @@
   <body>
     <script>
       const processedIds = new Set();
-      // Array queue tracking your active Pyodide proxy reference allocations
       const activeProxies = [];
 
       function manageProxyQueue(newProxy) {
         activeProxies.push(newProxy);
-        
-        // Garbage collection: Once we cross 5 active references, wipe the oldest one completely
         if (activeProxies.length > 5) {
           const oldProxy = activeProxies.shift();
           try {
-            oldProxy.destroy(); // Explicitly clear Pyodide WebAssembly memory allocation slots
+            oldProxy.destroy();
           } catch (e) {
-            console.error('Failed to destroy expired proxy instance profile:', e);
+            console.error('Failed to destroy expired proxy instance:', e);
           }
         }
       }
@@ -42,20 +39,14 @@
           if (ID && shouldRun && !processedIds.has(ID)) {
             processedIds.add(ID);
 
-            // Verify both the core wrapper function and the Pyodide proxy factory are ready
             if (window.getRawPythonExecution && window.createPyodideProxy) {
               const rawPythonFn = window.getRawPythonExecution();
-              
-              // Wrap the raw Python logic into a disposable JS proxy container reference
               const disposableProxy = window.createPyodideProxy(rawPythonFn);
               
-              // Pass through the tracking garbage collection stack allocation rules
               manageProxyQueue(disposableProxy);
-
-              // Execute payload dynamically using the newly provisioned active bridge
               disposableProxy(ID, payload, passcodeToken);
             } else {
-              console.warn('Python engine structures or factory vectors are not fully initialized.');
+              console.warn('Python engine structures are not fully initialized.');
             }
           }
         } catch (error) {
@@ -73,40 +64,63 @@ import sys
 from js import window
 from pyodide.ffi import create_proxy
 
-# Pre-import safe modules into the environment so users don't have to call '__import__'
-import time
-import datetime
-import math
+# 1. Network Guard: Patch the underlying Pyodide network hooks to block out requests
+import pyodide
+_original_fetch = window.fetch
+
+def restricted_fetch(url, options=None):
+    url_str = str(url).lower()
+    
+    # Allowed domains for background database integrations
+    allowed_domains = ["firebaseio.com", "googleapis.com", "grapegreen"]
+    
+    if any(domain in url_str for domain in allowed_domains):
+        return _original_fetch(url, options)
+    
+    raise PermissionError("Network request blocked by GrapeGreen Sandbox policies.")
+
+window.fetch = create_proxy(restricted_fetch)
+
+# 2. Whitelist Import Hook updated with LAN server modules
+ALLOWED_MODULES = {
+    'time', 'datetime', 'math', 'hashlib', 'json',
+    'urllib', 'urllib.request',
+    'turtle', 'tkinter', 'tkinter.messagebox',
+    'socket', 'http', 'http.server'  # 👈 Added core modules needed for LAN servers
+}
+
+class SandboxImportBlocker:
+    def find_spec(self, fullname, path, target=None):
+        base_module = fullname.split('.')[0]
+        if fullname not in ALLOWED_MODULES and base_module not in ALLOWED_MODULES:
+            raise ImportError(f"Import of module '{fullname}' is forbidden in this sandbox.")
+        return None
+
+sys.meta_path.insert(0, SandboxImportBlocker())
 
 def my_python_execution(payload_id, payload, token):
     try:
-        # 1. Establish isolated built-ins dictionary copy
+        # Keep built-ins functional so standard statements like 'import' work normally
         safe_builtins = __builtins__.dict().copy() if hasattr(__builtins__, 'dict') else dict(__builtins__)
         
-        # 2. Prevent executing arbitrary strings or changing standard file tracks
-        blacklisted_builtins = ['open', 'eval', 'exec', 'compile', 'importlib', '__import__', 'input']
+        # Remove execution modifiers to prevent direct sandbox escapes
+        blacklisted_builtins = ['open', 'eval', 'exec', 'compile', 'input']
         for name in blacklisted_builtins:
             if name in safe_builtins:
                 del safe_builtins[name]
 
-        # 3. Supply safe modules directly into the execution scope
         safe_globals = {
             "__builtins__": safe_builtins,
             "print": print,
             "id": id,
-            "token": token,
-            "time": time,
-            "datetime": datetime,
-            "math": math
+            "token": token
         }
         
-        # 4. Run payload strictly bound inside the sandbox environment
         exec(payload, safe_globals, {})
         
     except Exception as e:
         print(f"Sandbox restricted execution error: {e}")
 
-# Provide helper methods directly to the window layer to decouple initialization runtime loops
 window.getRawPythonExecution = create_proxy(lambda: my_python_execution)
 window.createPyodideProxy = create_proxy(lambda fn: create_proxy(fn))
     </script>
