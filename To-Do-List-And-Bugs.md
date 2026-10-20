@@ -3,7 +3,8 @@
 ---
 
 ## Bugs
-∙ none I know of.
+- users lookup no work
+- staff chat no work
 
 ---
 
