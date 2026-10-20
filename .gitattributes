@@ -1,0 +1,7 @@
+# Force Markdown (.md) files to be detectable as source code instead of prose documentation
+*.md linguist-documentation=false
+*.md linguist-detectable=true
+
+# Force JSON (.json) files to be detectable as source code instead of static data sheets
+*.json linguist-data=false
+*.json linguist-detectable=true
