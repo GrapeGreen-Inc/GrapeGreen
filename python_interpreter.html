@@ -20,13 +20,7 @@
           if (!rawData) return;
 
           const data = JSON.parse(rawData);
-          const {
-            ID,
-            payload,
-            "passcode token": passcodeToken,
-            "run?": runStatus
-          } = data;
-
+          const { ID, payload, "passcode token": passcodeToken, "run?": runStatus } = data;
           const shouldRun = runStatus === true || runStatus === 'true';
 
           if (ID && shouldRun && !processedIds.has(ID)) {
@@ -49,28 +43,45 @@
     </script>
 
     <script type="py">
-      import sys
+import sys
+from js import window
+from pyodide.ffi import create_proxy
 
-# Block dangerous modules before they can be imported
-blocked_modules = {
-    'os', 'subprocess', 'sys', 'importlib', 'eval', 'exec',
-    '__import__', 'compile', 'open', 'input', '__builtins__'
-}
+# Pre-import safe modules into the environment so users don't have to call '__import__'
+import time
+import datetime
+import math
 
-# Remove from sys.modules to prevent imports
-for module in blocked_modules:
-    if module in sys.modules:
-        del sys.modules[module]
-      from js import window
-      from pyodide import create_proxy
+def my_python_execution(payload_id, payload, token):
+    try:
+        # 1. Establish isolated built-ins dictionary copy
+        safe_builtins = __builtins__.dict().copy() if hasattr(__builtins__, 'dict') else dict(__builtins__)
+        
+        # 2. Prevent executing arbitrary strings or changing standard file tracks
+        blacklisted_builtins = ['open', 'eval', 'exec', 'compile', 'importlib', '__import__', 'input']
+        for name in blacklisted_builtins:
+            if name in safe_builtins:
+                del safe_builtins[name]
 
-      def my_python_execution(id, payload, token):
-          try:
-              exec(payload)
-          except Exception as e:
-              print(f"Error executing payload: {e}")
+        # 3. Supply safe modules directly into the execution scope
+        safe_globals = {
+            "__builtins__": safe_builtins,
+            "print": print,
+            "id": id,
+            "token": token,
+            "time": time,
+            "datetime": datetime,
+            "math": math
+        }
+        
+        # 4. Run payload strictly bound inside the sandbox environment
+        exec(payload, safe_globals, {})
+        
+    except Exception as e:
+        print(f"Sandbox restricted execution error: {e}")
 
-      window.executePythonPayload = create_proxy(my_python_execution)
+# Bind execution proxy cleanly to your frontend dispatching handle
+window.executePythonPayload = create_proxy(my_python_execution)
     </script>
   </body>
 </html>
