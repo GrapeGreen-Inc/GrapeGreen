@@ -19,6 +19,7 @@
     }
   },
   "safetyMode": {
-    "under13StrictPrivacy": true
+    "under13StrictPrivacy": true,
+    "userdataencrypted": true
   }
 }
