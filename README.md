@@ -46,5 +46,6 @@ GrapeGreen is built to be welcoming, engaging, and easy to explore. The communit
 
 ---
 
-# FORKING IS NOT ALLOWED IF YOU FORK I WILL BE MAD
-## IF YOU FORK YOU ARE WILLING MAKING YOURSELF PUBLIC ENEMY #1
+# 🚫 ⚠ FORKING IS NOT ALLOWED IF YOU FORK I WILL BE MAD ⚠ 🚫
+## 🛑 IF YOU FORK YOU ARE WILLING MAKING YOURSELF PUBLIC ENEMY #1 🛑
+### this repo is locked to fork 🔒
