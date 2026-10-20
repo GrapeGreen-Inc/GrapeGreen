@@ -8,11 +8,13 @@
     <p>Registering your upvote...</p>
 
     <script type="module">
+        // Import your required core functions exactly from v13.0.0 CDN endpoints
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-analytics.js";
-        // Import Firestore features needed for the atomic operation
+        // Dynamically request targeted Firestore features for the lightweight vote token increment
         import { getFirestore, doc, setDoc, increment } from "https://gstatic.com";
 
+        // Your specific web app configuration credentials payload
         const firebaseConfig = {
             apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es",
             authDomain: "app-iguess-39f2f.firebaseapp.com",
@@ -24,23 +26,35 @@
             measurementId: "G-J4736J0D8J"
         };
 
+        // Initialize App Instance
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
+        
+        // Isolate telemetry from core logic to bypass script errors if an ad-blocker kills analytics tracking
+        try {
+            getAnalytics(app);
+        } catch (analyticsError) {
+            console.warn("Analytics stream failed to build or was blocked, moving forward with vote collection.");
+        }
+
+        // Initialize Firestore reference object mapping
         const db = getFirestore(app);
 
         async function registerVote() {
             try {
+                // Pinpoint collection metadata record
                 const docRef = doc(db, "meta", "SiteVotes");
-                // Atomic increment (+1) keeping document size tiny
+                
+                // Atomically step your stats counter document balance forward by exactly +1
                 await setDoc(docRef, { votes: increment(1) }, { merge: true });
-            } catch (error) {
-                console.error("Vote failed: ", error);
+            } catch (firestoreError) {
+                console.error("Database registration failed: ", firestoreError);
             } finally {
-                // Step back one folder directory, then jump straight to index.html
+                // Drop out of subfolder and pass the client back to home panel immediately
                 window.location.href = "../index.html";
             }
         }
 
+        // Fire transaction call immediately on load pass through
         registerVote();
     </script>
 </body>
