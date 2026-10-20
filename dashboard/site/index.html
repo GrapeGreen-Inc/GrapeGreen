@@ -14,7 +14,6 @@
 <meta property="og:description" content="Sign up or log in to chat, browse memes, and manage your account.">
 <meta property="og:type" content="website">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
@@ -75,11 +74,6 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
       <div class="f mute hide" id="kidnote">You're under 13, so we won't ask for or keep your email or birthday. You'll log in with your username and password.</div>
       <div class="f"><label for="su-pass">Password (6+ characters)</label>
         <div class="pw"><input id="su-pass" type="password" autocomplete="new-password" required minlength="6"><button type="button" data-show="su-pass">Show</button></div></div>
-      <form action="/login" method="POST">
-    <div class="g-recaptcha" data-sitekey="6LfV1PgtAAAAAIYTHM_VZn1zh0stTnJkDnGa3D0-"></div>
-    <br/>
-    <input type="submit" value="Submit">
-</form>
       <button class="go" type="submit">Create account</button>
     </form>
     <div id="err" role="alert"></div>
