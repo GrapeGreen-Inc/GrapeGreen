@@ -43,3 +43,7 @@ This project includes:
 ## Community
 
 GrapeGreen is built to be welcoming, engaging, and easy to explore. The community is moderated to help keep conversations respectful and safe, and users may receive warnings or restrictions if they violate community guidelines.
+
+---
+
+#FORKING IS NOT ALLOWED IF YOU FORK I WILL BE MAD
