@@ -13,6 +13,22 @@
   <body>
     <script>
       const processedIds = new Set();
+      // Array queue tracking your active Pyodide proxy reference allocations
+      const activeProxies = [];
+
+      function manageProxyQueue(newProxy) {
+        activeProxies.push(newProxy);
+        
+        // Garbage collection: Once we cross 5 active references, wipe the oldest one completely
+        if (activeProxies.length > 5) {
+          const oldProxy = activeProxies.shift();
+          try {
+            oldProxy.destroy(); // Explicitly clear Pyodide WebAssembly memory allocation slots
+          } catch (e) {
+            console.error('Failed to destroy expired proxy instance profile:', e);
+          }
+        }
+      }
 
       function tryDispatch() {
         try {
@@ -26,10 +42,20 @@
           if (ID && shouldRun && !processedIds.has(ID)) {
             processedIds.add(ID);
 
-            if (window.executePythonPayload) {
-              window.executePythonPayload(ID, payload, passcodeToken);
+            // Verify both the core wrapper function and the Pyodide proxy factory are ready
+            if (window.getRawPythonExecution && window.createPyodideProxy) {
+              const rawPythonFn = window.getRawPythonExecution();
+              
+              // Wrap the raw Python logic into a disposable JS proxy container reference
+              const disposableProxy = window.createPyodideProxy(rawPythonFn);
+              
+              // Pass through the tracking garbage collection stack allocation rules
+              manageProxyQueue(disposableProxy);
+
+              // Execute payload dynamically using the newly provisioned active bridge
+              disposableProxy(ID, payload, passcodeToken);
             } else {
-              console.warn('Python payload handler is not ready yet.');
+              console.warn('Python engine structures or factory vectors are not fully initialized.');
             }
           }
         } catch (error) {
@@ -80,8 +106,9 @@ def my_python_execution(payload_id, payload, token):
     except Exception as e:
         print(f"Sandbox restricted execution error: {e}")
 
-# Bind execution proxy cleanly to your frontend dispatching handle
-window.executePythonPayload = create_proxy(my_python_execution)
+# Provide helper methods directly to the window layer to decouple initialization runtime loops
+window.getRawPythonExecution = create_proxy(lambda: my_python_execution)
+window.createPyodideProxy = create_proxy(lambda fn: create_proxy(fn))
     </script>
   </body>
 </html>
