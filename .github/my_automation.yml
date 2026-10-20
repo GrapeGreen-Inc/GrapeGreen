@@ -1,0 +1,34 @@
+# The name displayed on your GitHub Actions dashboard page layout
+name: GrapeGreen Core Initialization
+
+# 1. Choose WHEN to trigger the script (e.g., every time you 'git push' to main)
+on:
+  push:
+    branches: [ "main" ]
+
+# 2. Define WHAT actions the temporary cloud computer should take
+jobs:
+  execute-start-script:
+    # Tell GitHub to spin up a fresh Ubuntu Linux virtual machine cloud server
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step A: Download your repository code onto the temporary cloud machine
+    - name: Checkout repository code
+      uses: actions/checkout@v4
+
+    # Step B: Install a clean version of Python on that cloud machine
+    - name: Set up Python Environment
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    # Step C: Install dependencies (Optional: Uncomment below if start.py needs external libraries)
+    # - name: Install Dependencies
+    #   run: |
+    #     pip install requests
+
+    # Step D: Run your start.py script file
+    - name: Run start.py file
+      run: |
+        python start.py
