@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voting...</title>
+</head>
+<body>
+    <p>Registering your upvote...</p>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-analytics.js";
+        // Import Firestore features needed for the atomic operation
+        import { getFirestore, doc, setDoc, increment } from "https://gstatic.com";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es",
+            authDomain: "app-iguess-39f2f.firebaseapp.com",
+            databaseURL: "https://app-iguess-39f2f-default-rtdb.firebaseio.com",
+            projectId: "app-iguess-39f2f",
+            storageBucket: "app-iguess-39f2f.firebasestorage.app",
+            messagingSenderId: "1056619953768",
+            appId: "1:1056619953768:web:6ac154660c07c48a5005dd",
+            measurementId: "G-J4736J0D8J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        async function registerVote() {
+            try {
+                const docRef = doc(db, "meta", "SiteVotes");
+                // Atomic increment (+1) keeping document size tiny
+                await setDoc(docRef, { votes: increment(1) }, { merge: true });
+            } catch (error) {
+                console.error("Vote failed: ", error);
+            } finally {
+                // Step back one folder directory, then jump straight to index.html
+                window.location.href = "../index.html";
+            }
+        }
+
+        registerVote();
+    </script>
+</body>
+</html>
