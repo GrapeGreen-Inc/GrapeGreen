@@ -1,6 +1,6 @@
 # GrapeGreen
 
-GrapeGreen is a colorful single-page web app and dashboard focused on community features like chat, profile settings, QR generation, meme browsing, and account management. The project is built as a front-end-only experience with Firebase-powered data for user accounts, chat, and other community features.
+GrapeGreen is a colorful multi-page web app and dashboard focused on community features like chat, profile settings, QR generation, meme browsing, and account management. The project is built as a front-end-only experience with Firebase-powered data for user accounts, chat, and other community features.
 
 ## Overview
 
