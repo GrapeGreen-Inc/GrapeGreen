@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrapeGreen Server Controller</title>
+    <style>
+        body {
+            background-color: #2c1a4d;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #3d256c;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            color: #a3e635;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #cbc3e3;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #5b3a9c;
+            border-radius: 6px;
+            background-color: #1f1137;
+            color: #ffffff;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input[type="password"]:focus {
+            border-color: #a3e635;
+        }
+        button {
+            background-color: #5b3a9c;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        button:hover {
+            background-color: #7047c2;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .status {
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .success { color: #a3e635; }
+        .error { color: #ef4444; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>GrapeGreen Engine Panel</h1>
+    
+    <button id="runBtn" onclick="triggerServer()">🚀 Run Background Server</button>
+    
+    <div class="input-group" style="margin-top: 25px;">
+        <label for="secretCode">Verification Secret Code Key:</label>
+        <input type="password" id="secretCode" placeholder="Enter authorization key...">
+    </div>
+
+    <div id="statusMessage" class="status"></div>
+</div>
+
+<script>
+    async function triggerServer() {
+        const secretInput = document.getElementById("secretCode").value;
+        const statusBox = document.getElementById("statusMessage");
+        const runButton = document.getElementById("runBtn");
+        
+        // The master secret key string
+        const masterSecret = "67TheTacoShellCrunchedHeWentToTheBathroom69";
+        
+        if (secretInput !== masterSecret) {
+            statusBox.className = "status error";
+            statusBox.innerText = "❌ Access Denied: Invalid authentication signature.";
+            return;
+        }
+
+        // Lock button during transmission
+        runButton.disabled = true;
+        statusBox.className = "status success";
+        statusBox.innerText = "🔑 Verifying credentials... Sending activation ping to GitHub cloud...";
+
+        try {
+            // Fires an automated dispatch webhook directly to GreatGamesGuy67/GrapeGreen
+            const response = await fetch('https://github.com', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/vnd.github+json',
+                    'Authorization': 'Bearer ' + secretInput // Passes signature verification to the server handler
+                },
+                body: JSON.stringify({ 
+                    event_type: 'start-python-server' 
+                })
+            });
+
+            // GitHub returns a 24-hour verification code state status 204 for a flawless dispatch execution
+            if (response.status === 204 || response.ok) {
+                statusBox.innerText = "✅ Success! GitHub Action container wake-up sequence initialized.";
+            } else {
+                statusBox.className = "status error";
+                statusBox.innerText = "⚠️ Cloud server returned error status: " + response.status;
+            }
+        } catch (error) {
+            statusBox.className = "status error";
+            statusBox.innerText = "❌ Network failure tracking down repository pipeline connection.";
+        } finally {
+            runButton.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
