@@ -89,6 +89,8 @@
             if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.render === 'function') {
                 grecaptcha.render("recaptcha-widget", {
                     "sitekey": RECAPTCHA_PUBLIC_KEY,
+                    "theme": "dark",
+                    "error-callback": onCaptchaError,
                     "callback": window.onVerificationSuccess
                 });
             } else {
@@ -96,7 +98,21 @@
                 setTimeout(mountRecaptchaWidget, 200);
             }
         }
-
+function onCaptchaError() {
+    console.warn("⚠️ GrapeGreen Alert: reCAPTCHA monthly threshold reached or network dropped. Activating system fallback...");
+    
+    // Grabs your description paragraph to silently update the status text in GrapeGreen style
+    const statusText = document.querySelector('.container p');
+    if (statusText) {
+        statusText.style.color = "#a3e635"; // Flips text to your vibrant lime green accent color
+        statusText.innerText = "System validation bypass initialized. Loading verification gateway...";
+    }
+    
+    // Automatically routes them past the wall into the redirect pipeline after a 1.2-second natural delay
+    setTimeout(function() {
+        window.location.href = "redirect.html"; 
+    }, 1200);
+}
         // Initialize script environment tracking
         mountRecaptchaWidget();
     </script>
