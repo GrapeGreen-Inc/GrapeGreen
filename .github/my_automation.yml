@@ -40,9 +40,16 @@ jobs:
     # 🔄 Step E: Automatically save and push python_logs.json back to your repo!
     - name: Auto-Commit Python Server Logs
       if: always() # 🛡️ Ensures this runs even if the server hits a timeout or is stopped!
+      env:
+        # Pull down your encrypted token secret safely into the temporary server terminal environment
+        LAUNCH_KEY: ${{ secrets.GRAPEGREEN_LAUNCH_TOKEN }}
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@://github.com"
         git add python_logs.json
+        
+        # Commit the changes or echo a safe message if no updates were written
         git commit -m "chore: automated background ledger update [skip ci]" || echo "No log changes to commit"
-        git push
+        
+        # Inject your secret token key directly into the push path so GitHub authorizes the remote write!
+        git push https://x-access-token:${LAUNCH_KEY}@://github.com HEAD:main
