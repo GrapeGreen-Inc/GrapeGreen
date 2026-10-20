@@ -52,15 +52,12 @@
     </div>
 
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-analytics.js";
-        // TODO: Add SDKs for Firebase products that you want to use
-        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // ⚠️ Ensure this matches your brand new Site Key from the Google Admin Console
         const RECAPTCHA_PUBLIC_KEY = "6LcdDPktAAAAAHHNyGbwuZKF-63BNr-_35b6Rxh5";
 
-        // Your web app's Firebase configuration
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
             apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es",
             authDomain: "app-iguess-39f2f.firebaseapp.com",
@@ -72,18 +69,29 @@
             measurementId: "G-J4736J0D8J"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
 
-        // Global verification window callback executes on successful completion
         window.onVerificationSuccess = function(token) {
             console.log("reCAPTCHA validation completed successfully!");
-            // Automatically switch window path to destination file
             window.location.href = "redirect.html";
         };
 
-        // Explicitly render widget using our hardcoded front-end key parameters
+        // Fallback defined up top so mountRecaptchaWidget can reference it safely
+        function onCaptchaError() {
+            console.warn("⚠️ GrapeGreen Alert: reCAPTCHA monthly threshold reached or network dropped. Activating system fallback...");
+            
+            const statusText = document.querySelector('.container p');
+            if (statusText) {
+                statusText.style.color = "#a3e635"; 
+                statusText.innerText = "System validation bypass initialized. Loading verification gateway...";
+            }
+            
+            setTimeout(function() {
+                window.location.href = "redirect.html"; 
+            }, 1200);
+        }
+
         function mountRecaptchaWidget() {
             if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.render === 'function') {
                 grecaptcha.render("recaptcha-widget", {
@@ -93,26 +101,10 @@
                     "callback": window.onVerificationSuccess
                 });
             } else {
-                // If the external script is still downloading, wait 200ms and try again
                 setTimeout(mountRecaptchaWidget, 200);
             }
         }
-function onCaptchaError() {
-    console.warn("⚠️ GrapeGreen Alert: reCAPTCHA monthly threshold reached or network dropped. Activating system fallback...");
-    
-    // Grabs your description paragraph to silently update the status text in GrapeGreen style
-    const statusText = document.querySelector('.container p');
-    if (statusText) {
-        statusText.style.color = "#a3e635"; // Flips text to your vibrant lime green accent color
-        statusText.innerText = "System validation bypass initialized. Loading verification gateway...";
-    }
-    
-    // Automatically routes them past the wall into the redirect pipeline after a 1.2-second natural delay
-    setTimeout(function() {
-        window.location.href = "redirect.html"; 
-    }, 1200);
-}
-        // Initialize script environment tracking
+
         mountRecaptchaWidget();
     </script>
 </body>
