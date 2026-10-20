@@ -1,4 +1,4 @@
-# Devolpment Stuff
+# Development Stuff
 
 ---
 
@@ -8,9 +8,9 @@
 ---
 
 ## To-Do
-∙ Fix staff chat
+[ ] Fix staff chat
 
-∙ Fix users lookup.
+[ ] Fix users lookup.
 
 ---
 
