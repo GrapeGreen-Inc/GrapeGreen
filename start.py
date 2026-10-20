@@ -1,5 +1,12 @@
-#start of start.py
+# start of start.py
 import logging
-logging.basicConfig(level=logging.DEBUG)
-logging.debug("Python Server Initlized")
-#end of start.py
+
+# Configure the logging layout and level
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+if __name__ == "__main__":
+    logging.debug("Python Server Initialized")
+# end of start.py
