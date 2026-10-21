@@ -52,7 +52,7 @@
     </div>
 
     <script type="module">
-        // Import Firebase modules (including Firestore)
+        // Import Firebase modules using fully qualified, exact paths
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-analytics.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
@@ -83,34 +83,27 @@
         // Fetch the Secret Key from Firestore asynchronously
         async function fetchSecretKey() {
             try {
-                // Accesses collection 'meta' -> document 'RECAP_KEY'
                 const docRef = doc(db, "meta", "RECAP_KEY");
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    // Maps the 'key' field value from the document snapshot
                     recaptchaSecretKey = data.key; 
                     console.log("Firestore configuration synchronized successfully.");
                 } else {
                     console.warn("⚠️ Configuration missing from Firestore document path.");
                 }
             } catch (error) {
-                console.error("❌ Firestore read error occurred:", error);
+                console.error("❌ Firestore read error occurred (Check your Firestore Security Rules):", error);
             }
         }
 
         // Verification Success Handler
         window.onVerificationSuccess = function(token) {
             console.log("reCAPTCHA user validation completed successfully!");
-            
-            // Check if secret key was loaded into state prior to redirect execution
             if (recaptchaSecretKey) {
                 console.log("Secret key active for verification pipeline processing.");
-                // You can temporarily pass the token or state via session/query if needed:
-                // sessionStorage.setItem("recap_secret", recaptchaSecretKey);
             }
-            
             window.location.href = "redirect.html";
         };
 
@@ -133,7 +126,7 @@
         function mountRecaptchaWidget() {
             if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.render === 'function') {
                 grecaptcha.render("recaptcha-widget", {
-                    "sitekey": RECAPTCHA_PUBLIC_KEY, // Uses your hardcoded public key
+                    "sitekey": RECAPTCHA_PUBLIC_KEY, 
                     "theme": "dark",
                     "error-callback": onCaptchaError,
                     "callback": window.onVerificationSuccess
@@ -144,9 +137,9 @@
         }
 
         // Start initialization runtime tasks
-        async function startGateway() {
-            await fetchSecretKey(); // Fetches secret key from Firestore parallel to page load
-            mountRecaptchaWidget(); // Mounts layout widget interface
+        function startGateway() {
+            fetchSecretKey(); // FIX: Removed 'await' so it runs seamlessly in the background
+            mountRecaptchaWidget(); // This will now trigger immediately
         }
 
         startGateway();
