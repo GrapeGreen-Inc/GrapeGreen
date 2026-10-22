@@ -32,7 +32,7 @@ const analytics = getAnalytics(app);
 // 2. CHAT PARAMETERS & STATE SYSTEM
 // ==========================================================================
 const history = [];
-const parameters = [""]; /* how params work in this feild you put 8bit int thingys like [-.00000000] or [+.00000000] and stuff idk.*/
+let parameters = [""]; /* how params work in this feild you put 8bit int thingys like [-.00000000] or [+.00000000] and stuff idk.*/
 const hyperparameters = {
   "temperature": 0.7, 
   "topK": 40,
@@ -66,6 +66,39 @@ const CRYPTO_KEY_3 = "GrapeKeyGamma11zUltimateGate";
 let activeUserSession = null;
 let activeUserPlan = "free";
 
+/**
+ * Automatically fetches the raw parameters from your local 'params.txt'
+ * file located in the exact same folder and maps them into your array tracking block.
+ */
+async function autoLoadAIParameters() {
+  try {
+    // Looks for 'params.txt' sitting inside the exact same folder path
+    const response = await fetch('./params.txt');
+    if (!response.ok) throw new Error("Local params.txt file could not be read.");
+    
+    const textData = await response.text();
+    
+    // Splits the file contents by every line break, strips dead spaces, and deletes completely empty lines
+    const parsedParams = textData.split('\n')
+                                 .map(line => line.trim())
+                                 .filter(line => line.length > 0);
+    
+    if (parsedParams.length > 0) {
+      // Points your tracking variable directly to your freshly scanned parameters array stack
+      parameters = parsedParams;
+      console.log(`✅ Loaded ${parameters.length} parameters from your local folder files!`, parameters);
+    } else {
+      console.warn("⚠️ Your local params.txt was successfully read but appears to be completely empty.");
+    }
+  } catch (error) {
+    console.error("❌ Failed to automatically stream local parameters configuration:", error);
+    // Fallback marker so your calculations don't drop structural errors if the file text is unreadable
+    parameters = ["error_loading_params"];
+  }
+}
+
+// Fire the auto-loader immediately when your dashboard scripts initialize
+autoLoadAIParameters();
 // ==========================================================================
 // 3. CRYPTOGRAPHIC PIPELINE ENGINE
 // Pipeline order: Text -> Base64 -> AES -> AES (Secret 2) -> AES (Secret 3) -> Base16
