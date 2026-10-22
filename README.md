@@ -1,6 +1,6 @@
 # GrapeGreen
 
-GrapeGreen is a colorful community dashboard where people can sign in, chat with others, personalize their profile, browse memes, and explore a few useful tools in one friendly social space. It is designed for casual interaction, self-expression, and an easygoing online community experience.
+GrapeGreen is a colorful community dashboard where people can sign in, chat with others, personalize their profile, browse memes, and explore a few useful tools in one friendly social space. It is designed to feel welcoming, social, and easy to explore while still giving the project room for future AI-powered features.
 
 ## Overview
 
@@ -40,9 +40,20 @@ This project includes:
 - Update log and help resources
 - Meme wall and support-style interface
 
+### AI features
+
+- Secure AI workspace for user-specific chat sessions
+- AI-powered conversational dashboard with profile-aware interactions
+- Local prompt and mood processing for conversational context
+- Workspace-based chat management with active thread switching
+- AI response flow designed for secure, dashboard-style messaging
+- Support for moderation checks, fallback replies, and structured AI message output
+- Encryption-style data handling for local app state and stored chat metadata
+- Planned expansion path for stronger backend AI orchestration and authentication upgrades
+
 ## Community
 
-GrapeGreen is built to be welcoming, engaging, and easy to explore. The community is moderated to help keep conversations respectful and safe, and users may receive warnings or restrictions if they violate community guidelines.
+GrapeGreen is built to be welcoming, engaging, and easy to explore. The community is moderated to help keep conversations respectful and safe, and users may receive warnings or restrictions if they violate the platform guidelines.
 
 ---
 
