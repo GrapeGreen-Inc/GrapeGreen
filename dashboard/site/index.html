@@ -133,6 +133,7 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
   <button class="side-item" data-tab="updates">Update log</button>
   <button class="side-item" data-tab="help">Help</button>
   <button class="side-item" data-tab="tos">TOS</button>
+    <button class="side-item" data-tab="Grape-Ai">Grape Ai (beta)</button>
   <button class="side-item hide" id="nav-legal" data-tab="legal">Legal panel</button>
   <button class="side-item hide" id="nav-admin" data-tab="admin">Admin panel</button>
 </nav>
@@ -374,6 +375,9 @@ Furthermore, under no circumstances should you click any external links, weird p
     <h3>Under-13 users</h3><div id="lg-kids"></div>
     <h3>Transferred tickets</h3><div id="lg-trans"></div>
     <h3>Deleted accounts</h3><div id="lg-bin"></div>
+  </section>
+    <section id="grape-ai" class="view">
+        <iframe src="Grape_Ai/index.html" width="100%" height="100%" style="border: none; display: block;"></iframe>
   </section>
 <!-- RIFT view: paste after the TOS section inside <main> -->
 <section id="rift" class="view">
