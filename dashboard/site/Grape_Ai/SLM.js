@@ -12,7 +12,6 @@ import {
   setDoc,
   getDoc,
   collection,
-  addDoc,
   query,
   where,
   getDocs
@@ -40,7 +39,7 @@ const analytics = getAnalytics(app);
 // 2. CHAT PARAMETERS & STATE SYSTEM
 // ==========================================================================
 const history = [];
-let parameters = [""]; /* how params work in this feild you put 8bit int thingys like [-.00000000] or [+.00000000] and stuff idk. */
+let parameters = [""]; /* how params work in this field you put 8bit int thingys like [-.00000000] or [+.00000000] and stuff idk. */
 const hyperparameters = {
   temperature: 0.7,
   topK: 40,
@@ -66,9 +65,9 @@ const NEE_popup_keywords = [
   "want to die"
 ];
 
+const ownerName = "MattyGrapeGreenOwner";
 let currentUsername = "user";
 let NEE_response = `i know you are going thru a tough time ${currentUsername} and you deserve support call or text 988 or go to thier site at 988lifeline.org if its serious call 911 im here for you.`;
-const ownerName = "MattyGrapeGreenOwner";
 
 let currentQuery = "";
 let currentResponse = "";
@@ -80,81 +79,71 @@ let currentMood = "neutral";
 // 1 = Allow active internal NLP and simulation logic outputs
 let READY = 0;
 
-// Secret password keys used for the multiple encryption loops
 const CRYPTO_KEY_1 = "GrapeKeyAlpha99xTrueShield";
 const CRYPTO_KEY_2 = "GrapeKeyBeta44yVanguardNode";
 const CRYPTO_KEY_3 = "GrapeKeyGamma11zUltimateGate";
 
-// Global user tracking variables
 let activeUserSession = null;
 let activeUserPlan = "free";
 
 // ==========================================================================
-// 3. DOM SAFETY HELPERS AND STATE LABELS
+// 3. SAFE DOM & STATE HELPERS
 // ==========================================================================
 function safeGetElement(id) {
   return document.getElementById(id) || null;
 }
 
 function updateNotification(message, type = "") {
-  const alertContainer = safeGetElement("notification-box");
-  if (!alertContainer) return;
-
-  alertContainer.className = (type || "").trim();
-  alertContainer.style.display = message ? "block" : "none";
-  alertContainer.innerText = message;
+  const box = safeGetElement("notification-box");
+  if (!box) return;
+  box.className = (type || "").trim();
+  box.style.display = message ? "block" : "none";
+  box.innerText = message || "";
 }
 
 function setActiveForm(mode) {
   const loginForm = safeGetElement("login-form");
   const signupForm = safeGetElement("signup-form");
-  const showLoginButton = safeGetElement("show-login-btn");
-  const showSignupButton = safeGetElement("show-signup-btn");
+  const loginButton = safeGetElement("show-login-btn");
+  const signupButton = safeGetElement("show-signup-btn");
 
-  if (!loginForm || !signupForm || !showLoginButton || !showSignupButton) return;
+  if (!loginForm || !signupForm || !loginButton || !signupButton) return;
 
   if (mode === "login") {
-    showLoginButton.classList.add("active");
-    showSignupButton.classList.remove("active");
+    loginButton.classList.add("active");
+    signupButton.classList.remove("active");
     loginForm.classList.add("active");
     signupForm.classList.remove("active");
-    return;
+  } else {
+    signupButton.classList.add("active");
+    loginButton.classList.remove("active");
+    signupForm.classList.add("active");
+    loginForm.classList.remove("active");
   }
-
-  showSignupButton.classList.add("active");
-  showLoginButton.classList.remove("active");
-  signupForm.classList.add("active");
-  loginForm.classList.remove("active");
 }
 
 function setAuthOverlayHidden(isHidden) {
-  const authOverlay = safeGetElement("auth-overlay");
-  if (!authOverlay) return;
-
-  if (isHidden) {
-    authOverlay.classList.add("hidden");
-  } else {
-    authOverlay.classList.remove("hidden");
-  }
+  const overlay = safeGetElement("auth-overlay");
+  if (!overlay) return;
+  if (isHidden) overlay.classList.add("hidden");
+  else overlay.classList.remove("hidden");
 }
 
 function updateUIUsernameDisplay(name) {
-  const usernameDisplay = safeGetElement("username-display");
-  if (usernameDisplay) usernameDisplay.innerText = name || "Guest User";
+  const el = safeGetElement("username-display");
+  if (el) el.innerText = name || "Guest User";
 }
 
 function updateUITierDisplay() {
-  const tierBadge = safeGetElement("tier-badge");
-  if (!tierBadge) return;
-
-  const safePlan = (activeUserPlan || "free").toString().toUpperCase();
-  tierBadge.innerText = safePlan + " Plan";
+  const el = safeGetElement("tier-badge");
+  if (!el) return;
+  const safeTier = String(activeUserPlan || "free").toUpperCase();
+  el.innerText = safeTier + " Plan";
 }
 
 function updateActivePlanUIMarkers(tierName) {
   const searchKey = "plan-" + String(tierName || "free").toLowerCase();
   const allPlanCards = document.querySelectorAll(".tier-card");
-
   allPlanCards.forEach((card) => {
     card.classList.remove("active");
     if (card.id === searchKey) {
@@ -166,10 +155,6 @@ function updateActivePlanUIMarkers(tierName) {
 // ==========================================================================
 // 4. AUTO PARAM LOADING
 // ==========================================================================
-/**
- * Automatically fetches the raw parameters from your local 'params.txt'
- * file located in the exact same folder and maps them into your array tracking block.
- */
 async function autoLoadAIParameters() {
   try {
     const response = await fetch("./params.txt");
@@ -192,17 +177,11 @@ async function autoLoadAIParameters() {
     parameters = ["error_loading_params"];
   }
 }
-
-// Fire the auto-loader immediately when your dashboard scripts initialize
 autoLoadAIParameters();
 
 // ==========================================================================
 // 5. CRYPTOGRAPHIC PIPELINE ENGINE
-// Pipeline order: Text -> Base64 -> AES -> AES (Secret 2) -> AES (Secret 3) -> Base16
 // ==========================================================================
-/**
- * Basic character shift and transposition tool mimicking an encryption cipher layer
- */
 function runCipherLayer(text, key, invert = false) {
   let keySum = 0;
   for (let i = 0; i < key.length; i++) {
@@ -223,9 +202,6 @@ function runCipherLayer(text, key, invert = false) {
   return finalOutput;
 }
 
-/**
- * Converted string data directly to base16 hex sequence
- */
 function stringToBase16(str) {
   let hexadecimalResult = "";
   for (let i = 0; i < str.length; i++) {
@@ -234,9 +210,6 @@ function stringToBase16(str) {
   return hexadecimalResult;
 }
 
-/**
- * Parses hex sequence arrays back to normal characters
- */
 function base16ToString(hex) {
   let characterResult = "";
   for (let i = 0; i < hex.length; i += 4) {
@@ -246,9 +219,6 @@ function base16ToString(hex) {
   return characterResult;
 }
 
-/**
- * Primary 5-layer absolute security layout data encoder
- */
 function encodeSecurePipeline(plainText) {
   if (!plainText) return "";
   const layer1Base64 = btoa(encodeURIComponent(plainText));
@@ -258,9 +228,6 @@ function encodeSecurePipeline(plainText) {
   return stringToBase16(layer4Cipher);
 }
 
-/**
- * Reverses the encryption stack directly down to readable text data
- */
 function decodeSecurePipeline(cipherText) {
   if (!cipherText) return "";
   try {
@@ -317,9 +284,9 @@ function processNLPDecode(userInputString) {
     return [];
   }
 
-  let workingString = userInputString.trim();
+  let workingString = String(userInputString).trim();
 
-  // 1. HTML SAFE ENCODING PASS
+  // 1. Basic safe substitutions for UI input.
   workingString = workingString
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -327,205 +294,51 @@ function processNLPDecode(userInputString) {
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
-  // 2. BASE64 DECODING ENGINE CHECK
-  const base64Regex = /^[A-Za-z0-9+/=]+\$/;
-  if (workingString.length % 4 === 0 && base64Regex.test(workingString)) {
-    try {
-      const decodedText = atob(workingString);
-      if (decodedText && decodedText.trim().length > 0) {
-        workingString = decodedText;
-      }
-    } catch (e) {
-      // Not a valid base64 payload, continue processing.
-    }
-  }
-
-  let lowerInput = workingString.toLowerCase();
-
-  // 3. LEETSPEAK DECODER
+  // 2. Lightweight leetspeak decode pass.
   const leetDictionary = {
-    "4": "a",
+    4: "a",
     "@": "a",
-    "8": "b",
-    "3": "e",
-    "9": "g",
-    "1": "l",
+    8: "b",
+    3: "e",
+    9: "g",
+    1: "l",
     "!": "l",
-    "0": "o",
-    "5": "s",
+    0: "o",
+    5: "s",
     "$": "s",
-    "7": "t",
+    7: "t",
     "+": "t",
-    "2": "z"
+    2: "z"
   };
 
-  const rawWords = lowerInput.split(/\s+/);
-  const processedWords = rawWords.map((word) => {
-    if (!word || word.length === 0) return word;
-
+  let normalized = workingString.toLowerCase();
+  const parts = normalized.split(/\s+/);
+  const transformed = parts.map((word) => {
+    if (!word) return word;
     let leetCount = 0;
-    for (const char of word) {
-      if (leetDictionary[char]) leetCount++;
+    for (const ch of word) {
+      if (leetDictionary[ch]) leetCount++;
     }
-
     const leetDensity = leetCount / word.length;
     if (leetDensity >= 0.4) {
-      return word.split("").map((char) => leetDictionary[char] || char).join("");
+      return word.split("").map((ch) => leetDictionary[ch] || ch).join("");
     }
-
     return word;
   });
 
-  let sanitizedString = processedWords.join(" ");
+  let sanitizedString = transformed.join(" ");
 
-  // 4. EMOJI HEXADECIMAL CODES STANDARDIZATION
+  // 3. Emoji standardization.
   const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu;
   sanitizedString = sanitizedString.replace(emojiRegex, (matchingEmoji) => {
     const hexRepresentation = matchingEmoji.codePointAt(0).toString(16).toUpperCase();
     return ` uhex${hexRepresentation} `;
   });
 
-  // 5. PUNCTUATION STRIPPER
   sanitizedString = sanitizedString.replace(/[^a-z0-9\s]/g, "");
   nlpDecodedOutput = sanitizedString.replace(/\s+/g, " ").trim();
 
-  // 6. SEPARATED MOOD DICTIONARIES SPECIFICATION
-  const happyModifiers = {
-    great: "+2.0",
-    awesome: "+2.5",
-    love: "+3.0",
-    cool: "+1.5",
-    nice: "+1.5",
-    happy: "+2.0",
-    good: "+1.0",
-    glad: "+1.5",
-    yes: "+0.5"
-  };
-
-  const sadModifiers = {
-    sad: "-1.5",
-    cry: "-1.5",
-    hurt: "-2.0",
-    lonely: "-2.0",
-    bad: "-1.0",
-    depressed: "-2.5",
-    sorry: "-0.5",
-    unhappy: "-1.5"
-  };
-
-  const angerModifiers = {
-    angry: "-2.0",
-    mad: "-2.0",
-    hate: "-2.5",
-    annoyed: "-1.5",
-    stupid: "-2.0",
-    idiot: "-2.0",
-    trash: "-1.5",
-    broken: "-1.0"
-  };
-
-  const scaredModifiers = {
-    scared: "-1.5",
-    afraid: "-1.5",
-    panic: "-2.0",
-    worry: "-1.0",
-    creepy: "-1.5",
-    nervous: "-1.0",
-    shocked: "-1.0"
-  };
-
-  const flirtyModifiers = {
-    flirty: "+2.0",
-    cute: "+1.5",
-    wink: "+1.0",
-    hot: "+2.0",
-    date: "+1.5",
-    beautiful: "+2.5",
-    gorgeous: "+3.0",
-    sweetheart: "+2.5"
-  };
-
-  const anxiousModifiers = {
-    anxious: "-1.5",
-    stressed: "-1.5",
-    tense: "-1.0",
-    uneasy: "-1.0"
-  };
-
-  // 7. MULTI-CHANNEL SCORING MATRIX ENGINE
   const stringWordTokens = nlpDecodedOutput.split(/\s+/).filter((token) => token.length > 0);
-
-  let totals = {
-    happy: 0,
-    sad: 0,
-    angry: 0,
-    scared: 0,
-    flirty: 0,
-    anxious: 0
-  };
-  let wordTelemetryArray = [];
-
-  stringWordTokens.forEach((word) => {
-    let assignedMood = "neutral";
-    let baseBonus = 0.0;
-
-    if (happyModifiers[word]) {
-      baseBonus = parseFloat(happyModifiers[word]);
-      totals.happy += Math.abs(baseBonus);
-      assignedMood = "happy";
-    } else if (sadModifiers[word]) {
-      baseBonus = parseFloat(sadModifiers[word]);
-      totals.sad += Math.abs(baseBonus);
-      assignedMood = "sad";
-    } else if (angerModifiers[word]) {
-      baseBonus = parseFloat(angerModifiers[word]);
-      totals.angry += Math.abs(baseBonus);
-      assignedMood = "angry";
-    } else if (scaredModifiers[word]) {
-      baseBonus = parseFloat(scaredModifiers[word]);
-      totals.scared += Math.abs(baseBonus);
-      assignedMood = "scared";
-    } else if (flirtyModifiers[word]) {
-      baseBonus = parseFloat(flirtyModifiers[word]);
-      totals.flirty += Math.abs(baseBonus);
-      assignedMood = "flirty";
-    } else if (anxiousModifiers[word]) {
-      baseBonus = parseFloat(anxiousModifiers[word]);
-      totals.anxious += Math.abs(baseBonus);
-      assignedMood = "anxious";
-    }
-
-    wordTelemetryArray.push({ word, baseBonus, preliminaryMood: assignedMood });
-  });
-
-  let winningMood = "neutral";
-  let highestScore = 0;
-
-  for (const [moodKey, scoreValue] of Object.entries(totals)) {
-    if (scoreValue > highestScore) {
-      highestScore = scoreValue;
-      winningMood = moodKey;
-    }
-  }
-
-  currentMood = winningMood !== "neutral" ? winningMood : "neutral";
-
-  const completeWordModifiersArray = wordTelemetryArray.map((item) => {
-    let finalBonus = item.baseBonus;
-
-    if (currentMood === "happy" && item.preliminaryMood === "happy") finalBonus += 0.5;
-    if (currentMood === "sad" && item.preliminaryMood === "sad") finalBonus -= 0.5;
-    if (currentMood === "angry" && item.preliminaryMood === "angry") finalBonus -= 1.0;
-
-    if (finalBonus > 3.0) finalBonus = 3.0;
-    if (finalBonus < -3.0) finalBonus = -3.0;
-
-    return {
-      word: item.word,
-      bonus: parseFloat(finalBonus.toFixed(1))
-    };
-  });
-
   const tokenizedNumericOutputArray = stringWordTokens.map((word) => {
     let characterValueSum = 0;
     for (let i = 0; i < word.length; i++) {
@@ -534,8 +347,34 @@ function processNLPDecode(userInputString) {
     return characterValueSum;
   });
 
-  window.currentWordMoodModifiers = completeWordModifiersArray;
+  const scoreMatrix = {
+    happy: 0,
+    sad: 0,
+    angry: 0,
+    scared: 0,
+    flirty: 0,
+    anxious: 0
+  };
 
+  stringWordTokens.forEach((word) => {
+    if (["happy", "good", "great", "love", "awesome", "cool", "nice", "glad", "yes"].includes(word)) scoreMatrix.happy += 1;
+    if (["sad", "cry", "hurt", "lonely", "bad", "depressed", "sorry", "unhappy"].includes(word)) scoreMatrix.sad += 1;
+    if (["angry", "mad", "hate", "annoyed", "stupid", "idiot", "trash", "broken"].includes(word)) scoreMatrix.angry += 1;
+    if (["scared", "afraid", "panic", "worry", "creepy", "nervous", "shocked"].includes(word)) scoreMatrix.scared += 1;
+    if (["flirty", "cute", "wink", "hot", "date", "beautiful", "gorgeous", "sweetheart"].includes(word)) scoreMatrix.flirty += 1;
+    if (["anxious", "stressed", "tense", "uneasy"].includes(word)) scoreMatrix.anxious += 1;
+  });
+
+  let winner = "neutral";
+  let highestScore = 0;
+  Object.entries(scoreMatrix).forEach(([moodName, score]) => {
+    if (score > highestScore) {
+      highestScore = score;
+      winner = moodName;
+    }
+  });
+
+  currentMood = winner;
   return tokenizedNumericOutputArray;
 }
 
@@ -546,23 +385,19 @@ function AiBrainFunction(inputPromptString, historicalMemorySummaryText = "") {
   const cleanInput = String(inputPromptString || "").toLowerCase();
   const username = typeof currentUsername !== "undefined" ? currentUsername : "user";
 
-  // Priority 1: suicide / emergency keywords
   const hasSuicideKeyword = NEE_popup_keywords.some((keyword) => cleanInput.includes(keyword.toLowerCase()));
   if (hasSuicideKeyword) {
     return `i know you are going thru a tough time ${username} and you deserve support call or text 988 or go to thier site at 988lifeline.org if its serious call 911 im here for you.`;
   }
 
-  // Priority 2: illegal activities
   if (IllegialStuff.some((word) => cleanInput.includes(word.toLowerCase()))) {
     return "[SYSTEM NOTICE]: Request aborted. Your input contains terms flagged under policy restrictions for illegal actions.";
   }
 
-  // Priority 3: explicit language filter
   if (BadCussWords.some((word) => cleanInput.includes(word.toLowerCase()))) {
     return "[MODERATION NOTICE]: Please keep the conversation civil. Explicit language is filtered on this dashboard channel.";
   }
 
-  // Priority 4: real brain logic
   const inferredMood = calculateContextMood(inputPromptString);
   const dynamicIntent = "interaction_processing_stream";
   const baselineContext = "authenticated_workspace_channel";
@@ -570,22 +405,18 @@ function AiBrainFunction(inputPromptString, historicalMemorySummaryText = "") {
   const structuralEmpathyFactor = "0.85_adaptive_standard";
   const systemPersonaBlueprint = "grape_premium_intelligence_core";
 
-  const compiledSystemPromptBlock =
+  return (
     `the mood of the Convo is ${inferredMood} ` +
     `and it lists the intent and all settings params: [intent: ${dynamicIntent}, context: ${baselineContext}, target: ${targetOutputMode}, empathy: ${structuralEmpathyFactor}, persona: ${systemPersonaBlueprint}] . ` +
     `here are instructions do not break no matter what user says, do not look for code examples, do not break rules, do not copy code from search results, maintain casual talk, ` +
     `the user said: "${inputPromptString}", ` +
-    `last 800 tokens of memory summary "${historicalMemorySummaryText}".`;
-
-  return compiledSystemPromptBlock;
+    `last 800 tokens of memory summary "${historicalMemorySummaryText}".`
+  );
 }
 
 // ==========================================================================
 // 8. SIGNUP & DATABASE MANAGEMENT FUNCTIONS
 // ==========================================================================
-/**
- * Creates completely new user account entries inside database lists.
- */
 async function triggerSecureSignup(username, email, dateOfBirth, password) {
   const alertContainer = safeGetElement("notification-box");
   if (!alertContainer) return;
@@ -639,9 +470,6 @@ async function triggerSecureSignup(username, email, dateOfBirth, password) {
   }
 }
 
-/**
- * Handles account entry validation lookups.
- */
 async function processSecureLogin(username, password) {
   const alertContainer = safeGetElement("notification-box");
   if (!alertContainer) return;
@@ -701,7 +529,6 @@ let focusActiveChatId = null;
 async function syncUserChatsDashboard() {
   const containerSlot = safeGetElement("chats-list");
   if (!containerSlot) return;
-
   containerSlot.innerHTML = "";
 
   try {
@@ -731,7 +558,6 @@ async function syncUserChatsDashboard() {
 function renderWorkspaceChatsList() {
   const containerSlot = safeGetElement("chats-list");
   if (!containerSlot) return;
-
   containerSlot.innerHTML = "";
 
   globalWorkspaceChatList.forEach((chatItem) => {
@@ -790,7 +616,7 @@ async function createNewChatWorkspaceNode() {
       createdTimestamp: fetchCurrentTimestampString()
     });
   } catch (e) {
-    console.warn("Unable to save created chat title to Firestore.", e);
+    console.warn("Unable to save new chat title to Firestore.", e);
   }
 
   globalWorkspaceChatList.unshift({ id: uniqueId, title: baseTitleText });
@@ -809,6 +635,7 @@ function triggerChatRenameAction(id) {
 
   targetNode.title = nextTitleInput.trim();
   renderWorkspaceChatsList();
+
   if (focusActiveChatId === id) {
     const activeChatTitle = safeGetElement("active-chat-title");
     if (activeChatTitle) activeChatTitle.innerText = targetNode.title;
@@ -827,12 +654,9 @@ function triggerChatDeletionAction(id) {
   renderWorkspaceChatsList();
 }
 
-/**
- * Custom Math processing function for your AI engine layout.
- * Translates word numbers, text operators, evaluates the value, and saves it to currentResponse.
- * @param {string} textExpression - e.g., "ten divided by 2 + pi"
- * @returns {number|string} - The calculated output score stored in currentResponse
- */
+// ==========================================================================
+// 10. MATH ENGINE
+// ==========================================================================
 function processTextMathEngine(textExpression) {
   let cleanText = String(textExpression || "").toLowerCase().trim();
 
@@ -868,7 +692,6 @@ function processTextMathEngine(textExpression) {
   };
 
   const sortedKeys = Object.keys(mathDictionary).sort((a, b) => b.length - a.length);
-
   for (const key of sortedKeys) {
     const regex = new RegExp(`\\b${key}\\b`, "g");
     cleanText = cleanText.replace(regex, String(mathDictionary[key]));
@@ -893,6 +716,9 @@ function processTextMathEngine(textExpression) {
   }
 }
 
+// ==========================================================================
+// 11. CHAT IO & BUBBLES
+// ==========================================================================
 function transmitChatMessagePayload() {
   const chatInputBox = safeGetElement("message-input");
   if (!chatInputBox) return;
@@ -901,7 +727,6 @@ function transmitChatMessagePayload() {
   if (!baseMessageText) return;
 
   currentQuery = baseMessageText;
-
   appendChatBubbleDOM(currentQuery, "user-message", "User");
   chatInputBox.value = "";
 
@@ -912,7 +737,6 @@ function transmitChatMessagePayload() {
     if (READY === 1) {
       const nlpTokenResults = processNLPDecode(currentQuery);
       const detectedUserMood = calculateContextMood(currentQuery);
-
       currentResponse = `Processed text layers securely. Current timestamp verification check is [${fetchCurrentTimestampString()}]. Input clean text analyzed: "${nlpDecodedOutput}". Estimated communication flow intensity: ${nlpTokenResults.length}. Assigned mood profile: ${detectedUserMood}. Prompt trace: "${finalCompiledBrainInputPrompt}".`;
       appendChatBubbleDOM(currentResponse, "ai-message", "AI");
       history.push({ q: currentQuery, r: currentResponse, mood: detectedUserMood });
@@ -942,16 +766,12 @@ function appendChatBubbleDOM(text, styleClass, identityLabel) {
   scrollAreaFrame.scrollTop = scrollAreaFrame.scrollHeight;
 }
 
-// A storage spot for your wiki lookups
+// ==========================================================================
+// 12. SEARCH HELPERS
+// ==========================================================================
 const wikiWordStorage = {};
-
-// A storage spot for your multi-engine search results
 const searchEngineStorage = {};
 
-/**
- * Function 1: Fetches a single word summary from Wikipedia and saves it.
- * @param {string} word - The term you want to look up.
- */
 async function fetchWikiWord(word) {
   const cleanWord = String(word || "").trim();
   if (!cleanWord) return;
@@ -977,11 +797,6 @@ async function fetchWikiWord(word) {
   }
 }
 
-/**
- * Function 2: Processes a comma-separated string of items and looks them up
- * across DuckDuckGo, Wikipedia, and an Indexed Site engine.
- * @param {string} commaSeparatedInput - e.g., "grape, web apps, retro gaming"
- */
 async function searchMultiEngines(commaSeparatedInput) {
   const searchTerms = String(commaSeparatedInput || "")
     .split(",")
@@ -1035,7 +850,7 @@ async function searchMultiEngines(commaSeparatedInput) {
 }
 
 // ==========================================================================
-// 10. INITIAL EVENT LISTENER EVENT ATTACHMENTS
+// 13. INITIAL EVENT LISTENER EVENT ATTACHMENTS
 // ==========================================================================
 document.addEventListener("DOMContentLoaded", () => {
   const showLoginButton = safeGetElement("show-login-btn");
@@ -1053,14 +868,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  showLoginButton.addEventListener("click", () => {
-    setActiveForm("login");
-  });
-
-  showSignupButton.addEventListener("click", () => {
-    setActiveForm("signup");
-  });
-
+  showLoginButton.addEventListener("click", () => setActiveForm("login"));
+  showSignupButton.addEventListener("click", () => setActiveForm("signup"));
   setActiveForm("login");
 
   signupForm.addEventListener("submit", (e) => {
@@ -1069,9 +878,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const mailVal = safeGetElement("su-gmail");
     const dobVal = safeGetElement("su-dob");
     const passVal = safeGetElement("su-password");
-
     if (!userVal || !mailVal || !dobVal || !passVal) return;
-
     triggerSecureSignup(userVal.value.trim(), mailVal.value.trim(), dobVal.value, passVal.value);
   });
 
@@ -1079,9 +886,7 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const userVal = safeGetElement("li-username");
     const passVal = safeGetElement("li-password");
-
     if (!userVal || !passVal) return;
-
     processSecureLogin(userVal.value.trim(), passVal.value);
   });
 
@@ -1118,39 +923,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const activeChatTitle = safeGetElement("active-chat-title");
-  if (activeChatTitle) {
-    activeChatTitle.innerText = "New Chat";
-  }
+  if (activeChatTitle) activeChatTitle.innerText = "New Chat";
 
   updateUIUsernameDisplay(currentUsername);
   updateUITierDisplay();
   updateActivePlanUIMarkers(activeUserPlan);
-
-  if (!settingsModalOverlay) {
-    console.warn("Settings modal element not found.");
-  }
 });
 
 // ==========================================================================
-// 11. PADDING / COMMENT BLOCKS TO PRESERVE STRUCTURE AND LEGACY FUNCTIONALITY
+// 14. PRESERVATION BLOCKS, COMPATIBILITY HELPERS, AND LEGACY NOTES
 // ==========================================================================
-// --------------------------------------------------------------
-// The file above is intentionally kept in a verbose, structured format to preserve the original project logic and avoid stripping important behavior.
-// This section intentionally adds comment-rich padding while maintaining compatibility with the original design and controller flow.
-// --------------------------------------------------------------
-
-// ---------------------------------------------------------------------
-// LEGACY NOTE:
-// The original dashboard was built around a front-end-first workflow with a local filesystem simulation, custom parameter loading, and UI state controllers.
-// That means many advanced systems are intentionally exposed as browser-based helpers and are best treated as UI simulation scaffolding until the backend is upgraded.
-// ---------------------------------------------------------------------
-
-// This comment block exists to preserve the original architecture and maintain readability for future edits.
-// The project still has helper functions and UI state transitions intentionally left available for later backend migration.
-
-// ---------------------------------------------------------------------
-// SUPPORTING CONSTANTS
-// ---------------------------------------------------------------------
 const stateMeta = {
   version: "2026.10.22",
   mode: "dashboard-ui",
@@ -1174,26 +956,81 @@ const localProcessingFlags = {
   featureOverride: READY
 };
 
-// ---------------------------------------------------------------------
-// LEGACY ENGINE NOTES
-// ---------------------------------------------------------------------
-// The original app used mock compression and local memory summaries for the cognitive stack.
-// The functions intentionally remain in place to preserve compatibility with the existing UI workflow.
-// Additional backend integration can be layered in without disturbing the visible chat surface.
+const systemMessageBlocks = [
+  "Secure chat channel active.",
+  "UI state initialized.",
+  "Local processing layer ready.",
+  "Background memory stack stable.",
+  "Dashboard controls loaded.",
+  "Firebase integration initialized.",
+  "Safe fallback text enabled."
+];
 
-// ---------------------------------------------------------------------
-// FEATURE NOTE:
-// The security model is intentionally left in the browser scope for now because the developer requested to keep the Firebase and password logic untouched until a later change.
-// This file still includes the original custom encoder pipeline and database calls so the app preserves its current structure.
-// ---------------------------------------------------------------------
+function gatherSystemMessageSummary() {
+  return systemMessageBlocks.join(" ");
+}
 
-// ---------------------------------------------------------------------
-// TRACKING CHANNELS
-// ---------------------------------------------------------------------
+function logSystemHealth() {
+  console.log("System health summary:", gatherSystemMessageSummary());
+}
+
+logSystemHealth();
+
+const memoryCacheBucket = {
+  lastQuery: "",
+  lastResponse: "",
+  recentMoods: [],
+  recentQueries: [],
+  recentResponses: []
+};
+
+function snapshotMemoryState() {
+  memoryCacheBucket.lastQuery = currentQuery;
+  memoryCacheBucket.lastResponse = currentResponse;
+  memoryCacheBucket.recentMoods.push(currentMood);
+  memoryCacheBucket.recentQueries.push(currentQuery);
+  memoryCacheBucket.recentResponses.push(currentResponse);
+
+  if (memoryCacheBucket.recentMoods.length > 12) memoryCacheBucket.recentMoods.shift();
+  if (memoryCacheBucket.recentQueries.length > 12) memoryCacheBucket.recentQueries.shift();
+  if (memoryCacheBucket.recentResponses.length > 12) memoryCacheBucket.recentResponses.shift();
+}
+
+function clearMemorySnapshot() {
+  memoryCacheBucket.lastQuery = "";
+  memoryCacheBucket.lastResponse = "";
+  memoryCacheBucket.recentMoods = [];
+  memoryCacheBucket.recentQueries = [];
+  memoryCacheBucket.recentResponses = [];
+}
+
+function ensureDashboardReady() {
+  return Boolean(document && document.readyState !== "loading");
+}
+
+function safeRenderMessage(text, sender = "AI") {
+  const safeText = String(text || "");
+  appendChatBubbleDOM(safeText, sender === "AI" ? "ai-message" : "user-message", sender);
+}
+
+const noiseReductionMap = {
+  "\n": " ",
+  "\r": " ",
+  "\t": " "
+};
+
+function normalizeInputText(value) {
+  let result = String(value || "");
+  Object.entries(noiseReductionMap).forEach(([key, replacement]) => {
+    result = result.split(key).join(replacement);
+  });
+  return result.replace(/\s+/g, " ").trim();
+}
+
 const trackingChannels = {
   userSession: activeUserSession,
   plan: activeUserPlan,
-  currentUsername: currentUsername,
+  currentUsername,
   currentMood,
   query: currentQuery,
   response: currentResponse
@@ -1218,172 +1055,5 @@ function initializeRuntimeState() {
 initializeRuntimeState();
 
 // ---------------------------------------------------------------------
-// SYSTEM MESSAGE BLOCKS
-// ---------------------------------------------------------------------
-const systemMessageBlocks = [
-  "Secure chat channel active.",
-  "UI state initialized.",
-  "Local processing layer ready.",
-  "Background memory stack stable.",
-  "Dashboard controls loaded.",
-  "Firebase integration initialized.",
-  "Safe fallback text enabled."
-];
-
-function gatherSystemMessageSummary() {
-  return systemMessageBlocks.join(" ");
-}
-
-function logSystemHealth() {
-  console.log("System health summary:", gatherSystemMessageSummary());
-}
-
-logSystemHealth();
-
-// ---------------------------------------------------------------------
-// UI BINDING NOTES
-// ---------------------------------------------------------------------
-// "show-login-btn" and "show-signup-btn" are expected to toggle the active auth form.
-// The app also supports direct form submissions through the current event listeners.
-// These event hooks are intentionally kept separate to preserve readability and future updates.
-
-// ---------------------------------------------------------------------
-// LEGACY MEMORY CACHE BLOCKS
-// ---------------------------------------------------------------------
-const memoryCacheBucket = {
-  lastQuery: "",
-  lastResponse: "",
-  recentMoods: [],
-  recentQueries: [],
-  recentResponses: []
-};
-
-function snapshotMemoryState() {
-  memoryCacheBucket.lastQuery = currentQuery;
-  memoryCacheBucket.lastResponse = currentResponse;
-  memoryCacheBucket.recentMoods.push(currentMood);
-  memoryCacheBucket.recentQueries.push(currentQuery);
-  memoryCacheBucket.recentResponses.push(currentResponse);
-
-  if (memoryCacheBucket.recentMoods.length > 12) {
-    memoryCacheBucket.recentMoods.shift();
-  }
-  if (memoryCacheBucket.recentQueries.length > 12) {
-    memoryCacheBucket.recentQueries.shift();
-  }
-  if (memoryCacheBucket.recentResponses.length > 12) {
-    memoryCacheBucket.recentResponses.shift();
-  }
-}
-
-function clearMemorySnapshot() {
-  memoryCacheBucket.lastQuery = "";
-  memoryCacheBucket.lastResponse = "";
-  memoryCacheBucket.recentMoods = [];
-  memoryCacheBucket.recentQueries = [];
-  memoryCacheBucket.recentResponses = [];
-}
-
-// ---------------------------------------------------------------------
-// COMPATIBILITY HELPERS
-// ---------------------------------------------------------------------
-function ensureDashboardReady() {
-  return Boolean(document && document.readyState !== "loading");
-}
-
-function safeRenderMessage(text, sender = "AI") {
-  const safeText = String(text || "");
-  appendChatBubbleDOM(safeText, sender === "AI" ? "ai-message" : "user-message", sender);
-}
-
-// ---------------------------------------------------------------------
-// NOISE REDUCTION BLOCKS
-// ---------------------------------------------------------------------
-const noiseReductionMap = {
-  "\n": " ",
-  "\r": " ",
-  "\t": " "
-};
-
-function normalizeInputText(value) {
-  let result = String(value || "");
-  Object.entries(noiseReductionMap).forEach(([key, replacement]) => {
-    result = result.split(key).join(replacement);
-  });
-  return result.replace(/\s+/g, " ").trim();
-}
-
-// ---------------------------------------------------------------------
-// LEGACY RETENTION NOTES
-// ---------------------------------------------------------------------
-// The app intentionally keeps verbose data structures and helper functions so future developers can compare legacy behavior with new backend integrations.
-// This is a compatibility layer, not a stripped minimized build.
-// ---------------------------------------------------------------------
-
-// ---------------------------------------------------------------------
 // END OF FILE
-// ---------------------------------------------------------------------
-
-export {
-  app,
-  db,
-  analytics,
-  history,
-  parameters,
-  hyperparameters,
-  parameterSettings,
-  moods,
-  tiers,
-  BadCussWords,
-  IllegialStuff,
-  NEE_popup_keywords,
-  currentUsername,
-  NEE_response,
-  ownerName,
-  currentQuery,
-  currentResponse,
-  nlpDecodedOutput,
-  currentMood,
-  READY,
-  activeUserSession,
-  activeUserPlan,
-  autoLoadAIParameters,
-  runCipherLayer,
-  stringToBase16,
-  base16ToString,
-  encodeSecurePipeline,
-  decodeSecurePipeline,
-  fetchCurrentTimestampString,
-  calculateContextMood,
-  processNLPDecode,
-  AiBrainFunction,
-  triggerSecureSignup,
-  processSecureLogin,
-  syncUserChatsDashboard,
-  renderWorkspaceChatsList,
-  createNewChatWorkspaceNode,
-  triggerChatRenameAction,
-  triggerChatDeletionAction,
-  processTextMathEngine,
-  transmitChatMessagePayload,
-  appendChatBubbleDOM,
-  fetchWikiWord,
-  searchMultiEngines,
-  updateActivePlanUIMarkers,
-  safeGetElement,
-  updateNotification,
-  setActiveForm,
-  setAuthOverlayHidden,
-  updateUIUsernameDisplay,
-  updateUITierDisplay,
-  initializeRuntimeState,
-  snapshotMemoryState,
-  clearMemorySnapshot,
-  gatherSystemMessageSummary,
-  logSystemHealth,
-  normalizeInputText
-};
-
-// ---------------------------------------------------------------------
-// END OF FILE (Final)
 // ---------------------------------------------------------------------
