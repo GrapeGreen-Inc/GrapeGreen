@@ -32,7 +32,7 @@ const analytics = getAnalytics(app);
 // 2. CHAT PARAMETERS & STATE SYSTEM
 // ==========================================================================
 const history = [];
-const parameters = [""];
+const parameters = [""]; /* how params work in this feild you put 8bit int thingys like [-.00000000] or [+.00000000] and stuff idk.*/
 const hyperparameters = {
   "temperature": 0.7, 
   "topK": 40,
@@ -550,6 +550,107 @@ function appendChatBubbleDOM(text, styleClass, identityLabel) {
   messagesScrollFrame.appendChild(bubbleElement);
   const scrollAreaFrame = document.getElementById("messages-scroll-area");
   scrollAreaFrame.scrollTop = scrollAreaFrame.scrollHeight;
+}
+// A storage spot for your wiki lookups
+const wikiWordStorage = {};
+
+// A storage spot for your multi-engine search results
+const searchEngineStorage = {};
+
+/**
+ * Function 1: Fetches a single word summary from Wikipedia and saves it
+ * @param {string} word - The term you want to look up
+ */
+async function fetchWikiWord(word) {
+  const cleanWord = word.trim();
+  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanWord)}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Word not found or API error");
+    
+    const data = await response.json();
+    
+    // Puts it in the const object with its description and a link
+    wikiWordStorage[cleanWord] = {
+      title: data.title,
+      description: data.description || "No short description available",
+      snippet: data.extract || "No summary available",
+      url: data.content_urls?.desktop?.page || ""
+    };
+    
+    console.log(`Successfully fetched from Wiki: ${cleanWord}`);
+  } catch (error) {
+    console.error(`Failed to fetch wiki entry for "${cleanWord}":`, error);
+    wikiWordStorage[cleanWord] = { error: "Could not retrieve definition" };
+  }
+}
+
+/**
+ * Function 2: Processes a comma-separated string of items and looks them up
+ * across DuckDuckGo, Wikipedia, and an Indexed Site engine.
+ * @param {string} commaSeparatedInput - e.g., "grape, web apps, retro gaming"
+ */
+async function searchMultiEngines(commaSeparatedInput) {
+  // Splits the text by commas, cleans up extra spaces, and filters out empty items
+  const searchTerms = commaSeparatedInput
+    .split(",")
+    .map(term => term.trim())
+    .filter(term => term.length > 0);
+
+  for (const term of searchTerms) {
+    console.log(`Searching across engines for: "${term}"...`);
+    
+    // 1. DuckDuckGo Instant Answer API (Free & CORS friendly)
+    let ddgResult = "No direct answer found";
+    try {
+      const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(term)}&format=json&origin=*`;
+      const res = await fetch(ddgUrl);
+      const data = await res.json();
+      ddgResult = data.AbstractText || data.RelatedTopics?.[0]?.Text || "No abstract available";
+    } catch (e) {
+      ddgResult = "Error connecting to DuckDuckGo";
+    }
+
+    // 2. Wikipedia Search API (Finds matching articles)
+    let wikiResult = "No page found";
+    try {
+      const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&format=json&origin=*`;
+      const res = await fetch(wikiUrl);
+      const data = await res.json();
+      if (data.query?.search?.[0]) {
+        wikiResult = `${data.query.search[0].title}: ${data.query.search[0].snippet.replace(/<[^>]*>/g, '')}`;
+      }
+    } catch (e) {
+      wikiResult = "Error connecting to Wikipedia";
+    }
+
+    // 3. Indexed Site Engine (Your custom site list check)
+    // Matches against your local site dictionary/index
+    let indexedResult = "Not found in your indexed database";
+    try {
+      // Example index database representing your known site network
+      const siteIndex = {
+      };
+      
+      const lowerTerm = term.toLowerCase();
+      // Simple lookup match check
+      if (siteIndex[lowerTerm]) {
+        indexedResult = siteIndex[lowerTerm];
+      }
+    } catch (e) {
+      indexedResult = "Error searching local index";
+    }
+
+    // Stores everything perfectly under the format "word to search": "result"
+    searchEngineStorage[term] = {
+      duckduckgo: ddgResult,
+      wikipedia: wikiResult,
+      indexed_sites: indexedResult
+    };
+  }
+  
+  console.log("Multi-engine scan finished!", searchEngineStorage);
 }
 
 function updateActivePlanUIMarkers(tierName) {
