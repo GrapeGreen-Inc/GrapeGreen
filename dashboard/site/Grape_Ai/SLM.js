@@ -152,6 +152,61 @@ function updateActivePlanUIMarkers(tierName) {
   });
 }
 
+function isGuestSession(sessionValue) {
+  return !!sessionValue && String(sessionValue).startsWith("guest_");
+}
+
+function loadGuestChats() {
+  try {
+    const stored = JSON.parse(localStorage.getItem("grape_guest_chats") || "[]");
+    if (Array.isArray(stored) && stored.length > 0) {
+      return stored;
+    }
+  } catch (error) {
+    console.warn("Guest chat cache could not be loaded.", error);
+  }
+
+  return [{ id: "guest_chat_1", title: "Guest Chat" }];
+}
+
+function saveGuestChats() {
+  if (!isGuestSession(activeUserSession)) return;
+
+  try {
+    localStorage.setItem("grape_guest_chats", JSON.stringify(globalWorkspaceChatList));
+  } catch (error) {
+    console.warn("Guest chat cache could not be saved.", error);
+  }
+}
+
+function activateGuestMode() {
+  currentUsername = "Guest User";
+  activeUserSession = "guest_" + Date.now();
+  activeUserPlan = "free";
+
+  updateUIUsernameDisplay(currentUsername);
+  updateUITierDisplay();
+  updateActivePlanUIMarkers(activeUserPlan);
+
+  const authOverlay = safeGetElement("auth-overlay");
+  if (authOverlay) {
+    authOverlay.style.display = "none";
+  }
+
+  globalWorkspaceChatList = loadGuestChats();
+  if (!globalWorkspaceChatList.length) {
+    globalWorkspaceChatList = [{ id: "guest_chat_1", title: "Guest Chat" }];
+  }
+
+  focusActiveChatId = globalWorkspaceChatList[0].id;
+
+  const activeChatTitle = safeGetElement("active-chat-title");
+  if (activeChatTitle) activeChatTitle.innerText = globalWorkspaceChatList[0].title;
+
+  renderWorkspaceChatsList();
+  return activeUserSession;
+}
+
 // ==========================================================================
 // 4. AUTO PARAM LOADING
 // ==========================================================================
@@ -286,7 +341,6 @@ function processNLPDecode(userInputString) {
 
   let workingString = String(userInputString).trim();
 
-  // 1. Basic safe substitutions for UI input.
   workingString = workingString
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -294,7 +348,6 @@ function processNLPDecode(userInputString) {
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#039;");
 
-  // 2. Lightweight leetspeak decode pass.
   const leetDictionary = {
     4: "a",
     "@": "a",
@@ -328,7 +381,6 @@ function processNLPDecode(userInputString) {
 
   let sanitizedString = transformed.join(" ");
 
-  // 3. Emoji standardization.
   const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu;
   sanitizedString = sanitizedString.replace(emojiRegex, (matchingEmoji) => {
     const hexRepresentation = matchingEmoji.codePointAt(0).toString(16).toUpperCase();
@@ -527,6 +579,16 @@ let globalWorkspaceChatList = [];
 let focusActiveChatId = null;
 
 async function syncUserChatsDashboard() {
+  if (isGuestSession(activeUserSession)) {
+    globalWorkspaceChatList = loadGuestChats();
+    if (!globalWorkspaceChatList.length) {
+      globalWorkspaceChatList = [{ id: "guest_chat_1", title: "Guest Chat" }];
+    }
+    focusActiveChatId = globalWorkspaceChatList[0].id;
+    renderWorkspaceChatsList();
+    return;
+  }
+
   const containerSlot = safeGetElement("chats-list");
   if (!containerSlot) return;
   containerSlot.innerHTML = "";
@@ -603,6 +665,21 @@ function renderWorkspaceChatsList() {
 }
 
 async function createNewChatWorkspaceNode() {
+  if (isGuestSession(activeUserSession)) {
+    const uniqueId = "guest_chat_" + Date.now();
+    const baseTitleText = "Guest Chat " + (globalWorkspaceChatList.filter((item) => item.id.startsWith("guest_chat_")).length + 1);
+
+    globalWorkspaceChatList.unshift({ id: uniqueId, title: baseTitleText });
+    focusActiveChatId = uniqueId;
+    saveGuestChats();
+
+    const activeChatTitle = safeGetElement("active-chat-title");
+    if (activeChatTitle) activeChatTitle.innerText = baseTitleText;
+
+    renderWorkspaceChatsList();
+    return;
+  }
+
   if (!activeUserSession) return;
 
   const uniqueId = "chat_" + Date.now();
@@ -634,6 +711,11 @@ function triggerChatRenameAction(id) {
   if (!nextTitleInput || nextTitleInput.trim() === "") return;
 
   targetNode.title = nextTitleInput.trim();
+
+  if (isGuestSession(activeUserSession)) {
+    saveGuestChats();
+  }
+
   renderWorkspaceChatsList();
 
   if (focusActiveChatId === id) {
@@ -646,6 +728,11 @@ function triggerChatDeletionAction(id) {
   if (!confirm("Are you sure you want to permanently delete this chat history thread?")) return;
 
   globalWorkspaceChatList = globalWorkspaceChatList.filter((item) => item.id !== id);
+
+  if (isGuestSession(activeUserSession)) {
+    saveGuestChats();
+  }
+
   if (focusActiveChatId === id) {
     focusActiveChatId = null;
     const activeChatTitle = safeGetElement("active-chat-title");
@@ -796,33 +883,7 @@ async function fetchWikiWord(word) {
     wikiWordStorage[cleanWord] = { error: "Could not retrieve definition" };
   }
 }
-const guestModeButton = safeGetElement("guest-mode-btn");
-if (guestModeButton) {
-  guestModeButton.addEventListener("click", () => {
-    currentUsername = "Guest User";
-    activeUserSession = "guest_" + Date.now();
-    activeUserPlan = "free";
 
-    updateUIUsernameDisplay(currentUsername);
-    updateUITierDisplay();
-    updateActivePlanUIMarkers(activeUserPlan);
-
-    setAuthOverlayHidden(true);
-
-    let savedGuestChats = JSON.parse(localStorage.getItem("grape_guest_chats") || "[]");
-
-    if (!savedGuestChats.length) {
-      savedGuestChats = [{ id: "guest_chat_1", title: "Guest Chat" }];
-    }
-
-    globalWorkspaceChatList = savedGuestChats;
-    focusActiveChatId = savedGuestChats[0].id;
-
-    renderWorkspaceChatsList();
-    const activeChatTitle = safeGetElement("active-chat-title");
-    if (activeChatTitle) activeChatTitle.innerText = savedGuestChats[0].title;
-  });
-}
 async function searchMultiEngines(commaSeparatedInput) {
   const searchTerms = String(commaSeparatedInput || "")
     .split(",")
@@ -888,6 +949,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const userProfileTrigger = safeGetElement("user-profile-trigger");
   const closeModalButton = safeGetElement("close-modal-btn");
   const settingsModalOverlay = safeGetElement("settings-modal-overlay");
+  const guestModeButton = safeGetElement("guest-mode-btn");
 
   if (!showLoginButton || !showSignupButton || !loginForm || !signupForm) {
     console.warn("Auth form elements were not found. Skipping auth bindings.");
@@ -897,6 +959,12 @@ document.addEventListener("DOMContentLoaded", () => {
   showLoginButton.addEventListener("click", () => setActiveForm("login"));
   showSignupButton.addEventListener("click", () => setActiveForm("signup"));
   setActiveForm("login");
+
+  if (guestModeButton) {
+    guestModeButton.addEventListener("click", () => {
+      activateGuestMode();
+    });
+  }
 
   signupForm.addEventListener("submit", (e) => {
     e.preventDefault();
