@@ -796,7 +796,33 @@ async function fetchWikiWord(word) {
     wikiWordStorage[cleanWord] = { error: "Could not retrieve definition" };
   }
 }
+const guestModeButton = safeGetElement("guest-mode-btn");
+if (guestModeButton) {
+  guestModeButton.addEventListener("click", () => {
+    currentUsername = "Guest User";
+    activeUserSession = "guest_" + Date.now();
+    activeUserPlan = "free";
 
+    updateUIUsernameDisplay(currentUsername);
+    updateUITierDisplay();
+    updateActivePlanUIMarkers(activeUserPlan);
+
+    setAuthOverlayHidden(true);
+
+    let savedGuestChats = JSON.parse(localStorage.getItem("grape_guest_chats") || "[]");
+
+    if (!savedGuestChats.length) {
+      savedGuestChats = [{ id: "guest_chat_1", title: "Guest Chat" }];
+    }
+
+    globalWorkspaceChatList = savedGuestChats;
+    focusActiveChatId = savedGuestChats[0].id;
+
+    renderWorkspaceChatsList();
+    const activeChatTitle = safeGetElement("active-chat-title");
+    if (activeChatTitle) activeChatTitle.innerText = savedGuestChats[0].title;
+  });
+}
 async function searchMultiEngines(commaSeparatedInput) {
   const searchTerms = String(commaSeparatedInput || "")
     .split(",")
