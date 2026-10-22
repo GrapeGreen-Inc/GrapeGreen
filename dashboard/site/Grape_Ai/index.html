@@ -1,12 +1,236 @@
 <!DOCTYPE HTML>
-<html lang="em">
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grape AI</title>
+    <!-- Link to your separate style sheet -->
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <p>This Is A Test Of Beta</p>
-   <script type="module" src="SLM.js"></script>
+
+    <!-- SIGN IN AND SIGN UP SCREENS -->
+    <div id="auth-overlay">
+      <div id="auth-card">
+        
+        <div id="auth-header">
+          <span>🍇</span>
+          <h2>Grape AI</h2>
+          <p>Secure, Private AI Chat</p>
+
+        </div>
+
+        <!-- Buttons to switch between screens -->
+        <div id="auth-toggle-buttons">
+          <button type="button" id="show-login-btn">Sign In</button>
+          <button type="button" id="show-signup-btn">Create Account</button>
+        </div>
+
+        <!-- Alert messages show up here -->
+        <div id="notification-box"></div>
+
+        <div id="auth-forms-container">
+          
+          <!-- Sign In Form (Username + Password) -->
+          <form id="login-form" autocomplete="off">
+            <div class="input-wrapper">
+              <label for="li-username">Username</label>
+              <input type="text" id="li-username" required placeholder="Your username">
+            </div>
+
+            <div class="input-wrapper">
+              <label for="li-password">Password</label>
+              <input type="password" id="li-password" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="auth-submit-btn">Sign In</button>
+          </form>
+
+          <!-- Sign Up Form (Username + Gmail + DOB + Password) -->
+          <form id="signup-form" autocomplete="off">
+            <div class="input-wrapper">
+              <label for="su-username">Username</label>
+              <input type="text" id="su-username" placeholder="Pick a username">
+            </div>
+            <div class="input-wrapper">
+              <label for="su-gmail">Gmail Address</label>
+              <input type="email" id="su-gmail" placeholder="yourname@gmail.com">
+            </div>
+            <div class="input-wrapper">
+              <label for="su-dob">Date of Birth</label>
+
+              <input type="date" id="su-dob">
+            </div>
+            <div class="input-wrapper">
+              <label for="su-password">Password</label>
+              <input type="password" id="su-password" placeholder="••••••••">
+            </div>
+            <button type="submit" class="auth-submit-btn">Create Account</button>
+          </form>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MAIN AI CHAT WORKSPACE -->
+    <div id="main-layout">
+      
+      <!-- SIDEBAR -->
+      <aside id="sidebar">
+
+        
+        <!-- User Profile (Clicking this opens the tier settings) -->
+        <div id="user-profile-trigger">
+          <div class="profile-icon">🍇</div>
+          <div class="user-info text-left">
+            <span id="username-display">Guest User</span>
+            <span id="tier-badge">Free Plan</span>
+          </div>
+        </div>
+
+        <!-- New Chat Button -->
+        <div id="sidebar-actions">
+          <button type="button" id="new-chat-btn">
+            <span>+ New Chat</span>
+          </button>
+        </div>
+
+        <!-- Sidebar Lists: Folders and Chats -->
+        <nav id="sidebar-lists">
+
+          
+          <!-- Projects and Folders -->
+          <div class="sidebar-section">
+            <div class="section-header">
+              <h3>Folders</h3>
+              <!-- Plus button for creation -->
+              <button type="button" id="new-folder-btn" title="Create New Folder (Plus Feature)">+</button>
+            </div>
+            <!-- Dynamic folders list loads here -->
+            <div id="folders-list"></div>
+          </div>
+
+          <!-- Active Conversations -->
+          <div class="sidebar-section">
+            <div class="section-header">
+              <h3>Recent Chats</h3>
+            </div>
+            <!-- Dynamic chat list loads here -->
+            <div id="chats-list">
+
+              <!-- Example of a chat item layout -->
+              <div class="chat-list-item active">
+                <span class="chat-icon">💬</span>
+                <span class="chat-item-title">My First Chat</span>
+                <div class="chat-item-actions">
+                  <button type="button" class="rename-btn" title="Rename Chat">✏️</button>
+                  <button type="button" class="delete-btn" title="Delete Chat">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </nav>
+
+      </aside>
+
+      <!-- CHAT VIEWPORT -->
+      <main id="chat-viewport">
+        
+
+        <!-- Chat Header -->
+        <header id="chat-header">
+          <div class="chat-header-left">
+            <h1 id="active-chat-title">New Chat</h1>
+          </div>
+          <div class="chat-header-right">
+            <span id="security-status">Encrypted Connection</span>
+          </div>
+        </header>
+
+        <!-- Message History -->
+        <div id="messages-scroll-area">
+          <div id="messages-container">
+            <!-- Messages show up here -->
+            <div class="message ai-message">
+              <div class="message-avatar">AI</div>
+              <div class="message-text">
+                <p>Hello! Welcome to Grape AI. Your information is securely encoded and saved in your Firestore database.</p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Box Area -->
+        <footer id="chat-input-area">
+          <form id="message-form">
+            <input type="text" id="message-input" placeholder="Type a message to Grape AI...">
+            <button type="submit" id="send-btn">
+              <span>Send</span>
+            </button>
+          </form>
+          <div id="crypto-footer-note">
+            Your data is automatically encrypted from plaintext to Base64, then run through multiple secure password keys down to safe base16 code before saving.
+          </div>
+        </footer>
+
+      </main>
+
+
+    </div>
+
+    <!-- PROFILE SETTINGS: TIERS MODAL POPUP -->
+    <div id="settings-modal-overlay">
+      <div id="settings-modal-card">
+        
+        <div id="settings-modal-header">
+          <h3>Grape AI Account Plans</h3>
+          <button type="button" id="close-modal-btn">&times;</button>
+        </div>
+
+        <div id="settings-modal-body">
+          <p class="modal-intro">Click your profile avatar to view or change your current plan tier.</p>
+          
+          <div id="tiers-grid">
+            
+            <!-- Plan Option: Free -->
+            <div class="tier-card active" id="plan-free">
+              <div class="tier-title">FREE</div>
+
+              <div class="tier-price">\$0</div>
+              <p class="tier-description">Standard chat access with basic daily message limits for everyone.</p>
+            </div>
+
+            <!-- Plan Option: Plus -->
+            <div class="tier-card" id="plan-plus">
+              <div class="tier-title">PLUS</div>
+              <div class="tier-price">\$5 / mo</div>
+              <p class="tier-description">Unlock custom folders to organize your chat threads into projects.</p>
+            </div>
+
+            <!-- Plan Option: Pro -->
+            <div class="tier-card" id="plan-pro">
+              <div class="tier-title">PRO</div>
+              <div class="tier-price">\$20 / mo</div>
+              <p class="tier-description">Higher messaging limits and faster AI answers for power users.</p>
+            </div>
+
+            <!-- Plan Option: Max -->
+
+            <div class="tier-card" id="plan-max">
+              <div class="tier-title">MAX</div>
+              <div class="tier-price">\$50 / mo</div>
+              <p class="tier-description">Ultimate performance and full system features. (Site owners get this plan automatically).</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- External script handling all background actions and encryption rules -->
+    <script type="module" src="SLM.js"></script>
   </body>
 </html>
