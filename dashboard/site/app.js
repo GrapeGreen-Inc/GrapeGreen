@@ -35,8 +35,8 @@ async function sendWelcomeEmail(username, recipientEmail) {
   const mailCollectionUrl = `https://googleapis.com{CFG.projectId}/databases/(default)/documents/mail${KEY}`;
   
   // 🍇 Updated to route exactly to your custom GitHub Pages path directories
-  const likeUrl = "https://github.io";
-  const dislikeUrl = "https://github.io";
+  const likeUrl = "https://grapegreen-inc.github.io/GrapeGreen/EmailOptions/like.html";
+  const dislikeUrl = "https://grapegreen-inc.github.io/GrapeGreen/EmailOptions/dislike.html";
 
   const htmlTemplate = `
     <div style="background-color: #120024; color: white; padding: 30px; font-family: sans-serif; border-radius: 12px; max-width: 500px; margin: auto; border: 2px solid #4b0082; text-align: center;">
