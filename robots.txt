@@ -3,6 +3,8 @@
 # --------------------------------------------------
 User-agent: *
 Disallow: /x.png
-Disallow: /assets/
+Disallow: dashboard/site/assets/
 Allow: /index.html
 Allow: /README.md
+Allow: dashboard/site/index.html
+Allow: dashboard/index.html
