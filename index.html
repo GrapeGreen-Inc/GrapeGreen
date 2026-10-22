@@ -5,65 +5,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GrapeGreen Security Verification</title>
     <meta name="google-site-verification" content="fmyON1NT93BBauxVZgKp1pQLbNJT9lwLviVvZmDlKDc" />
-    <!-- Google reCAPTCHA API Script -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
+        :root {
+            --bg-color: #2c1a4d;
+            --panel-bg: #3d256c;
+            --text-main: #ffffff;
+            --text-sub: #cbc3e3;
+            --accent: #a3e635;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+        .light-variant {
+            --bg-color: #f4f0fa;
+            --panel-bg: #ffffff;
+            --text-main: #1a0d33;
+            --text-sub: #5c4d75;
+            --accent: #65a30d;
+            --shadow: rgba(44, 26, 77, 0.15);
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #2c1a4d; /* GrapeGreen signature dark purple background */
+            background-color: var(--bg-color);
             margin: 0;
+            transition: background-color 0.3s ease;
         }
         .container {
             text-align: center;
             padding: 35px;
-            background: #3d256c; /* GrapeGreen inner panel container background */
+            background: var(--panel-bg);
             border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 24px var(--shadow);
             max-width: 420px;
             width: 100%;
             box-sizing: border-box;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
-        h2 {
-            color: #a3e635; /* GrapeGreen signature lime green accent headers */
-            font-size: 26px;
-            margin-top: 0;
-            margin-bottom: 12px;
+        h1 {
+            font-size: 42px;
+            font-weight: bold;
+            color: var(--text-main);
+            margin: 0 0 20px 0;
+            letter-spacing: -1px;
         }
         p {
-            color: #cbc3e3; /* GrapeGreen soft lavender paragraph description text */
+            color: var(--text-sub);
             font-size: 15px;
             margin-bottom: 25px;
             line-height: 1.4;
         }
+        .feedback-widget {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+            background: var(--panel-bg);
+            border: 1px solid rgba(163, 230, 53, 0.2);
+            border-radius: 4px;
+            padding: 8px 12px;
+            box-shadow: 0 2px 10px var(--shadow);
+            font-size: 13px;
+            z-index: 9999;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .feedback-text {
+            color: var(--text-sub);
+            margin-right: 12px;
+            font-weight: 500;
+        }
+        .feedback-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            margin: 0 2px;
+            border-radius: 4px;
+            transition: transform 0.1s ease, background-color 0.2s ease;
+        }
+        .feedback-btn:hover {
+            background-color: rgba(163, 230, 53, 0.15);
+            transform: scale(1.15);
+        }
+        .feedback-btn:disabled {
+            opacity: 0.4;
+            cursor: default;
+            background: none;
+        }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <h1 style="font-size: 42px; font-weight: bold; color: #ffffff; margin: 0 0 20px 0; letter-spacing: -1px;">Grape<span style="color: #a3e635;">Green</span></h1>
+        <h1>Grape<span style="color: var(--accent);">Green</span></h1>
         <p>Please complete the verification challenge below to continue.</p>
-        
-        <!-- reCAPTCHA Container Node -->
         <div id="recaptcha-widget"></div>
     </div>
-
+    <div class="feedback-widget" id="feedback-badge">
+        <span class="feedback-text" id="feedback-msg">Rate this theme?</span>
+        <button class="feedback-btn" id="vote-up-btn" title="Thumbs Up">👍</button>
+        <button class="feedback-btn" id="vote-down-btn" title="Thumbs Down">👎</button>
+    </div>
     <script type="module">
-        // Import Firebase modules using fully qualified, exact paths
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-analytics.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
-
-        // 1. The PUBLIC Site Key remains safely hardcoded for widget rendering
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
+        import { getFirestore, doc, getDoc, updateDoc, increment } from "https://gstatic.com/firebasejs/13.1.0/firebase-firestore.js;";
+        import { getRemoteConfig, fetchAndActivate, getString } from "https://gstatic.com/firebasejs/13.1.0/firebase-remote-config.js";
         const RECAPTCHA_PUBLIC_KEY = "6LcdDPktAAAAAHHNyGbwuZKF-63BNr-_35b6Rxh5";
-        
-        // This variable will hold your fetched secret key from Firestore
         let recaptchaSecretKey = null;
-
-        // Web app's Firebase configuration
+        let activeVariant = "dark";
         const firebaseConfig = {
             apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es",
             authDomain: "app-iguess-39f2f.firebaseapp.com",
@@ -74,60 +127,67 @@
             appId: "1:1056619953768:web:6ac154660c07c48a5005dd",
             measurementId: "G-J4736J0D8J"
         };
-
-        // Initialize Firebase instances
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getFirestore(app);
-
-        // Fetch the Secret Key from Firestore asynchronously
+        const remoteConfig = getRemoteConfig(app);
+        remoteConfig.settings.minimumFetchIntervalMillis = 0;
+        remoteConfig.defaultConfig = { "dashboard_theme_variant": "dark" };
+        function evaluateThemeVariant() {
+            fetchAndActivate(remoteConfig).then(() => {
+                const variant = getString(remoteConfig, "dashboard_theme_variant");
+                activeVariant = variant;
+                if (variant === "light") {
+                    document.body.classList.add("light-variant");
+                } else {
+                    document.body.classList.remove("light-variant");
+                }
+            }).catch((err) => console.error(err));
+        }
+        async function submitVote(isPositive) {
+            const upBtn = document.getElementById("vote-up-btn");
+            const downBtn = document.getElementById("vote-down-btn");
+            const msgText = document.getElementById("feedback-msg");
+            upBtn.disabled = true;
+            downBtn.disabled = true;
+            try {
+                const docRef = doc(db, "meta", "A&B-votes");
+                const fieldPath = isPositive ? `${activeVariant}_upvotes` : `${activeVariant}_downvotes`;
+                await updateDoc(docRef, { [fieldPath]: increment(1) });
+                msgText.innerText = "Thanks for feedback!";
+            } catch (error) {
+                console.error(error);
+                upBtn.disabled = false;
+                downBtn.disabled = false;
+            }
+        }
         async function fetchSecretKey() {
             try {
                 const docRef = doc(db, "meta", "RECAP_KEY");
                 const docSnap = await getDoc(docRef);
-
                 if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    recaptchaSecretKey = data.key; 
-                    console.log("Firestore configuration synchronized successfully.");
-                } else {
-                    console.warn("⚠️ Configuration missing from Firestore document path.");
+                    recaptchaSecretKey = docSnap.data().key;
                 }
             } catch (error) {
-                console.error("❌ Firestore read error occurred (Check your Firestore Security Rules):", error);
+                console.error(error);
             }
         }
-
-        // Verification Success Handler
         window.onVerificationSuccess = function(token) {
-            console.log("reCAPTCHA user validation completed successfully!");
-            if (recaptchaSecretKey) {
-                console.log("Secret key active for verification pipeline processing.");
-            }
             window.location.href = "redirect.html";
         };
-
-        // Fallback error handler 
         function onCaptchaError() {
-            console.warn("⚠️ GrapeGreen Alert: reCAPTCHA monthly threshold reached or network dropped. Activating system fallback...");
-            
             const statusText = document.querySelector('.container p');
             if (statusText) {
-                statusText.style.color = "#a3e635"; 
+                statusText.style.color = "var(--accent)";
                 statusText.innerText = "System validation bypass initialized. Loading verification gateway...";
             }
-            
-            setTimeout(function() {
-                window.location.href = "redirect.html"; 
-            }, 1200);
+            setTimeout(function() { window.location.href = "redirect.html"; }, 1200);
         }
-
-        // Mount the reCAPTCHA widget node safely on layout load
         function mountRecaptchaWidget() {
             if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.render === 'function') {
                 grecaptcha.render("recaptcha-widget", {
-                    "sitekey": RECAPTCHA_PUBLIC_KEY, 
-                    "theme": "dark",
+                    "sitekey": RECAPTCHA_PUBLIC_KEY,
+                    "theme": activeVariant === "light" ? "light" : "dark",
                     "error-callback": onCaptchaError,
                     "callback": window.onVerificationSuccess
                 });
@@ -135,13 +195,13 @@
                 setTimeout(mountRecaptchaWidget, 200);
             }
         }
-
-        // Start initialization runtime tasks
+        document.getElementById("vote-up-btn").addEventListener("click", () => submitVote(true));
+        document.getElementById("vote-down-btn").addEventListener("click", () => submitVote(false));
         function startGateway() {
-            fetchSecretKey(); // FIX: Removed 'await' so it runs seamlessly in the background
-            mountRecaptchaWidget(); // This will now trigger immediately
+            evaluateThemeVariant();
+            fetchSecretKey();
+            mountRecaptchaWidget();
         }
-
         startGateway();
     </script>
 </body>
