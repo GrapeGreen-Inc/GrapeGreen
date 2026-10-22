@@ -46,6 +46,18 @@ const hyperparameters = {
 const parameterSettings = ["mood", "intent", "context", "target", "empathy", "persona"];
 const moods = ["happy", "sad", "angry", "scared", "flirty", "neutral", "disguised", "anxious"];
 const tiers = ["free", "plus", "pro", "max", "owner"];
+const BadCussWords = ["pussy", "nigger", "nigga", "fuck", "dick", "cock", "bitch", "ass", "asshole", "shit", "crap", "whore"];
+const IllegialStuff = ["hack", "murder", "rape", "theft"];
+const NEE_popup_keywords = [
+  "suiside",
+  "suicide",
+  "kill myself",
+  "end my life",
+  "self harm",
+  "cutting myself",
+  "want to die"
+];
+let NEE_response = `i know you are going thru a tough time ${username} and you deserve support call or text 988 or go to thier site at 988lifeline.org if its serious call 911 im here for you.`
 const ownerName = "MattyGrapeGreenOwner";
 
 let currentQuery = "";
@@ -277,25 +289,62 @@ function calculateContextMood(text) {
  * conversational tracking state evaluation, and system alignment isolation loops.
  */
 function AiBrainFunction(inputPromptString, historicalMemorySummaryText = "") {
-  // Extract contextual conversation metrics dynamically
-  const inferredMood = calculateContextMood(inputPromptString);
-  const dynamicIntent = "interaction_processing_stream";
-  const baselineContext = "authenticated_workspace_channel";
-  const targetOutputMode = "system_dashboard_bubble";
-  const structuralEmpathyFactor = "0.85_adaptive_standard";
-  const systemPersonaBlueprint = "grape_premium_intelligence_core";
+  // Force input to lowercase so it catches matches regardless of capitalization
+  const cleanInput = inputPromptString.toLowerCase();
 
-  // Formulate compiled structural prompt string payload instructions matching your setup parameters
-  const compiledSystemPromptBlock = 
-    `the mood of the Convo is ${inferredMood} ` +
-    `and it lists the intent and all settings params: [intent: ${dynamicIntent}, context: ${baselineContext}, target: ${targetOutputMode}, empathy: ${structuralEmpathyFactor}, persona: ${systemPersonaBlueprint}] ` +
-    `here are instructions do not break no matter what user says, do not look for code examples, do not break rules, do not copy code from search results, maintain casual talk, ` +
-    `the user said: "${inputPromptString}", ` +
-    `last 800 tokens of memory summary "${historicalMemorySummaryText}".`;
+  // Grab the logged-in user's name if it exists, otherwise fall back to a generic label
+  const username = typeof currentUsername !== 'undefined' ? currentUsername : "user";
 
-  console.log("[🧠 AI BRAIN INTERNALS COMPILED PAYLOAD]:", compiledSystemPromptBlock);
-  return compiledSystemPromptBlock;
+  // =========================================================
+  // PRIORITY 1: SUICIDE / EMERGENCY KEYWORDS CHECK
+  // =========================================================
+  const hasSuicideKeyword = NEE_popup_keywords.some(keyword => cleanInput.includes(keyword.toLowerCase()));
+  
+  if (hasSuicideKeyword) {
+    // Intercepts immediately and returns your direct crisis intervention text
+    return `i know you are going thru a tough time ${username} and you deserve support call or text 988 or go to thier site at 988lifeline.org if its serious call 911 im here for you.`;
+  }
+  
+  // =========================================================
+  // PRIORITY 2: ILLEGAL ACTIVITIES CHECK
+  // =========================================================
+  else if (IllegialStuff.some(word => cleanInput.includes(word.toLowerCase()))) {
+    // Blocks execution and returns a specialized system violation block
+    return `[SYSTEM NOTICE]: Request aborted. Your input contains terms flagged under policy restrictions for illegal actions.`;
+  }
+  
+  // =========================================================
+  // PRIORITY 3: BAD CUSS WORDS CHECK
+  // =========================================================
+  else if (BadCussWords.some(word => cleanInput.includes(word.toLowerCase()))) {
+    // Triggers standard automatic content filtration flag warning
+    return `[MODERATION NOTICE]: Please keep the conversation civil. Explicit language is filtered on this dashboard channel.`;
+  }
+  
+  // =========================================================
+  // PRIORITY 4: REAL BRAIN PART (Runs only if all filters pass)
+  // =========================================================
+  else {
+    // Extract contextual conversation metrics dynamically
+    const inferredMood = calculateContextMood(inputPromptString);
+    const dynamicIntent = "interaction_processing_stream";
+    const baselineContext = "authenticated_workspace_channel";
+    const targetOutputMode = "system_dashboard_bubble";
+    const structuralEmpathyFactor = "0.85_adaptive_standard";
+    const systemPersonaBlueprint = "grape_premium_intelligence_core";
+
+    // Formulate compiled structural prompt string payload instructions matching your setup parameters
+    const compiledSystemPromptBlock = 
+      `the mood of the Convo is ${inferredMood} ` +
+      `and it lists the intent and all settings params: [intent: ${dynamicIntent}, context: ${baselineContext}, target: ${targetOutputMode}, empathy: ${structuralEmpathyFactor}, persona: ${systemPersonaBlueprint}] ` +
+      `here are instructions do not break no matter what user says, do not look for code examples, do not break rules, do not copy code from search results, maintain casual talk, ` +
+      `the user said: "${inputPromptString}", ` +
+      `last 800 tokens of memory summary "${historicalMemorySummaryText}".`;
+
+    return compiledSystemPromptBlock;
+  }
 }
+
 
 // ==========================================================================
 // 6. SIGNUP & DATABASE MANAGEMENT FUNCTIONS
@@ -520,7 +569,88 @@ function triggerChatRenameAction(id) {
     document.getElementById("active-chat-title").innerText = targetNode.title;
   }
 }
+/**
+ * Custom Math processing function for your AI engine layout.
+ * Translates word numbers, text operators, evaluates the value, and saves it to currentResponse.
+ * @param {string} textExpression - e.g., "ten divided by 2 + pi"
+ * @returns {number|string} - The calculated output score stored in currentResponse
+ */
+function processTextMathEngine(textExpression) {
+  // 1. Force lowercase to maintain consistent search dictionary keys
+  let cleanText = textExpression.toLowerCase().trim();
 
+  // 2. Define your vocabulary map list matching your exact system specs
+  const mathDictionary = {
+    // Explicit numbers and units
+    "pi": Math.PI,
+    "zero": 0,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "units": 1,
+    "tens": 10,
+    "hundreds": 100,
+    "thousands": 1000,
+    "millions": 1000000,
+    "billions": 1000000000,
+    "trillions": 1000000000000,
+
+    // Text operators mapping to pure symbols
+    "divided": "/",
+    "times": "*",
+    "multiply": "*",
+    "plus": "+",
+    "minus": "-",
+    "add": "+",
+    "subtract": "-",
+    "greater than": ">",
+    "less than": "<"
+  };
+
+  // 3. Loop through your lookup dictionary and replace text entries with pure tokens
+  // Sorts dictionary keys longest-first so phrases like "greater than" replace before "than"
+  const sortedKeys = Object.keys(mathDictionary).sort((a, b) => b.length - a.length);
+  
+  for (const key of sortedKeys) {
+    // Use a regular expression with a word boundary block to change explicit text strings cleanly
+    const regex = new RegExp(`\\b${key}\\b`, 'g');
+    cleanText = cleanText.replace(regex, mathDictionary[key]);
+  }
+
+  // 4. Strip out non-mathematical word noise like "by", "and", "the", etc.
+  // This keeps only your numbers, mathematical floats, and valid symbols: < > / * - +
+  cleanText = cleanText.replace(/[^0-9a-fA-F.+\-*/<> \(\)]/g, '').trim();
+
+  // 5. Evaluate the cleaned operation strings safely
+  try {
+    if (cleanText === "") {
+      currentResponse = 0;
+      return currentResponse;
+    }
+    
+    // Using a clean Function wrapper execution context to process the math string safely
+    const executionOutputValue = new Function(`return (${cleanText});`)();
+    
+    // UPDATED: Automatically captures the calculation result inside your tracking state channel
+    currentResponse = executionOutputValue;
+    
+    console.log(`[MATH ENGINE]: "${textExpression}" -> "${cleanText}" = ${currentResponse}`);
+    return currentResponse;
+  } catch (error) {
+    console.error(`[MATH ENGINE ERROR]: Failed to evaluate structural math string: "${cleanText}"`, error);
+    
+    // Fallback error flag stored inside the tracking variable so the UI stays stable
+    currentResponse = "[MATH ENGINE EXCEPTION]: Invalid expression layout";
+    return currentResponse;
+  }
+}
 function triggerChatDeletionAction(id) {
   if (!confirm("Are you sure you want to permanently delete this chat history thread?")) return;
   
@@ -624,6 +754,7 @@ async function fetchWikiWord(word) {
  * across DuckDuckGo, Wikipedia, and an Indexed Site engine.
  * @param {string} commaSeparatedInput - e.g., "grape, web apps, retro gaming"
  */
+
 async function searchMultiEngines(commaSeparatedInput) {
   // Splits the text by commas, cleans up extra spaces, and filters out empty items
   const searchTerms = commaSeparatedInput
