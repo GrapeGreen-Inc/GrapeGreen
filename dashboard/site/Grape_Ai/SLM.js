@@ -228,24 +228,235 @@ function processNLPDecode(userInputString) {
     return [];
   }
 
-  // 1. Lowercase character standardization pass
-  let sanitizedString = userInputString.toLowerCase();
+  let workingString = userInputString.trim();
 
-  // 2. Match and replace standard emojis into unicode hexadecimal strings safely
-  const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu;
-  sanitizedString = sanitizedString.replace(emojiRegex, (matchingEmoji) => {
-    const hexRepresentation = matchingEmoji.codePointAt(0).toString(16).toUpperCase();
-    return ` UHEX${hexRepresentation} `;
+  // =========================================================
+  // 1. HTML SAFE ENCODING PASS
+  // =========================================================
+  workingString = workingString
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+  // =========================================================
+  // 2. BASE-64 DECODING ENGINE CHECK
+  // =========================================================
+  const base64Regex = /^[A-Za-z0-9+/=]+\$/;
+  if (workingString.length % 4 === 0 && base64Regex.test(workingString)) {
+    try {
+      const decodedText = atob(workingString);
+      if (decodedText && decodedText.trim().length > 0) {
+        workingString = decodedText;
+      }
+    } catch (e) {
+      // Not a valid base64 payload, continue processing
+    }
+  }
+
+  let lowerInput = workingString.toLowerCase();
+
+  // =========================================================
+  // 3. INTELLIGENT PATTERN LEETSPEAK DECODER (No eval)
+  // =========================================================
+  const leetDictionary = {
+    '4': 'a', '@': 'a',
+    '8': 'b',
+    '3': 'e',
+    '9': 'g',
+    '1': 'l', '!': 'l',
+    '0': 'o',
+    '5': 's', '\$': 's',
+    '7': 't', '+': 't',
+    '2': 'z'
+  };
+
+  const rawWords = lowerInput.split(/\s+/);
+  const processedWords = rawWords.map(word => {
+    if (word.length === 0) return word;
+
+    let leetCharCount = 0;
+    for (let char of word) {
+      if (leetDictionary[char]) {
+        leetCharCount++;
+      }
+    }
+
+    const leetDensity = leetCharCount / word.length;
+    if (leetDensity >= 0.40) {
+      return word.split('').map(char => leetDictionary[char] || char).join('');
+    }
+
+    return word;
   });
 
-  // 3. Remove punctuation characters, retaining alphanumeric fields only
-  sanitizedString = sanitizedString.replace(/[^a-z0-9\sUHEX]/g, "");
+  let sanitizedString = processedWords.join(' ');
 
-  // Save parsed result into output reference storage
-  nlpDecodedOutput = sanitizedString.trim();
+  // =========================================================
+  // 4. EMOJI HEXADECIMAL CODES STANDARDIZATION
+  // =========================================================
+  const emojiRegex \(= /[\u{1F300}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/\)gu;
+  sanitizedString = sanitizedString.replace(emojiRegex, (matchingEmoji) => {
+    const hexRepresentation = matchingEmoji.codePointAt(0).toString(16).toUpperCase();
+    return ` uhex${hexRepresentation} `;
+  });
 
-  // 4. Simple Tokenization conversion map step down into numeric tracking hashes
+  // =========================================================
+  // 5. PUNCTUATION STRIPPER
+  // =========================================================
+  sanitizedString = sanitizedString.replace(/[^a-z0-9\s]/g, "");
+  nlpDecodedOutput = sanitizedString.replace(/\s+/g, ' ').trim();
+
+  // =========================================================
+  // 6. SEPARATED MOOD DICTIONARIES SPECIFICATION
+  // =========================================================
+  const happyModifiers = {
+    "great": "+2.0",
+    "awesome": "+2.5",
+    "love": "+3.0",
+    "cool": "+1.5",
+    "nice": "+1.5",
+    "happy": "+2.0",
+    "good": "+1.0",
+    "glad": "+1.5",
+    "yes": "+0.5"
+  };
+
+  const sadModifiers = {
+    "sad": "-1.5",
+    "cry": "-1.5",
+    "hurt": "-2.0",
+    "lonely": "-2.0",
+    "bad": "-1.0",
+    "depressed": "-2.5",
+    "sorry": "-0.5",
+    "unhappy": "-1.5"
+  };
+
+  const angerModifiers = {
+    "angry": "-2.0",
+    "mad": "-2.0",
+    "hate": "-2.5",
+    "annoyed": "-1.5",
+    "stupid": "-2.0",
+    "idiot": "-2.0",
+    "trash": "-1.5",
+    "broken": "-1.0"
+  };
+
+  const scaredModifiers = {
+    "scared": "-1.5",
+    "afraid": "-1.5",
+    "panic": "-2.0",
+    "worry": "-1.0",
+    "creepy": "-1.5",
+    "nervous": "-1.0",
+    "shocked": "-1.0"
+  };
+
+  const flirtyModifiers = {
+    "flirty": "+2.0",
+    "cute": "+1.5",
+    "wink": "+1.0",
+    "hot": "+2.0",
+    "date": "+1.5",
+    "beautiful": "+2.5",
+    "gorgeous": "+3.0",
+    "sweetheart": "+2.5"
+  };
+
+  const anxiousModifiers = {
+    "anxious": "-1.5",
+    "stressed": "-1.5",
+    "tense": "-1.0",
+    "uneasy": "-1.0"
+  };
+
+  // =========================================================
+  // 7. MULTI-CHANNEL SCORING MATRIX ENGINE
+  // =========================================================
   const stringWordTokens = nlpDecodedOutput.split(/\s+/).filter(token => token.length > 0);
+
+  let totals = { happy: 0, sad: 0, angry: 0, scared: 0, flirty: 0, anxious: 0 };
+  let wordTelemetryArray = [];
+
+  stringWordTokens.forEach(word => {
+    let assignedMood = "neutral";
+    let baseBonus = 0.0;
+
+    // Check individual channels independently
+    if (happyModifiers[word]) {
+      baseBonus = parseFloat(happyModifiers[word]);
+      totals.happy += Math.abs(baseBonus);
+      assignedMood = "happy";
+    } else if (sadModifiers[word]) {
+      baseBonus = parseFloat(sadModifiers[word]);
+      totals.sad += Math.abs(baseBonus);
+      assignedMood = "sad";
+    } else if (angerModifiers[word]) {
+      baseBonus = parseFloat(angerModifiers[word]);
+      totals.angry += Math.abs(baseBonus);
+      assignedMood = "angry";
+    } else if (scaredModifiers[word]) {
+      baseBonus = parseFloat(scaredModifiers[word]);
+      totals.scared += Math.abs(baseBonus);
+      assignedMood = "scared";
+    } else if (flirtyModifiers[word]) {
+      baseBonus = parseFloat(flirtyModifiers[word]);
+      totals.flirty += Math.abs(baseBonus);
+      assignedMood = "flirty";
+    } else if (anxiousModifiers[word]) {
+      baseBonus = parseFloat(anxiousModifiers[word]);
+      totals.anxious += Math.abs(baseBonus);
+      assignedMood = "anxious";
+    }
+
+    wordTelemetryArray.push({ word: word, baseBonus: baseBonus, preliminaryMood: assignedMood });
+  });
+
+  // Determine the channel with the highest score
+  let winningMood = "neutral";
+  let highestScore = 0;
+
+  for (const [moodKey, scoreValue] of Object.entries(totals)) {
+    if (scoreValue > highestScore) {
+      highestScore = scoreValue;
+      winningMood = moodKey;
+    }
+  }
+
+  // Update global tracking channel context if a distinct modifier threshold is matched
+  if (winningMood !== "neutral") {
+    currentMood = winningMood; 
+  } else {
+    currentMood = "neutral";
+  }
+
+  // =========================================================
+  // 8. FINAL BONUS PROCESSING (-3.0 to +3.0 Constraint)
+  // =========================================================
+  const completeWordModifiersArray = wordTelemetryArray.map(item => {
+    let finalBonus = item.baseBonus;
+
+    // Dynamic scale balance adjustments based on the winning channel profile
+    if (currentMood === "happy" && item.preliminaryMood === "happy") finalBonus += 0.5;
+    if (currentMood === "sad" && item.preliminaryMood === "sad") finalBonus -= 0.5;
+    if (currentMood === "angry" && item.preliminaryMood === "angry") finalBonus -= 1.0;
+
+    // Strict boundary clipping constraint enforcement
+    if (finalBonus > 3.0) finalBonus = 3.0;
+    if (finalBonus < -3.0) finalBonus = -3.0;
+
+    return {
+      word: item.word,
+      bonus: parseFloat(finalBonus.toFixed(1))
+    };
+  });
+
+  // =========================================================
+  // 9. TOKENIZATION LAYER (NUMERIC SUM HASHES)
+  // =========================================================
   const tokenizedNumericOutputArray = stringWordTokens.map(word => {
     let characterValueSum = 0;
     for (let i = 0; i < word.length; i++) {
@@ -254,31 +465,11 @@ function processNLPDecode(userInputString) {
     return characterValueSum;
   });
 
+  window.currentWordMoodModifiers = completeWordModifiersArray;
+
   return tokenizedNumericOutputArray;
 }
 
-/**
- * Searches conversational context inputs to classify primary layout moods
- */
-function calculateContextMood(text) {
-  const checkString = text.toLowerCase();
-  
-  const angerKeywords = ["angry", "mad", "hate", "annoyed", "stupid", "idiot", "trash", "broken"];
-  const sadKeywords = ["sad", "cry", "hurt", "lonely", "bad", "depressed", "sorry", "unhappy"];
-  const happyKeywords = ["happy", "good", "great", "love", "awesome", "cool", "nice", "glad", "yes"];
-  const scaredKeywords = ["scared", "afraid", "panic", "worry", "creepy", "nervous", "shocked"];
-  const flirtyKeywords = ["flirty", "cute", "wink", "hot", "date", "beautiful", "gorgeous", "sweetheart"];
-  const anxiousKeywords = ["anxious", "scared", "stressed", "tense", "scared", "uneasy"];
-
-  if (angerKeywords.some(keyword => checkString.includes(keyword))) return "angry";
-  if (sadKeywords.some(keyword => checkString.includes(keyword))) return "sad";
-  if (happyKeywords.some(keyword => checkString.includes(keyword))) return "happy";
-  if (scaredKeywords.some(keyword => checkString.includes(keyword))) return "scared";
-  if (flirtyKeywords.some(keyword => checkString.includes(keyword))) return "flirty";
-  if (anxiousKeywords.some(keyword => checkString.includes(keyword))) return "anxious";
-  
-  return "neutral";
-}
 
 // ==========================================================================
 // 5. CORE COGNITIVE WORK IN PROGRESS AI ENGINE
