@@ -424,6 +424,10 @@ body {
   display: flex;
 }
 
+.chat-list-item:focus-within .chat-item-actions {
+  display: flex;
+}
+
 .chat-item-actions button {
   background: transparent;
   border: none;
