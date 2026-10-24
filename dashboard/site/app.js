@@ -1166,26 +1166,46 @@ function listenStaffChat() {
 
 $("staff-form").addEventListener("submit", async e => {
   e.preventDefault();
-  const x = cleanText($("staff-in").value).slice(0, 500);
-  if (!x || !isMod()) return;
 
-  $("staff-in").value = "";
+  const input = $("staff-in");
+  const message = cleanText(input.value).trim().slice(0, 500);
+
+  if (!message || !isMod()) return;
+
+  const button = e.submitter;
+  if (button) button.disabled = true;
 
   try {
-    await fetch(`${ROOT}/staffchat${KEY}`, {
+    const response = await fetch(`${ROOT}/staffchat${KEY}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
         fields: {
           u: { stringValue: me.name },
-          x: { stringValue: wrap(x, CHAT_KEY) },
+          x: { stringValue: wrap(message, CHAT_KEY) },
           r: { stringValue: me.role },
           t: { integerValue: String(Date.now()) }
         }
       })
     });
-  } catch {
-    toast("Message didn't send.");
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error?.message ||
+        `Firestore returned HTTP ${response.status}`
+      );
+    }
+
+    input.value = "";
+  } catch (error) {
+    console.error("Staff chat send failed:", error);
+    toast("Message didn't send. Check the console for details.");
+  } finally {
+    if (button) button.disabled = false;
   }
 });
 
