@@ -77,7 +77,7 @@ let currentMood = "neutral";
 // FEATURE FLAG CONTROLLER:
 // 0 = Block responses with WIP warning message
 // 1 = Allow active internal NLP and simulation logic outputs
-let READY = 0;
+let READY = 1;
 
 const CRYPTO_KEY_1 = "GrapeKeyAlpha99xTrueShield";
 const CRYPTO_KEY_2 = "GrapeKeyBeta44yVanguardNode";
