@@ -1136,12 +1136,31 @@ function renderStaff() {
   box.scrollTop = box.scrollHeight;
 }
 
+let staffUnsubscribe = null;
+
 function listenStaffChat() {
-  if (!isMod() || !window.listenStaff) return;
-  window.listenStaff(list => {
-    staffMsgs = list.slice().reverse();
-    renderStaff();
-  }, () => {});
+  if (!isMod()) return;
+  if (staffUnsubscribe) return;
+
+  const box = $("staff-msgs");
+
+  if (typeof window.listenStaff !== "function") {
+    box.textContent = "Staff chat is still initializing. Try opening it again.";
+    return;
+  }
+
+  staffUnsubscribe = window.listenStaff(
+    list => {
+      staffMsgs = list.slice().reverse();
+      renderStaff();
+    },
+    error => {
+      staffUnsubscribe = null;
+      console.error("Staff chat listener failed:", error);
+      box.textContent =
+        "Couldn't load staff chat. Check the browser console.";
+    }
+  );
 }
 
 $("staff-form").addEventListener("submit", async e => {
