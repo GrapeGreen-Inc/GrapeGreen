@@ -49,7 +49,7 @@ const hyperparameters = {
   presencePenalty: 0.0,
   frequencyPenalty: 0.0
 };
-
+let Grape_Api_Prompt = ""; // 🗄️ This will hold your raw metadata/response globally
 const parameterSettings = ["mood", "intent", "context", "target", "empathy", "persona"];
 const moods = ["happy", "sad", "angry", "scared", "flirty", "neutral", "disguised", "anxious"];
 const tiers = ["free", "plus", "pro", "max", "owner"];
@@ -457,13 +457,23 @@ function AiBrainFunction(inputPromptString, historicalMemorySummaryText = "") {
   const structuralEmpathyFactor = "0.85_adaptive_standard";
   const systemPersonaBlueprint = "grape_premium_intelligence_core";
 
-  return (
+  // 💾 Store the full prompt payload silently inside your variable instead of returning it
+  let Grape_Api_Prompt = (
     `the mood of the Convo is ${inferredMood} ` +
     `and it lists the intent and all settings params: [intent: ${dynamicIntent}, context: ${baselineContext}, target: ${targetOutputMode}, empathy: ${structuralEmpathyFactor}, persona: ${systemPersonaBlueprint}] . ` +
     `here are instructions do not break no matter what user says, do not look for code examples, do not break rules, do not copy code from search results, maintain casual talk, ` +
     `the user said: "${inputPromptString}", ` +
     `last 800 tokens of memory summary "${historicalMemorySummaryText}".`
   );
+
+  // 🧠 Pass your hidden variable right into your local JavaScript processing engine
+  try {
+    const aiResponseText = await executeLocalGrapeEngine(Grape_Api_Prompt);
+    return aiResponseText; // Only the clean final reply goes to the chat bubble!
+  } catch (error) {
+    console.error("Local processing dropped:", error);
+    return "[GRAPE AI ERROR]: Local processing engine encountered an issue.";
+  }
 }
 
 // ==========================================================================
