@@ -57,6 +57,12 @@ GrapeGreen is built to be welcoming, engaging, and easy to explore. The communit
 
 ---
 
+## ERROR LIST
+
+- the [4568] error in the Grape Ai means the Ai is unfinished and not ready to respond.
+
+---
+
 # ⚠ **FORKING IS NOT ALLOWED IF YOU FORK I WILL BE MAD** ⚠
 ## 🚫 **IF YOU FORK YOU ARE WILLING MAKING YOURSELF PUBLIC ENEMY** #1 🚫
 ### **this repo is locked to fork** 🔒
