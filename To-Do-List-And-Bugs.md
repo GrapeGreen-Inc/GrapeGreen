@@ -3,7 +3,7 @@
 ---
 
 ## Bugs
-- users lookup no work
+- ~~users lookup no work~~ (Fixed by @Isan88438)
 - staff chat no work
 - grape ai sign up don't work
 
