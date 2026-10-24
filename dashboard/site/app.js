@@ -1209,11 +1209,31 @@ $("profile-save").onclick = async () => {
 /* ---------- Users directory (adults only — minors never listed or searchable here) ---------- */
 let directory = [];
 async function loadUsers() {
+  const box = $("user-list");
+  box.textContent = "Loading users...";
+
   try {
-    const r = await fetch(`${DB}${KEY}&pageSize=300`);
-    directory = ((await r.json()).documents || []).map(parseDoc).filter(u => !u.deletedAt && (u.age === "3" || u.age === "4"));
+    const response = await fetch(`${DB}${KEY}&pageSize = 300`);
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        data?.error?.message || `Firestore returned HTTP ${response.status}`
+      );
+    }
+
+    directory = (data.documents || [])
+      .map(parseDoc)
+      .filter(user =>
+        !user.deletedAt &&
+        (user.age === "3" || user.age === "4")
+      );
+
     renderUsers();
-  } catch { $("user-list").textContent = "Couldn't load users."; }
+  } catch (error) {
+    console.error("Users lookup failed:", error);
+    box.textContent = "Couldn't load users. Check the browser console.";
+  }
 }
 function renderUsers() {
   const q = $("user-search").value.trim().toLowerCase();
