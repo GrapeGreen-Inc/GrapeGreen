@@ -862,7 +862,37 @@ function appendChatBubbleDOM(text, styleClass, identityLabel) {
   messagesScrollFrame.appendChild(bubbleElement);
   scrollAreaFrame.scrollTop = scrollAreaFrame.scrollHeight;
 }
+//ai brain:
+// 🚀 The background processing engine function
+async function executeLocalGrapeEngine(assembledPromptString) {
+  // 🛡️ Your internal error tracking message code
+  const Grape_Engine_Error_Msg = "We Ran Into A Error Processing [4568]";
 
+  // ⚙️ Production Flag (0 = Development/Testing, 1 = Live AI Active)
+  const Prod_Ready = 0; 
+
+  try {
+    // =========================================================================
+    // 🧠 AI LOGIC SECTION
+    // Put your upcoming text processing, array scoring, or AI engine stuff here!
+    // =========================================================================
+
+    // 🔒 Safety Switch: If not production ready, immediately return the error message
+    if (Prod_Ready === 0) {
+      return Grape_Engine_Error_Msg;
+    }
+
+    // (Your live AI execution scripts will overwrite this placeholder later)
+    let processedResult = "yo, this is your live AI generated response text!";
+    return processedResult;
+
+    // =========================================================================
+
+  } catch (error) {
+    console.error("Internal engine calculation error:", error);
+    return Grape_Engine_Error_Msg; 
+  }
+}
 // ==========================================================================
 // 12. SEARCH HELPERS
 // ==========================================================================
