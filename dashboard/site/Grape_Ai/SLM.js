@@ -433,7 +433,7 @@ function processNLPDecode(userInputString) {
 // ==========================================================================
 // 7. CORE COGNITIVE WORK IN PROGRESS AI ENGINE
 // ==========================================================================
-function AiBrainFunction(inputPromptString, historicalMemorySummaryText = "") {
+async function AiBrainFunction(inputPromptString, historicalMemorySummaryText = "") {
   const cleanInput = String(inputPromptString || "").toLowerCase();
   const username = typeof currentUsername !== "undefined" ? currentUsername : "user";
 
