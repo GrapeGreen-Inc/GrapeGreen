@@ -1253,7 +1253,7 @@ async function loadUsers() {
   box.textContent = "Loading users...";
 
   try {
-    const response = await fetch(`${DB}${KEY}&pageSize = 300`);
+    const response = await fetch(`${DB}${KEY}&pageSize=300`);
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
