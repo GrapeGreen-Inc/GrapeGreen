@@ -5,6 +5,7 @@
 ## Bugs
 - users lookup no work
 - staff chat no work
+- grape ai sign up don't work
 
 ---
 
@@ -14,6 +15,8 @@
 - [ ] get site indexed.
 
 - [ ] Fix users lookup.
+
+- [ ] Fix grape ai sign up issue
 
 ---
 
