@@ -247,6 +247,7 @@ function switchTab(id) {
   if (id === "admin") loadAdmin();
   if (id === "legal") loadLegal();
   if (id === "tos") loadTos();
+  if (id === "users") loadUsers();
   if (id === "chat" && !window.listenChat) pollChat(true);
   if (id === "updates") loadUpdates();
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === id));
