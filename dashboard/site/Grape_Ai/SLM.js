@@ -816,7 +816,7 @@ function processTextMathEngine(textExpression) {
 // ==========================================================================
 // 11. CHAT IO & BUBBLES
 // ==========================================================================
-function transmitChatMessagePayload() {
+async function transmitChatMessagePayload() {
   const chatInputBox = safeGetElement("message-input");
   if (!chatInputBox) return;
 
@@ -828,7 +828,10 @@ function transmitChatMessagePayload() {
   chatInputBox.value = "";
 
   const simulatedCompressedMemorySummary = "[System memory status stable. Active session logs running.]";
-  const finalCompiledBrainInputPrompt = AiBrainFunction(currentQuery, simulatedCompressedMemorySummary);
+  const finalCompiledBrainInputPrompt = await AiBrainFunction(
+    currentQuery,
+    simulatedCompressedMemorySummary
+  );
 
   setTimeout(() => {
     if (READY === 1) {
