@@ -179,7 +179,7 @@ def parse_from_grape_param(param_str):
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        search_url = "https://duckduckgo.com"
+        search_url = "https://html.duckduckgo.com/html/"
         payload = {"q": query}
         try:
             res = requests.post(search_url, data=payload, headers=headers, timeout=10)
