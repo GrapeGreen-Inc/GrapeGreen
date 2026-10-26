@@ -6,19 +6,20 @@
 
 import sklearn                      # Classic Machine Learning tools (Scikit-Learn)from sklearn.model_selection import train_test_split  # Splits your data sets into training/test partitionsfrom sklearn.preprocessing import LabelEncoder        # Normalizes text tokens into standard index codes
 # =====================================================================# 4. DEEP LEARNING FRAMEWORKS & SECURE NETWORK CORES# =====================================================================import torch                        # Core tensor library for training neural networksimport torch.nn as nn               # Building layers, loss functions, and activation loopsimport torch.optim as optim         # Optimizers (Adam, SGD) to update network training weightsimport requests                     # Vital addition for automated web-scraping and Wikipedia importsimport re                           # Regular expressions for deep regex string cleaning loopsimport json                         # Used to load and write out persistent model variables
-# =====================================================================# 5. GRAPEGREEN PLATFORM SYSTEM ARRAYS# =====================================================================parameterSettings = ["mood", "intent", "context", "target", "empathy", "persona"]moods = ["happy", "sad", "angry", "scared", "flirty", "neutral", "disguised", "anxious"]
+# =====================================================================# 5. GRAPEGREEN PLATFORM SYSTEM CONFIGURATIONS & ARRAYS# =====================================================================# REQUEST_MODE Guardrail Flags (Hardcoded - Only modifiable in code):# 0 = Turn off requests completely (Offline Mode)
 
-tiers = ["free", "plus", "pro", "max", "owner"]
+# 1 = Training use active (Allows Wikipedia scraping logs)# 2 = Production use active (Allows Live DDG Searches, Blocks Training modifications)REQUEST_MODE = 2 
+parameterSettings = ["mood", "intent", "context", "target", "empathy", "persona"]moods = ["happy", "sad", "angry", "scared", "flirty", "neutral", "disguised", "anxious"]tiers = ["free", "plus", "pro", "max", "owner"]
 BadCussWords = ["pussy", "nigger", "nigga", "fuck", "dick", "cock", "bitch", "ass", "asshole", "shit", "crap", "whore"]IllegialStuff = ["hack", "murder", "rape", "theft"]NEE_popup_keywords = ["suiside", "suicide", "kill myself", "end my life", "self harm", "cutting myself", "want to die"]
 PARAMS_FILE = "params.json"
 # =====================================================================# 6. SIGNED 8-DIGIT FIXED POINT CONVERTER (SERIALIZER)# =====================================================================def format_to_grape_param(float_val):
     """Converts an internal floating probability into a strict [±.00000000] string format."""
+
     sign = "+" if float_val >= 0 else "-"
     absolute_val = abs(float_val)
     decimal_part = f"{absolute_val - int(absolute_val):.8f}"[2:]
     return f"[{sign}.{decimal_part}]"
 def parse_from_grape_param(param_str):
-
     """Parses an 8-digit custom database string back into a functional float calculation coordinate."""
     clean_str = param_str.replace("[", "").replace("]", "")
     sign = -1.0 if clean_str.startswith("-") else 1.0
@@ -28,13 +29,13 @@ def parse_from_grape_param(param_str):
     """
     Advanced Preprocessing NLP Pipeline:
     Converts case weights, logs platform safety breaches, and filters tokens.
+
     """
     cleaned_string = raw_text_stream.lower().strip()
     
     # 988 Crisis Response Intercept (NEE Popup Redirect Logic)
     if any(keyword in cleaned_string for keyword in NEE_popup_keywords):
         return {
-
             "status": "NEE_TRIGGERED",
             "output": "\n[⚠️ CRITICAL SYSTEM NOTICE: 988 LIFELINE CONTEXT INTERCEPT]\n"
                       "It looks like things are incredibly heavy right now. Please know help is close:\n"
@@ -48,13 +49,13 @@ def parse_from_grape_param(param_str):
         return {
             "status": "BLOCKED",
             "output": "Grape AI: Core framework safety constraints prevent processing this text stream token."
+
         }
         
     # Global Profanity Censor Interception Matrix
     for word in BadCussWords:
         pattern = re.compile(rf'\b{word}\b', re.IGNORECASE)
         raw_text_stream = pattern.sub("🍇", raw_text_stream)
-
         
     # Isolate punctuation matrices out of raw layout frames
     token_ready_text = re.sub(r'[^\w\s]', '', raw_text_stream.lower())
@@ -65,12 +66,13 @@ def parse_from_grape_param(param_str):
         "processed_text": raw_text_stream, 
         "tokens": tokens
     }
-# =====================================================================# 8. SMALL LANGUAGE MODEL PERSISTENT ENGINE CORE (GrapeSLM)# =====================================================================class GrapeSLMBrain:
+# =====================================================================# 8. SMALL LANGUAGE MODEL PERSISTENT ENGINE CORE (GrapeSLM)
+
+# =====================================================================class GrapeSLMBrain:
     def __init__(self):
         self.state_matrix = {}
         self.all_words = []
         self.load_parameters()
-
         
     def load_parameters(self):
         """Loads and maps saved signed strings out of params.json into live floats."""
@@ -84,13 +86,13 @@ def parse_from_grape_param(param_str):
                     if len(parts) >= 2:
                         context_tuple = (parts[0], parts[1])
                     else:
+
                         context_tuple = tuple(parts[0].split(","))
                         
                     self.state_matrix[context_tuple] = {}
                     for target_word, custom_weight_str in weight_dict.items():
                         self.state_matrix[context_tuple][target_word] = parse_from_grape_param(custom_weight_str)
                 self.all_words = serialized_data.get("vocabulary", [])
-
             except Exception:
                 self.state_matrix = {}
         else:
@@ -104,21 +106,27 @@ def parse_from_grape_param(param_str):
             serialized_matrix[key_string] = {}
             for word, probability in target_dict.items():
                 serialized_matrix[key_string][word] = format_to_grape_param(probability)
+
                 
         output_payload = {
             "vocabulary": list(set(self.all_words)),
             "matrix": serialized_matrix
         }
         with open(PARAMS_FILE, "w") as f:
-
             json.dump(output_payload, f, indent=4)
 
     def train_on_wikipedia(self, topic):
         """Automated Learning Vector Bridge: Scrapes clean text records from Wikipedia API."""
+        if REQUEST_MODE == 0:
+            return False
+        if REQUEST_MODE == 2:
+            return False
+
         url = "https://wikipedia.org"
         params = {
             "action": "query", 
             "format": "json", 
+
             "prop": "extracts", 
             "explaintext": True, 
             "titles": topic,
@@ -130,7 +138,6 @@ def parse_from_grape_param(param_str):
             pages = data.get("query", {}).get("pages", {})
             text = ""
             for page_id, page_data in pages.items():
-
                 if "extract" in page_data:
                     text += page_data["extract"]
             
@@ -139,6 +146,7 @@ def parse_from_grape_param(param_str):
                 
             cleaned = re.sub(r'[^\w\s]', '', text.lower())
             words = cleaned.split()
+
             if len(words) < 3:
                 return False
                 
@@ -150,7 +158,6 @@ def parse_from_grape_param(param_str):
                 next_word = words[i+2]
                 if state not in self.state_matrix:
                     self.state_matrix[state] = {}
-
                 if next_word not in self.state_matrix[state]:
                     self.state_matrix[state][next_word] = 0.0
                 self.state_matrix[state][next_word] += 1.0
@@ -159,6 +166,7 @@ def parse_from_grape_param(param_str):
                 total_sum = sum(target_dict.values())
                 for word in target_dict:
                     target_dict[word] /= total_sum
+
                     
             self.save_parameters()
             return True
@@ -166,10 +174,11 @@ def parse_from_grape_param(param_str):
             return False
 
     def live_duckduckgo_search(self, query):
-        """
-        Performs an on-the-fly live web extraction via DuckDuckGo's HTML fallback structure.
-        Parses text contexts when users request search validation.
-        """
+        """Performs an on-the-fly live web extraction via DuckDuckGo's HTML fallback structure."""
+        if REQUEST_MODE == 0:
+            return "Grape AI Live-Search Failure: Network traffic disabled by request mode parameter configuration (REQUEST_MODE=0)."
+        if REQUEST_MODE == 1:
+            return "Grape AI Live-Search Blocked: Matrix is currently locked inside pure training operation parameters (REQUEST_MODE=1)."
 
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -177,6 +186,7 @@ def parse_from_grape_param(param_str):
         search_url = "https://duckduckgo.com"
         payload = {"q": query}
         try:
+
             res = requests.post(search_url, data=payload, headers=headers, timeout=10)
             if res.status_code != 200:
                 return "Grape AI Live-Search: External search gateway rejected traffic tokens."
@@ -190,17 +200,14 @@ def parse_from_grape_param(param_str):
                 clean_text = re.sub(r'<[^>]*>', '', snip).strip()
                 cleaned_snippets.append(clean_text)
                 
-
             joined_context = " | ".join(cleaned_snippets)
             return f"[🌐 Live Search Results for '{query}']: {joined_context}"
         except Exception as e:
             return f"Grape AI Live-Search: Processing failure encountered -> {str(e)}"
 
     def inference(self, input_tokens, temperature=0.7, top_k=25, top_p=0.85, repetition_penalty=1.25, presence_penalty=0.3, max_tokens=40):
-        """
-        Calculates advanced generative tokens by applying statistical logit modification matrices
-        including temperature adjustments, penalties, and threshold distributions.
-        """
+
+        """Calculates advanced generative tokens by applying statistical logit modification matrices."""
         now = datetime.now()
         time_string = now.strftime("%I:%M:%S %p")
         day_string = now.strftime("%A")
@@ -208,20 +215,27 @@ def parse_from_grape_param(param_str):
 
         raw_tokens_joined = " ".join(input_tokens)
         
+        # Explicit Short-Circuit Evaluation for Core Greetings/Introductions
+        if raw_tokens_joined in ["hi", "hello", "hey", "greetings"]:
+            return "Grape AI: Hello! I am online and functional. How can I help parse your framework text matrices today?"
+
         if "search" in raw_tokens_joined or "find out about" in raw_tokens_joined or "website" in raw_tokens_joined:
             search_query = raw_tokens_joined.replace("search", "").replace("website", "").strip()
-
             if not search_query:
                 search_query = "latest web standard updates"
             return self.live_duckduckgo_search(search_query)
 
         if "time" in raw_tokens_joined:
+
             return f"The current system time is exactly {time_string}."
         if "date" in raw_tokens_joined or "day" in raw_tokens_joined or "today" in raw_tokens_joined:
             return f"Today is {day_string}, {date_string}."
 
+        # Guarantee params.json structural lookup matrix fallback alignment
         if not self.state_matrix:
-            return "Grape AI: My parameter matrices are completely uninitialized. Type 'train <topic>'."
+            self.load_parameters()
+            if not self.state_matrix:
+                return "Grape AI: My parameter matrices are completely uninitialized inside params.json. Set REQUEST_MODE=1 and run 'train <topic>'."
 
         seed_sequence = None
         for i in range(len(input_tokens) - 1):
@@ -231,6 +245,9 @@ def parse_from_grape_param(param_str):
                 break
                 
         if not seed_sequence:
+            if not self.state_matrix.keys():
+
+                return "Grape AI: Matrix empty."
             seed_sequence = random.choice(list(self.state_matrix.keys()))
             
         response_tokens = [seed_sequence[0].capitalize(), seed_sequence[1]]
@@ -284,34 +301,28 @@ def parse_from_grape_param(param_str):
 # =====================================================================# 9. RUNTIME ENGINE EXECUTION SHELL INTERFACE LOOP# =====================================================================if __name__ == "__main__":
     ai_engine = GrapeSLMBrain()
     
-    print("\n" + "="*70)
+    if not ai_engine.state_matrix and REQUEST_MODE == 1:
 
-    print("      🍇 FULL HYPERPARAMETER GRAPE-SLM MODEL COMPUTATION ONLINE 🍇")
-    print("="*70)
-    
-    if not ai_engine.state_matrix:
-        print("[Framework Initialize] Populating custom parameter files...")
         ai_engine.train_on_wikipedia("Grapes")
         ai_engine.train_on_wikipedia("Artificial intelligence")
-        
-    print("\n Setup complete! Temperature, Top-K, Top-P, and Repetition penalties active.")
-    print(" Type 'train <topic>' to pull new Wikipedia content logs directly.")
-    print(" Type 'search <query>' or ask about a website to run an active live search.")
-    print("="*60)
     
     while True:
         try:
-            chat_input = input("\nYou: ")
+            chat_input = input("")
             if chat_input.lower().strip() == 'exit':
                 break
                 
             if chat_input.lower().startswith("train "):
+                if REQUEST_MODE != 1:
+                    print("Grape AI Check: Training blocked. Switch REQUEST_MODE variable to 1 to write model weights.")
+                    continue
                 subject = chat_input[6:].strip()
                 if ai_engine.train_on_wikipedia(subject):
                     print(f"Grape AI: Model successfully trained and weight vectors logged inside '{PARAMS_FILE}'.")
                 else:
                     print("Grape AI: Web processing failure.")
                 continue
+
                 
             pipeline_data = preprocess_and_screen(chat_input)
             if pipeline_data["status"] != "PASSED":
@@ -324,7 +335,6 @@ def parse_from_grape_param(param_str):
                 top_k=25, top_p=0.85, 
                 repetition_penalty=1.25, 
                 presence_penalty=0.3
-
             )
             print(f"Grape AI: {bot_reply}")
             
