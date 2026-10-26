@@ -1,79 +1,35 @@
-# =====================================================================
-# 1. CORE PYTHON UTILITIES (Math, Randomization, and Time Tracking)
-# =====================================================================
-import math                         # For advanced algebraic operations, floats, and constants
-import random                       # For basic random sampling and seeding datasets
-import time                         # For benchmarking model processing performance
-import os                           # For interacting with your database and environment files
-import sys                          # For processing dynamic command line system inputs
-from datetime import datetime       # For tracking explicit user timestamps and log dates
+# GrapeSLM Core Engine with Web Search Integration
 
-# =====================================================================
-# 2. NUMERICAL COMPUTATION & DATA ANALYTICS
-# =====================================================================
-import numpy as np                  # Core library for vector arrays, matrix math, and tensors
-import pandas as pd                 # For reading datasets, csv strings, and database logs
+# =====================================================================# 1. CORE PYTHON UTILITIES (Math, Randomization, and Time Tracking)# =====================================================================import math                         # For advanced algebraic operations, floats, and constantsimport random                       # For basic random sampling and seeding datasetsimport time                         # For benchmarking model processing performanceimport os                           # For interacting with your database and environment filesimport sys                          # For processing dynamic command line system inputsfrom datetime import datetime       # For tracking explicit user timestamps and log dates
+# =====================================================================# 2. NUMERICAL COMPUTATION & DATA ANALYTICS# =====================================================================import numpy as np                  # Core library for vector arrays, matrix math, and tensorsimport pandas as pd                 # For reading datasets, csv strings, and database logs
+# =====================================================================# 3. CORE AI, MACHINE LEARNING, & STRUCTURAL NLP# =====================================================================
 
-# =====================================================================
-# 3. CORE AI, MACHINE LEARNING, & STRUCTURAL NLP
-# =====================================================================
-import sklearn                      # Classic Machine Learning tools (Scikit-Learn)
-from sklearn.model_selection import train_test_split  # Splits your data sets into training/test partitions
-from sklearn.preprocessing import LabelEncoder        # Normalizes text tokens into standard index codes
+import sklearn                      # Classic Machine Learning tools (Scikit-Learn)from sklearn.model_selection import train_test_split  # Splits your data sets into training/test partitionsfrom sklearn.preprocessing import LabelEncoder        # Normalizes text tokens into standard index codes
+# =====================================================================# 4. DEEP LEARNING FRAMEWORKS & SECURE NETWORK CORES# =====================================================================import torch                        # Core tensor library for training neural networksimport torch.nn as nn               # Building layers, loss functions, and activation loopsimport torch.optim as optim         # Optimizers (Adam, SGD) to update network training weightsimport requests                     # Vital addition for automated web-scraping and Wikipedia importsimport re                           # Regular expressions for deep regex string cleaning loopsimport json                         # Used to load and write out persistent model variables
+# =====================================================================# 5. GRAPEGREEN PLATFORM SYSTEM CONFIGURATIONS & ARRAYS# =====================================================================# REQUEST_MODE Guardrail Flags (Hardcoded - Only modifiable in code):# 0 = Turn off requests completely (Offline Mode)
 
-# =====================================================================
-# 4. DEEP LEARNING FRAMEWORKS & SECURE NETWORK CORES
-# =====================================================================
-import torch                        # Core tensor library for training neural networks
-import torch.nn as nn               # Building layers, loss functions, and activation loops
-import torch.optim as optim         # Optimizers (Adam, SGD) to update network training weights
-import requests                     # Vital addition for automated web-scraping and Wikipedia imports
-import re                           # Regular expressions for deep regex string cleaning loops
-import json                         # Used to load and write out persistent model variables
-
-# =====================================================================
-# 5. GRAPEGREEN PLATFORM SYSTEM CONFIGURATIONS & ARRAYS
-# =====================================================================
-# REQUEST_MODE Guardrail Flags (Hardcoded - Only modifiable in code):
-# 0 = Turn off requests completely (Offline Mode)
-# 1 = Training use active (Allows Wikipedia scraping logs)
-# 2 = Production use active (Allows Live DDG Searches, Blocks Training modifications)
-REQUEST_MODE = 1 
-
-parameterSettings = ["mood", "intent", "context", "target", "empathy", "persona"]
-moods = ["happy", "sad", "angry", "scared", "flirty", "neutral", "disguised", "anxious"]
-tiers = ["free", "plus", "pro", "max", "owner"]
-
-BadCussWords = ["pussy", "nigger", "nigga", "fuck", "dick", "cock", "bitch", "ass", "asshole", "shit", "crap", "whore"]
-IllegialStuff = ["hack", "murder", "rape", "theft"]
-NEE_popup_keywords = ["suiside", "suicide", "kill myself", "end my life", "self harm", "cutting myself", "want to die"]
-
+# 1 = Training use active (Allows Wikipedia scraping logs)# 2 = Production use active (Allows Live DDG Searches, Blocks Training modifications)REQUEST_MODE = 1 
+parameterSettings = ["mood", "intent", "context", "target", "empathy", "persona"]moods = ["happy", "sad", "angry", "scared", "flirty", "neutral", "disguised", "anxious"]tiers = ["free", "plus", "pro", "max", "owner"]
+BadCussWords = ["pussy", "nigger", "nigga", "fuck", "dick", "cock", "bitch", "ass", "asshole", "shit", "crap", "whore"]IllegialStuff = ["hack", "murder", "rape", "theft"]NEE_popup_keywords = ["suiside", "suicide", "kill myself", "end my life", "self harm", "cutting myself", "want to die"]
 PARAMS_FILE = "params.json"
-
-# =====================================================================
-# 6. SIGNED 8-DIGIT FIXED POINT CONVERTER (SERIALIZER)
-# =====================================================================
-def format_to_grape_param(float_val):
+# =====================================================================# 6. SIGNED 8-DIGIT FIXED POINT CONVERTER (SERIALIZER)# =====================================================================def format_to_grape_param(float_val):
     """Converts an internal floating probability into a strict [±.00000000] string format."""
+
     sign = "+" if float_val >= 0 else "-"
     absolute_val = abs(float_val)
     decimal_part = f"{absolute_val - int(absolute_val):.8f}"[2:]
     return f"[{sign}.{decimal_part}]"
-
 def parse_from_grape_param(param_str):
     """Parses an 8-digit custom database string back into a functional float calculation coordinate."""
     clean_str = param_str.replace("[", "").replace("]", "")
     sign = -1.0 if clean_str.startswith("-") else 1.0
     value = float(clean_str[1:])
     return sign * value
-
-# =====================================================================
-# 7. INBOUND NLP PREPROCESSING PIPELINE & SECURITY INTERCEPTORS
-# =====================================================================
-def preprocess_and_screen(raw_text_stream):
+# =====================================================================# 7. INBOUND NLP PREPROCESSING PIPELINE & SECURITY INTERCEPTORS# =====================================================================def preprocess_and_screen(raw_text_stream):
     """
     Advanced Preprocessing NLP Pipeline:
     Converts case weights, logs platform safety breaches, and filters tokens.
+
     """
     cleaned_string = raw_text_stream.lower().strip()
     
@@ -93,6 +49,7 @@ def preprocess_and_screen(raw_text_stream):
         return {
             "status": "BLOCKED",
             "output": "Grape AI: Core framework safety constraints prevent processing this text stream token."
+
         }
         
     # Global Profanity Censor Interception Matrix
@@ -109,11 +66,9 @@ def preprocess_and_screen(raw_text_stream):
         "processed_text": raw_text_stream, 
         "tokens": tokens
     }
+# =====================================================================# 8. SMALL LANGUAGE MODEL PERSISTENT ENGINE CORE (GrapeSLM)
 
-# =====================================================================
-# 8. SMALL LANGUAGE MODEL PERSISTENT ENGINE CORE (GrapeSLM)
-# =====================================================================
-class GrapeSLMBrain:
+# =====================================================================class GrapeSLMBrain:
     def __init__(self):
         self.state_matrix = {}
         self.all_words = []
@@ -131,6 +86,7 @@ class GrapeSLMBrain:
                     if len(parts) >= 2:
                         context_tuple = (parts[0], parts[1])
                     else:
+
                         context_tuple = tuple(parts[0].split(","))
                         
                     self.state_matrix[context_tuple] = {}
@@ -150,6 +106,7 @@ class GrapeSLMBrain:
             serialized_matrix[key_string] = {}
             for word, probability in target_dict.items():
                 serialized_matrix[key_string][word] = format_to_grape_param(probability)
+
                 
         output_payload = {
             "vocabulary": list(set(self.all_words)),
@@ -163,12 +120,13 @@ class GrapeSLMBrain:
         if REQUEST_MODE == 0 or REQUEST_MODE == 2:
             return False
 
-        url = "https://wikipedia.org"
+        url = "https://en.wikipedia.org/w/api.php"
         params = {
             "action": "query", 
             "format": "json", 
             "prop": "extracts", 
             "explaintext": True, 
+
             "titles": topic,
             "redirects": 1
         }
@@ -188,6 +146,7 @@ class GrapeSLMBrain:
             words = cleaned.split()
             if len(words) < 3:
                 return False
+
                 
             self.all_words.extend(words)
             self.all_words = list(set(self.all_words))
@@ -207,6 +166,7 @@ class GrapeSLMBrain:
                     target_dict[word] /= total_sum
                     
             self.save_parameters()
+
             return True
         except Exception:
             return False
@@ -245,6 +205,7 @@ class GrapeSLMBrain:
         now = datetime.now()
         time_string = now.strftime("%I:%M:%S %p")
         day_string = now.strftime("%A")
+
         date_string = now.strftime("%B %d, %Y")
 
         raw_tokens_joined = " ".join(input_tokens)
@@ -264,6 +225,7 @@ class GrapeSLMBrain:
             return f"Today is {day_string}, {date_string}."
 
         if not self.state_matrix:
+
             self.load_parameters()
             if not self.state_matrix:
                 return "Grape AI: My parameter matrices are completely uninitialized inside params.json."
@@ -283,6 +245,7 @@ class GrapeSLMBrain:
         response_tokens = [seed_sequence[0].capitalize(), seed_sequence[1]]
         current_state = seed_sequence
         
+
         for token_step in range(max_tokens):
             if current_state not in self.state_matrix:
                 break
@@ -302,6 +265,7 @@ class GrapeSLMBrain:
                     logits[idx] /= (repetition_penalty * occurrences)
                     logits[idx] -= (presence_penalty * length_penalty * (token_step / max_tokens))
             
+
             adjusted_probs = np.exp(logits / max(temperature, 0.01))
             adjusted_probs /= np.sum(adjusted_probs)
             
@@ -321,25 +285,28 @@ class GrapeSLMBrain:
             response_tokens.append(chosen_token)
             
             current_state = (current_state[1], chosen_token.lower())
+
             
             if chosen_token.endswith(('.', '!', '?')) and len(response_tokens) > 10:
                 break
                 
         return " ".join(response_tokens)
-
-# =====================================================================
-# 9. RUNTIME ENGINE EXECUTION SHELL INTERFACE LOOP
-# =====================================================================
-if __name__ == "__main__":
+# =====================================================================# 9. RUNTIME ENGINE EXECUTION SHELL INTERFACE LOOP# =====================================================================if __name__ == "__main__":
     ai_engine = GrapeSLMBrain()
     
+    # Optional setup background training if matrix is fully uninitialized
     if not ai_engine.state_matrix and REQUEST_MODE == 1:
         ai_engine.train_on_wikipedia("Grapes")
         ai_engine.train_on_wikipedia("Artificial intelligence")
     
+    # Strict execution loop block to prevent early process termination
     while True:
+
         try:
             chat_input = input("")
+            if not chat_input.strip():
+                continue
+                
             if chat_input.lower().strip() == 'exit':
                 break
                 
@@ -370,3 +337,8 @@ if __name__ == "__main__":
             
         except KeyboardInterrupt:
             break
+        except Exception as e:
+            # Fallback block to prevent raw terminal crashes if loops fail
+            print(f"Grape AI Runtime Error: {str(e)}")
+
+
