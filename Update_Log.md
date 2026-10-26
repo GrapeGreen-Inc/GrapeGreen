@@ -1,49 +1,45 @@
-# UPDATE LOG
+## V1.5.1
+### AI+ Patch
+* [ADD] added guest mode.
+* [CHANGE] changed welcome message
 
----
-
-## V0.5
-### Create
-+ GrapeGreen Created
-+ GrapeGreen Posted
-
----
-
-## V1.0
-### Fresh Start
-+ Under-13 sign-ups keep only a username and password for COPPA/KOPPA
-+ New login screen
-
----
-
-## V1.1
-### Admin+
-+ Global chat with bold, underline and hidden text
-+ Admin panel: ban, promote, demote
-+ Delete account with a 90-day bin.
-
----
-
-## V1.2
-### Security+
-+ Email and birthday encrypted
-+ Themes and a new Settings page
-~ Kids-only chat room (modratated by by MattyGrapeGreenOwner_Kid)
-- No more alert() pop-ups
-
----
-
-## V1.3
-### Support+
-+ Added a Help Room
-- removed test accounts
-~ changed wall of memes
-
----
+## V1.5
+### Artificial Intelligence+
+* [ADD] Grape Ai Sidebar.
+* [ADD] Grape Ai Logic
 
 ## V1.4
 ### Admin+
-+ added features
-+ updated dashboard with MOTD
-+ admin chat
-+ users profile lookup
+* [ADD] added features
+* [ADD] updated dashboard with MOTD
+* [ADD] admin chat
+* [ADD] users profile lookup
+
+## V1.3
+### Support+
+* [ADD] Added a Help Room
+* [REMOVE] removed test accounts
+* [CHANGE] changed wall of memes
+
+## V1.2
+### Security+
+* [ADD] Email and birthday encrypted
+* [ADD] Themes and a new Settings page
+* [CHANGE] Kids-only chat room (moderated by MattyGrapeGreenOwner_Kid)
+* [REMOVE] No more alert() pop-ups
+
+## V1.1
+### Admin+
+* [ADD] Global chat with bold, underline and hidden text
+* [ADD] Admin panel: ban, promote, demote
+* [ADD] Delete account with a 90-day bin.
+
+## V1.0
+### Fresh Start
+* [ADD] Under-13 sign-ups keep only a username and password for COPPA/KOPPA
+* [ADD] New login screen
+
+## V0.5
+### Create
+* [ADD] GrapeGreen Created
+* [ADD] GrapeGreen Posted
