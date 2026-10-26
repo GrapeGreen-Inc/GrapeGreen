@@ -80,7 +80,6 @@ def parse_from_grape_param(param_str):
                     serialized_data = json.load(f)
                 self.state_matrix = {}
                 for key_string, weight_dict in serialized_data.get("matrix", {}).items():
-                    # Parse bigram keys back from the saved string representation
                     parts = key_string.split("::")
                     if len(parts) >= 2:
                         context_tuple = (parts[0], parts[1])
@@ -90,8 +89,8 @@ def parse_from_grape_param(param_str):
                     self.state_matrix[context_tuple] = {}
                     for target_word, custom_weight_str in weight_dict.items():
                         self.state_matrix[context_tuple][target_word] = parse_from_grape_param(custom_weight_str)
-
                 self.all_words = serialized_data.get("vocabulary", [])
+
             except Exception:
                 self.state_matrix = {}
         else:
@@ -110,8 +109,8 @@ def parse_from_grape_param(param_str):
             "vocabulary": list(set(self.all_words)),
             "matrix": serialized_matrix
         }
-
         with open(PARAMS_FILE, "w") as f:
+
             json.dump(output_payload, f, indent=4)
 
     def train_on_wikipedia(self, topic):
@@ -130,15 +129,14 @@ def parse_from_grape_param(param_str):
             data = response.json()
             pages = data.get("query", {}).get("pages", {})
             text = ""
-
             for page_id, page_data in pages.items():
+
                 if "extract" in page_data:
                     text += page_data["extract"]
             
             if not text.strip():
                 return False
                 
-            # Clean text and construct basic bigram transition probabilities
             cleaned = re.sub(r'[^\w\s]', '', text.lower())
             words = cleaned.split()
             if len(words) < 3:
@@ -147,18 +145,16 @@ def parse_from_grape_param(param_str):
             self.all_words.extend(words)
             self.all_words = list(set(self.all_words))
             
-            # Populate state matrix with relative frequency steps
             for i in range(len(words) - 2):
                 state = (words[i], words[i+1])
-
                 next_word = words[i+2]
                 if state not in self.state_matrix:
                     self.state_matrix[state] = {}
+
                 if next_word not in self.state_matrix[state]:
                     self.state_matrix[state][next_word] = 0.0
                 self.state_matrix[state][next_word] += 1.0
                 
-            # Normalize absolute tallies into proper relative weight fractions
             for state, target_dict in self.state_matrix.items():
                 total_sum = sum(target_dict.values())
                 for word in target_dict:
@@ -170,11 +166,11 @@ def parse_from_grape_param(param_str):
             return False
 
     def live_duckduckgo_search(self, query):
-
         """
         Performs an on-the-fly live web extraction via DuckDuckGo's HTML fallback structure.
         Parses text contexts when users request search validation.
         """
+
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
@@ -185,7 +181,6 @@ def parse_from_grape_param(param_str):
             if res.status_code != 200:
                 return "Grape AI Live-Search: External search gateway rejected traffic tokens."
             
-            # Simple fallback regex scanner extracting HTML link snippets
             snippets = re.findall(r'<a class="result__snippet"[^>]*>(.*?)</a>', res.text, re.DOTALL)
             if not snippets:
                 return f"Grape AI Search: No live indexes found for query string token '{query}'."
@@ -195,6 +190,7 @@ def parse_from_grape_param(param_str):
                 clean_text = re.sub(r'<[^>]*>', '', snip).strip()
                 cleaned_snippets.append(clean_text)
                 
+
             joined_context = " | ".join(cleaned_snippets)
             return f"[🌐 Live Search Results for '{query}']: {joined_context}"
         except Exception as e:
@@ -210,12 +206,11 @@ def parse_from_grape_param(param_str):
         day_string = now.strftime("%A")
         date_string = now.strftime("%B %d, %Y")
 
-
         raw_tokens_joined = " ".join(input_tokens)
         
-        # Intercept live search explicit requests
         if "search" in raw_tokens_joined or "find out about" in raw_tokens_joined or "website" in raw_tokens_joined:
             search_query = raw_tokens_joined.replace("search", "").replace("website", "").strip()
+
             if not search_query:
                 search_query = "latest web standard updates"
             return self.live_duckduckgo_search(search_query)
@@ -230,7 +225,6 @@ def parse_from_grape_param(param_str):
 
         seed_sequence = None
         for i in range(len(input_tokens) - 1):
-
             potential_key = (input_tokens[i], input_tokens[i+1])
             if potential_key in self.state_matrix:
                 seed_sequence = potential_key
@@ -250,41 +244,37 @@ def parse_from_grape_param(param_str):
             sorted_candidates = sorted(word_probs.items(), key=lambda x: x[1], reverse=True)
             k_bounded = sorted_candidates[:top_k]
             
-
             words = [item[0] for item in k_bounded]
             raw_scores = np.array([item[1] for item in k_bounded], dtype=float)
             logits = np.log(raw_scores + 1e-10)
             
-            # Apply Repetition, Presence, and Length Penalty Constraints
-            length_penalty = 1.0  # Normalized structural modifier baseline
+            length_penalty = 1.0
+
             for idx, word in enumerate(words):
                 occurrences = response_tokens.count(word)
                 if occurrences > 0:
-                    # Apply classic scaling penalties directly onto raw logit space
                     logits[idx] /= (repetition_penalty * occurrences)
                     logits[idx] -= (presence_penalty * length_penalty * (token_step / max_tokens))
             
-            # Apply Temperature Scaling transformations
             adjusted_probs = np.exp(logits / max(temperature, 0.01))
             adjusted_probs /= np.sum(adjusted_probs)
             
-            # Re-sort array tracks after transformation calculations
             temp_sorted_indices = np.argsort(adjusted_probs)[::-1]
-
             words = [words[i] for i in temp_sorted_indices]
             adjusted_probs = adjusted_probs[temp_sorted_indices]
             
-            # Apply Top-P Nucleus Threshold Cumulative Capping Filter
             cumulative_sums = np.cumsum(adjusted_probs)
             cutoff_index = np.where(cumulative_sums >= top_p)[0]
             if len(cutoff_index) > 0:
                 final_range = max(1, cutoff_index[0] + 1)
                 words = words[:final_range]
                 adjusted_probs = adjusted_probs[:final_range]
+
                 adjusted_probs /= np.sum(adjusted_probs)
                 
             chosen_token = random.choices(words, weights=adjusted_probs)[0]
             response_tokens.append(chosen_token)
+            
             current_state = (current_state[1], chosen_token.lower())
             
             if chosen_token.endswith(('.', '!', '?')) and len(response_tokens) > 10:
@@ -295,6 +285,7 @@ def parse_from_grape_param(param_str):
     ai_engine = GrapeSLMBrain()
     
     print("\n" + "="*70)
+
     print("      🍇 FULL HYPERPARAMETER GRAPE-SLM MODEL COMPUTATION ONLINE 🍇")
     print("="*70)
     
@@ -305,7 +296,6 @@ def parse_from_grape_param(param_str):
         
     print("\n Setup complete! Temperature, Top-K, Top-P, and Repetition penalties active.")
     print(" Type 'train <topic>' to pull new Wikipedia content logs directly.")
-
     print(" Type 'search <query>' or ask about a website to run an active live search.")
     print("="*60)
     
@@ -325,7 +315,6 @@ def parse_from_grape_param(param_str):
                 
             pipeline_data = preprocess_and_screen(chat_input)
             if pipeline_data["status"] != "PASSED":
-
                 print(pipeline_data["output"])
                 continue
                 
@@ -335,6 +324,7 @@ def parse_from_grape_param(param_str):
                 top_k=25, top_p=0.85, 
                 repetition_penalty=1.25, 
                 presence_penalty=0.3
+
             )
             print(f"Grape AI: {bot_reply}")
             
