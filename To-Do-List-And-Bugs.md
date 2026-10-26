@@ -14,7 +14,7 @@
 
 - [ ] get site indexed.
 
-- [ ] Fix users lookup.
+- [x] Fix users lookup.
 
 - [ ] Fix grape ai sign up issue
 
