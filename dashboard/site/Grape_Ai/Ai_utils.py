@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split  # Splits your data sets in
 from sklearn.preprocessing import LabelEncoder        # Normalizes text tokens into standard index codes
 
 # =====================================================================
-# 4. DEEP LEARNING FRAMEWORKS & LIBRARIES
+# 4. DEEP LEARNING FRAMEWORKS & SECURE NETWORK CORES
 # =====================================================================
 import torch                        # Core tensor library for training neural networks
 import torch.nn as nn               # Building layers, loss functions, and activation loops
@@ -32,7 +32,7 @@ import re                           # Regular expressions for deep regex string 
 import json                         # Used to load and write out persistent model variables
 
 # =====================================================================
-# 5. APP-SPECIFIC HYPERPARAMETERS & DICTIONARIES
+# 5. GRAPEGREEN PLATFORM SYSTEM ARRAYS
 # =====================================================================
 parameterSettings = ["mood", "intent", "context", "target", "empathy", "persona"]
 moods = ["happy", "sad", "angry", "scared", "flirty", "neutral", "disguised", "anxious"]
@@ -48,26 +48,29 @@ PARAMS_FILE = "params.json"
 # 6. SIGNED 8-DIGIT FIXED POINT CONVERTER (SERIALIZER)
 # =====================================================================
 def format_to_grape_param(float_val):
-    """Converts a floating-point number into an 8-digit explicit sign string [±.00000000]."""
+    """Converts an internal floating probability into a strict [±.00000000] string format."""
     sign = "+" if float_val >= 0 else "-"
     absolute_val = abs(float_val)
     decimal_part = f"{absolute_val - int(absolute_val):.8f}"[2:]
     return f"[{sign}.{decimal_part}]"
 
 def parse_from_grape_param(param_str):
-    """Parses an 8-digit custom string back into a standard system float."""
+    """Parses an 8-digit custom database string back into a functional float calculation coordinate."""
     clean_str = param_str.replace("[", "").replace("]", "")
     sign = -1.0 if clean_str.startswith("-") else 1.0
     value = float(clean_str[1:])
     return sign * value
-
 # =====================================================================
-# 7. TEXT PREPROCESSING PIPELINE & SECURITY INTERCEPTOR
+# 7. INBOUND NLP PREPROCESSING PIPELINE & SECURITY INTERCEPTORS
 # =====================================================================
 def preprocess_and_screen(raw_text_stream):
-    """Advanced Preprocessing NLP Pipeline with safety filters and token mapping."""
+    """
+    Advanced Preprocessing NLP Pipeline:
+    Converts case weights, logs platform safety breaches, and filters tokens.
+    """
     cleaned_string = raw_text_stream.lower().strip()
     
+    # 988 Crisis Response Intercept (NEE Popup Redirect Logic)
     if any(keyword in cleaned_string for keyword in NEE_popup_keywords):
         return {
             "status": "NEE_TRIGGERED",
@@ -78,16 +81,19 @@ def preprocess_and_screen(raw_text_stream):
                       "-> Official web resource portal: https://988lifeline.org\n"
         }
         
+    # Legal Panel Harm Guardrail Boundaries
     if any(illegal in cleaned_string for illegal in IllegialStuff):
         return {
             "status": "BLOCKED",
-            "output": "Grape AI: Fulfilling this operational request violates database safety parameters."
+            "output": "Grape AI: Core framework safety constraints prevent processing this text stream token."
         }
         
+    # Global Profanity Censor Interception Matrix
     for word in BadCussWords:
         pattern = re.compile(rf'\b{word}\b', re.IGNORECASE)
         raw_text_stream = pattern.sub("🍇", raw_text_stream)
         
+    # Isolate punctuation matrices out of raw layout frames
     token_ready_text = re.sub(r'[^\w\s]', '', raw_text_stream.lower())
     tokens = token_ready_text.split()
     
@@ -97,7 +103,7 @@ def preprocess_and_screen(raw_text_stream):
         "tokens": tokens
     }
 # =====================================================================
-# 8. SMALL LANGUAGE MODEL PERSISTENT ENGINE (GrapeSLM)
+# 8. SMALL LANGUAGE MODEL PERSISTENT ENGINE CORE (GrapeSLM)
 # =====================================================================
 class GrapeSLMBrain:
     def __init__(self):
@@ -106,25 +112,17 @@ class GrapeSLMBrain:
         self.load_parameters()
         
     def load_parameters(self):
-        """Loads and converts saved custom strings from params.json back into live state lists."""
+        """Loads and maps saved signed strings out of params.json into live floats."""
         if os.path.exists(PARAMS_FILE):
             try:
                 with open(PARAMS_FILE, "r") as f:
                     serialized_data = json.load(f)
-                    
                 self.state_matrix = {}
                 for key_string, weight_dict in serialized_data.get("matrix", {}).items():
                     context_tuple = tuple(key_string.split("::"))
-                    self.state_matrix[context_tuple] = []
-                    
+                    self.state_matrix[context_tuple] = {}
                     for target_word, custom_weight_str in weight_dict.items():
-                        parsed_weight = parse_from_grape_param(custom_weight_str)
-                        occurrences = int(round(parsed_weight * 100))
-                        if occurrences <= 0:
-                            occurrences = 1
-                        for _ in range(occurrences):
-                            self.state_matrix[context_tuple].append(target_word)
-                            
+                        self.state_matrix[context_tuple][target_word] = parse_from_grape_param(custom_weight_str)
                 self.all_words = serialized_data.get("vocabulary", [])
             except Exception:
                 self.state_matrix = {}
@@ -132,38 +130,25 @@ class GrapeSLMBrain:
             self.state_matrix = {}
 
     def save_parameters(self):
-        """Saves weights formatted into the explicit sign [±.00000000] design layout inside params.json."""
+        """Serializes probabilities using strict 8-digit sign parameters [±.00000000]."""
         serialized_matrix = {}
-        for context_tuple, next_words in self.state_matrix.items():
-            key_string = f"{context_tuple[0]}::{context_tuple[1]}"
+        for context_tuple, target_dict in self.state_matrix.items():
+            key_string = f"{context_tuple}::{context_tuple}"
             serialized_matrix[key_string] = {}
-            
-            total_connections = len(next_words)
-            unique_words = set(next_words)
-            
-            for word in unique_words:
-                frequency = next_words.count(word)
-                probability = frequency / total_connections
+            for word, probability in target_dict.items():
                 serialized_matrix[key_string][word] = format_to_grape_param(probability)
                 
         output_payload = {
             "vocabulary": list(set(self.all_words)),
             "matrix": serialized_matrix
         }
-        
         with open(PARAMS_FILE, "w") as f:
             json.dump(output_payload, f, indent=4)
 
     def train_on_wikipedia(self, topic):
-        """Web Fetch Interface: Automatically downloads context vectors from Wikipedia."""
+        """Automated Learning Vector Bridge: Scrapes clean text records from Wikipedia."""
         url = "https://wikipedia.org"
-        params = {
-            "action": "query",
-            "format": "json",
-            "prop": "extracts",
-            "explaintext": True,
-            "titles": topic
-        }
+        params = {"action": "query", "format": "json", "prop": "extracts", "explaintext": True, "titles": topic}
         try:
             response = requests.get(url, params=params, timeout=10).json()
             pages = response.get("query", {}).get("pages", {})
@@ -171,10 +156,8 @@ class GrapeSLMBrain:
             for _, page_data in pages.items():
                 if "extract" in page_data:
                     fetched_corpus += page_data["extract"]
-            
             if not fetched_corpus:
                 return False
-                
             self.optimize_weights(fetched_corpus)
             self.save_parameters()
             return True
@@ -182,32 +165,38 @@ class GrapeSLMBrain:
             return False
 
     def optimize_weights(self, clean_text_corpus):
-        """Compiles predictive sequence arrays directly from data inputs."""
+        """Builds predictive context dictionaries out of input token sets."""
         sanitized_data = re.sub(r'\[.*?\]|\(.*?\)', '', clean_text_corpus)
         processed_tokens = [t.strip() for t in sanitized_data.split() if t.strip()]
-        
         if len(processed_tokens) < 3:
             return
             
         self.all_words.extend([w.lower() for w in processed_tokens])
+        raw_counts = {}
         
         for i in range(len(processed_tokens) - 2):
             context_key = (processed_tokens[i].lower(), processed_tokens[i+1].lower())
             next_predicted_word = processed_tokens[i+2]
+            if context_key not in raw_counts:
+                raw_counts[context_key] = {}
+            raw_counts[context_key][next_predicted_word] = raw_counts[context_key].get(next_predicted_word, 0) + 1
             
-            if context_key not in self.state_matrix:
-                self.state_matrix[context_key] = []
-            self.state_matrix[context_key].append(next_predicted_word)
-
-    def inference(self, input_tokens, temperature=0.7, top_k=5, max_output_tokens=35):
-        """Runs predictions through matrix state variables scaled by temperature constraints."""
-        # Active Temporal Context Generation
+        for context_key, target_words in raw_counts.items():
+            total_connections = sum(target_words.values())
+            self.state_matrix[context_key] = {}
+            for word, count in target_words.items():
+                self.state_matrix[context_key][word] = count / total_connections
+    def inference(self, input_tokens, temperature=0.7, top_k=40, top_p=0.9, 
+                  repetition_penalty=1.2, presence_penalty=0.4, length_penalty=1.0, max_tokens=60):
+        """
+        Hyperparameter Matrix Compute Engine:
+        Executes decoding passes using EVERY primary configuration layer concurrently.
+        """
         current_time_data = datetime.now()
         day_string = current_time_data.strftime("%A")
         date_string = current_time_data.strftime("%B %d, %Y")
         time_string = current_time_data.strftime("%I:%M %p")
 
-        # Catch dynamic intent questions regarding time or dates explicitly
         raw_tokens_joined = " ".join(input_tokens)
         if "time" in raw_tokens_joined:
             return f"The current system time is exactly {time_string}."
@@ -215,7 +204,7 @@ class GrapeSLMBrain:
             return f"Today is {day_string}, {date_string}."
 
         if not self.state_matrix:
-            return "Grape AI: My brain is empty. Type 'train <topic>' to load parameters!"
+            return "Grape AI: My parameter matrices are completely uninitialized. Type 'train <topic>'."
 
         seed_sequence = None
         for i in range(len(input_tokens) - 1):
@@ -227,91 +216,87 @@ class GrapeSLMBrain:
         if not seed_sequence:
             seed_sequence = random.choice(list(self.state_matrix.keys()))
             
-        response_tokens = [seed_sequence[0].capitalize(), seed_sequence[1]]
+        response_tokens = [seed_sequence.capitalize(), seed_sequence]
         current_state = seed_sequence
         
-        for _ in range(max_output_tokens):
+        for token_step in range(max_tokens):
             if current_state not in self.state_matrix:
                 break
                 
-            possible_words = self.state_matrix[current_state]
-            counts = {}
-            for w in possible_words:
-                counts[w] = counts.get(w, 0) + 1
-                
-            sorted_candidates = [word for word, count in sorted(counts.items(), key=lambda x: x, reverse=True)]
-            pruned_candidates = sorted_candidates[:top_k]
+            word_probs = self.state_matrix[current_state]
+            sorted_candidates = sorted(word_probs.items(), key=lambda x: x, reverse=True)
+            k_bounded = sorted_candidates[:top_k]
             
-            if not pruned_candidates:
-                break
+            words = [item[0] for item in k_bounded]
+            raw_scores = np.array([item[1] for item in k_bounded], dtype=float)
+            logits = np.log(raw_scores + 1e-10)
+            
+            # Apply Repetition, Presence, and Length Penalty Constraints
+            for idx, word in enumerate(words):
+                occurrences = response_tokens.count(word)
+                if occurrences > 0:
+                    # Apply classic scaling penalties directly onto raw logit space
+                    logits[idx] /= (repetition_penalty * occurrences)
+                    logits[idx] -= (presence_penalty * length_penalty * (token_step / max_tokens))
+            
+            # Apply Temperature Scaling transformations
+            adjusted_probs = np.exp(logits / max(temperature, 0.01))
+            adjusted_probs /= np.sum(adjusted_probs)
+            
+            # Re-sort array tracks after transformation calculations
+            temp_sorted_indices = np.argsort(adjusted_probs)[::-1]
+            words = [words[i] for i in temp_sorted_indices]
+            adjusted_probs = adjusted_probs[temp_sorted_indices]
+            
+            # Apply Top-P Nucleus Threshold Cumulative Capping Filter
+            cumulative_sums = np.cumsum(adjusted_probs)
+            cutoff_index = np.where(cumulative_sums >= top_p)[0]
+            if len(cutoff_index) > 0:
+                final_range = max(1, cutoff_index[0] + 1)
+                words = words[:final_range]
+                adjusted_probs = adjusted_probs[:final_range]
+                adjusted_probs /= np.sum(adjusted_probs)
                 
-            if temperature <= 0.1:
-                chosen_token = pruned_candidates[0]
-            else:
-                decay_weights = [1.0 / (rank + 1)**(1.0 / temperature) for rank in range(len(pruned_candidates))]
-                chosen_token = random.choices(pruned_candidates, weights=decay_weights)[0]
-                
+            chosen_token = random.choices(words, weights=adjusted_probs)[0]
             response_tokens.append(chosen_token)
-            current_state = (current_state[1], chosen_token.lower())
+            current_state = (current_state, chosen_token.lower())
             
-            if chosen_token.endswith(('.', '!', '?')):
+            if chosen_token.endswith(('.', '!', '?')) and len(response_tokens) > 10:
                 break
                 
-        compiled_sentence = " ".join(response_tokens)
-        post_process_audit = preprocess_and_screen(compiled_sentence)
-        return post_process_audit["processed_text"] if post_process_audit["status"] == "PASSED" else post_process_audit["output"]
-# =====================================================================
-# 9. PYTORCH MODEL STRUCTURAL CONFIGURATION
-# =====================================================================
-class GrapeContextClassifier(nn.Module):
-    def __init__(self, vocabulary_size, embedding_dimensions, hidden_neurons, total_output_classes):
-        super(GrapeContextClassifier, self).__init__()
-        self.embeddings = nn.Embedding(vocabulary_size, embedding_dimensions)
-        self.linear1 = nn.Linear(embedding_dimensions, hidden_neurons)
-        self.linear2 = nn.Linear(hidden_neurons, total_output_classes)
-        self.activation = nn.ReLU()
-        
-    def forward(self, input_tensor):
-        embedded_vectors = self.embeddings(input_tensor)
-        averaged_pooling = torch.mean(embedded_vectors, dim=1)
-        layer1_output = self.activation(self.linear1(averaged_pooling))
-        final_logits = self.linear2(layer1_output)
-        return final_logits
+        return " ".join(response_tokens)
 
 # =====================================================================
-# 10. RUNTIME INTERACTIVE CHAT ENGINE & AUTOMATED SELF TESTS
+# 9. RUNTIME ENGINE EXECUTION SHELL INTERFACE LOOP
 # =====================================================================
 if __name__ == "__main__":
     ai_engine = GrapeSLMBrain()
     
     print("\n" + "="*70)
-    print("         🍇 GRAPE AI SLM PERSISTENT PARAMETER CORE ONLINE 🍇")
+    print("      🍇 FULL HYPERPARAMETER GRAPE-SLM MODEL COMPUTATION ONLINE 🍇")
     print("="*70)
     
     if not ai_engine.state_matrix:
-        print("[System Initialization] Training base vocabulary dependencies...")
+        print("[Framework Initialize] Populating custom parameter files...")
         ai_engine.train_on_wikipedia("Grapes")
-        ai_engine.train_on_wikipedia("Python (programming language)")
+        ai_engine.train_on_wikipedia("Artificial intelligence")
         
-    print("\n" + "="*60)
-    print(" Live Chat Session Opened. Type text prompts to communicate.")
-    print(" Type 'train <topic>' to pull live data updates.")
-    print(" Type 'exit' to log out of framework context blocks.")
+    print("\n Setup complete! Temperature, Top-K, Top-P, and Repetition penalties active.")
+    print(" Type 'train <topic>' to pull new Wikipedia content logs directly.")
     print("="*60)
     
     while True:
         try:
             chat_input = input("\nYou: ")
             if chat_input.lower().strip() == 'exit':
-                print("Powering down model execution frames. Good bye!")
                 break
                 
             if chat_input.lower().startswith("train "):
                 subject = chat_input[6:].strip()
                 if ai_engine.train_on_wikipedia(subject):
-                    print(f"Grape AI: Weight parameters successfully processed and tracked inside {PARAMS_FILE}!")
+                    print(f"Grape AI: Model successfully trained and weight vectors logged inside '{PARAMS_FILE}'.")
                 else:
-                    print("Grape AI: Wikipedia processing failed.")
+                    print("Grape AI: Web processing failure.")
                 continue
                 
             pipeline_data = preprocess_and_screen(chat_input)
@@ -319,7 +304,14 @@ if __name__ == "__main__":
                 print(pipeline_data["output"])
                 continue
                 
-            bot_reply = ai_engine.inference(pipeline_data["tokens"], temperature=0.7, top_k=4)
+            bot_reply = ai_engine.inference(
+                pipeline_data["tokens"], 
+                temperature=0.7, 
+                top_k=25, 
+                top_p=0.85, 
+                repetition_penalty=1.25, 
+                presence_penalty=0.3
+            )
             print(f"Grape AI: {bot_reply}")
             
         except KeyboardInterrupt:
