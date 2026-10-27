@@ -14,43 +14,39 @@
 <meta property="og:title" content="GrapeGreen Dashboard">
 <meta property="og:description" content="Sign up or log in to chat, browse memes, and manage your account.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="https://pyscript.net/releases/2024.11.1/core.css">
-<script type="module" src="https://pyscript.net/releases/2024.11.1/core.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.29.1/min/vs/loader.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" defer></script>
 <!-- 🍇 GrapeGreen Imports Core: GPU-Accelerated 3D Engine Script Wrapper -->
 <!-- 🍇 GrapeGreen Imports Core: GPU-Accelerated 3D Engine Script Wrapper -->
 <script type="module">
-    // 🧠 999 IQ Import: Streaming your engine classes directly from your live distribution path URL
-    import { 
-        GrapeScene3D, 
-        MeshObject, 
-        Material, 
-        AllDirLight, 
-        SpotLight,
-        Vector3,
-        Camera,
-        ColliderBody,
-        Raycaster,
-        initializeScene
-    } from "https://grapegreen-inc.github.io/GrapeGreen-Imports/Imports/modules/Immersion/Grape_3D/v1/Three-dim.js";
+// 🧠 999 IQ Import: Streaming your engine classes directly from your live distribution path URL
+import { 
+GrapeScene3D, 
+MeshObject, 
+Material, 
+AllDirLight, 
+SpotLight,
+Vector3,
+Camera,
+ColliderBody,
+Raycaster,
+initializeScene
+} from "https://grapegreen-inc.github.io/GrapeGreen-Imports/Imports/modules/Immersion/Grape_3D/v1/Three-dim.js";
 
-    // Expose modules to the window context so other app files can access them cleanly
-    window.Grape3D = {
-        GrapeScene3D,
-        MeshObject,
-        Material,
-        AllDirLight,
-        SpotLight,
-        Vector3,
-        Camera,
-        ColliderBody,
-        Raycaster,
-        initializeScene
-    };
+// Expose modules to the window context so other app files can access them cleanly
+window.Grape3D = {
+GrapeScene3D,
+MeshObject,
+Material,
+AllDirLight,
+SpotLight,
+Vector3,
+Camera,
+ColliderBody,
+Raycaster,
+initializeScene
+};
 
-    console.log("🚀 GrapeGreen Imports: 3D Engine modules imported and bound to window.Grape3D!");
+console.log("🚀 GrapeGreen Imports: 3D Engine modules imported and bound to window.Grape3D!");
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -68,287 +64,287 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
 <div id="dim"></div>
 <div id="toast" class="hide" role="status"></div>
 <div id="delbox" class="hide"><div class="dlg">
-  <b>Delete your account?</b>
-  <p class="mute">Type your password to confirm. It stays in a bin for 90 days, then it's gone for good.</p>
-  <input id="del-pw" type="password" autocomplete="current-password" aria-label="Password" style="width:100%;padding:10px;border:2px solid var(--line);border-radius:8px">
-  <div id="del-err" style="color:#c62828;font-size:14px;min-height:20px;margin-top:6px"></div>
-  <div class="acts"><button class="btn" id="del-cancel">Cancel</button><button class="btn red" id="del-ok">Delete</button></div>
+<b>Delete your account?</b>
+<p class="mute">Type your password to confirm. It stays in a bin for 90 days, then it's gone for good.</p>
+<input id="del-pw" type="password" autocomplete="current-password" aria-label="Password" style="width:100%;padding:10px;border:2px solid var(--line);border-radius:8px">
+<div id="del-err" style="color:#c62828;font-size:14px;min-height:20px;margin-top:6px"></div>
+<div class="acts"><button class="btn" id="del-cancel">Cancel</button><button class="btn red" id="del-ok">Delete</button></div>
 </div></div>
 <div id="notice" class="hide" role="status"></div>
 <div id="ticket" class="ovl hide"><div class="dlg" id="ticket-body"></div></div>
 <div id="dm" class="ovl hide"><div class="dlg">
-  <b id="dm-title">Chat</b>
-  <div id="dmlog"></div>
-  <form id="dm-form" style="display:flex;gap:8px"><input class="fld" id="dm-in" style="margin:0" placeholder="Message..." autocomplete="off"><button class="btn">Send</button></form>
-  <div class="acts"><button class="btn" id="dm-close">Close</button></div>
+<b id="dm-title">Chat</b>
+<div id="dmlog"></div>
+<form id="dm-form" style="display:flex;gap:8px"><input class="fld" id="dm-in" style="margin:0" placeholder="Message..." autocomplete="off"><button class="btn">Send</button></form>
+<div class="acts"><button class="btn" id="dm-close">Close</button></div>
 </div></div>
 
 <div id="gate">
-  <div class="brand">
-    <div class="bunch" id="bunch"><em></em></div>
-    <h1>Grape<span>Green</span></h1>
-    <p>Your dashboard, your tabs, your memes.</p>
-  </div>
-  <div class="form-side"><div class="box">
-    <div class="seg">
-      <button type="button" id="t-login" class="on">Log in</button>
-      <button type="button" id="t-signup">Sign up</button>
-    </div>
+<div class="brand">
+<div class="bunch" id="bunch"><em></em></div>
+<h1>Grape<span>Green</span></h1>
+<p>Your dashboard, your tabs, your memes.</p>
+</div>
+<div class="form-side"><div class="box">
+<div class="seg">
+<button type="button" id="t-login" class="on">Log in</button>
+<button type="button" id="t-signup">Sign up</button>
+</div>
 
-    <form id="login-form">
-      <h2>Welcome back</h2>
-      <div class="f"><label for="li-user">Username</label><input id="li-user" autocomplete="username" required></div>
-      <div class="f"><label for="li-pass">Password</label>
-        <div class="pw"><input id="li-pass" type="password" autocomplete="current-password" required><button type="button" data-show="li-pass">Show</button></div></div>
-      <button class="go" type="submit">Log in</button>
-      <a href="#" class="guest" id="guest">Continue as guest</a>
-    </form>
+<form id="login-form">
+<h2>Welcome back</h2>
+<div class="f"><label for="li-user">Username</label><input id="li-user" autocomplete="username" required></div>
+<div class="f"><label for="li-pass">Password</label>
+<div class="pw"><input id="li-pass" type="password" autocomplete="current-password" required><button type="button" data-show="li-pass">Show</button></div></div>
+<button class="go" type="submit">Log in</button>
+<a href="#" class="guest" id="guest">Continue as guest</a>
+</form>
 
-    <form id="signup-form" class="hide">
-      <h2>Make an account</h2>
-      <div class="f"><label for="su-user">Username</label><input id="su-user" autocomplete="username" required></div>
-      <div class="f"><label for="su-dob">Date of birth</label><input id="su-dob" type="date" required></div>
-      <div class="f" id="mailrow"><label for="su-mail">Email</label><input id="su-mail" type="email" placeholder="you@gmail.com"></div>
-      <div class="f mute hide" id="kidnote">You're under 13, so we won't ask for or keep your email or birthday. You'll log in with your username and password.</div>
-      <div class="f"><label for="su-pass">Password (6+ characters)</label>
-        <div class="pw"><input id="su-pass" type="password" autocomplete="new-password" required minlength="6"><button type="button" data-show="su-pass">Show</button></div></div>
-      <button class="go" type="submit">Create account</button>
-    </form>
-    <div id="err" role="alert"></div>
-  </div></div>
+<form id="signup-form" class="hide">
+<h2>Make an account</h2>
+<div class="f"><label for="su-user">Username</label><input id="su-user" autocomplete="username" required></div>
+<div class="f"><label for="su-dob">Date of birth</label><input id="su-dob" type="date" required></div>
+<div class="f" id="mailrow"><label for="su-mail">Email</label><input id="su-mail" type="email" placeholder="you@gmail.com"></div>
+<div class="f mute hide" id="kidnote">You're under 13, so we won't ask for or keep your email or birthday. You'll log in with your username and password.</div>
+<div class="f"><label for="su-pass">Password (6+ characters)</label>
+<div class="pw"><input id="su-pass" type="password" autocomplete="new-password" required minlength="6"><button type="button" data-show="su-pass">Show</button></div></div>
+<button class="go" type="submit">Create account</button>
+</form>
+<div id="err" role="alert"></div>
+</div></div>
 </div>
 
 <div class="top">
-  <b>GrapeGreen</b>
-  <input id="find" placeholder="Search tabs..." aria-label="Search tabs">
-  <button id="find-btn">Search</button>
-  <input id="cmd-in" class="hide" placeholder="/command (dev+)" aria-label="Run a command" style="width:min(220px,30vw)">
+<b>GrapeGreen</b>
+<input id="find" placeholder="Search tabs..." aria-label="Search tabs">
+<button id="find-btn">Search</button>
+<input id="cmd-in" class="hide" placeholder="/command (dev+)" aria-label="Run a command" style="width:min(220px,30vw)">
 </div>
 <nav class="side">
-  <button class="side-item active" data-tab="dashboard">Dashboard</button>
-  <button class="side-item" data-tab="settings">Settings</button>
-  <button class="side-item" data-tab="qr">QR Code</button>
-    <button class="side-item" style="display: none;" data-tab="HELLO_its_me">HELLO_its_me</button>
-  <button class="side-item" data-tab="science">Atomic science</button>
-  <button class="side-item" data-tab="code">Coding advice</button>
-  <button class="side-item" data-tab="memes">Wall of memes</button>
-  <button class="side-item" data-tab="chat">Chat</button>
+<button class="side-item active" data-tab="dashboard">Dashboard</button>
+<button class="side-item" data-tab="settings">Settings</button>
+<button class="side-item" data-tab="qr">QR Code</button>
+<button class="side-item" style="display: none;" data-tab="HELLO_its_me">HELLO_its_me</button>
+<button class="side-item" data-tab="science">Atomic science</button>
+<button class="side-item" data-tab="code">Coding advice</button>
+<button class="side-item" data-tab="memes">Wall of memes</button>
+<button class="side-item" data-tab="chat">Chat</button>
 <button class="side-item" data-tab="Grape-Ai">Grape Ai (aplha pre-release) [WIP]</button>
-  <button class="side-item" data-tab="users">Users</button>
-  <button class="side-item hide" id="nav-staff" data-tab="staff">Staff chat</button>
-  <button class="side-item" data-tab="updates">Update log</button>
-  <button class="side-item" data-tab="help">Help</button>
-  <button class="side-item" data-tab="tos">TOS</button>
-  <button class="side-item hide" id="nav-legal" data-tab="legal">Legal panel</button>
-  <button class="side-item hide" id="nav-admin" data-tab="admin">Admin panel</button>
+<button class="side-item" data-tab="users">Users</button>
+<button class="side-item hide" id="nav-staff" data-tab="staff">Staff chat</button>
+<button class="side-item" data-tab="updates">Update log</button>
+<button class="side-item" data-tab="help">Help</button>
+<button class="side-item" data-tab="tos">TOS</button>
+<button class="side-item hide" id="nav-legal" data-tab="legal">Legal panel</button>
+<button class="side-item hide" id="nav-admin" data-tab="admin">Admin panel</button>
 </nav>
 
 <main>
-  <section id="dashboard" class="view active">
-    <h1>Dashboard</h1>
-    <div id="motd-banner" class="card hide" style="max-width:640px;border-left:4px solid var(--leaf)">
-      <b>📣 Message of the day</b>
-      <p id="motd-text" style="margin:6px 0 0"></p>
-    </div>
-    <div class="card" style="max-width:640px"><h3 id="about-title">About this site</h3>
-      <p id="about-text" class="mute">GrapeGreen Dashboard: chat, memes, tools and a place to hang out.</p>
-      <button class="btn hide" id="about-edit" style="margin-top:8px">Edit (dev+)</button>
-      <div id="about-form" class="hide" style="margin-top:8px">
-        <textarea class="fld" id="about-area" rows="3"></textarea>
-        <button class="btn" id="about-save">Save</button> <span class="mute" id="about-msg"></span>
-      </div>
-    </div>
-    <p class="mute">Copyrighted by no one except owner ©</p>
+<section id="dashboard" class="view active">
+<h1>Dashboard</h1>
+<div id="motd-banner" class="card hide" style="max-width:640px;border-left:4px solid var(--leaf)">
+<b>📣 Message of the day</b>
+<p id="motd-text" style="margin:6px 0 0"></p>
+</div>
+<div class="card" style="max-width:640px"><h3 id="about-title">About this site</h3>
+<p id="about-text" class="mute">GrapeGreen Dashboard: chat, memes, tools and a place to hang out.</p>
+<button class="btn hide" id="about-edit" style="margin-top:8px">Edit (dev+)</button>
+<div id="about-form" class="hide" style="margin-top:8px">
+<textarea class="fld" id="about-area" rows="3"></textarea>
+<button class="btn" id="about-save">Save</button> <span class="mute" id="about-msg"></span>
+</div>
+</div>
+<p class="mute">Copyrighted by no one except owner ©</p>
 
-    <!-- Google AdSense placeholder: once your AdSense account is approved, swap this block for the
-         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX">
-         loader and your real <ins class="adsbygoogle"> ad-unit snippets from the AdSense dashboard.
-         This site has an under-13 user base — review Google's child-directed / mixed-audience ad
-         policy before enabling real ads: https://support.google.com/adsense/answer/9335564 -->
-    <div class="card" style="max-width:640px"><h3>Sponsored</h3>
-      <div id="ad-rotator" style="min-height:70px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:8px;color:var(--mute)"></div>
-    </div>
-  </section>
-
-  <section id="settings" class="view">
-    <h1>Settings</h1>
-    <div class="set">
-      <div class="card"><h3>👤 Profile</h3>
-        <div class="prof"><div id="av">G</div>
-          <div><div><span id="who" style="font-size:20px;font-weight:700">Guest</span><span class="badge" id="rolebadge">Guest</span></div>
-            <div class="mute" id="mine"></div></div></div>
-        <div class="row"><label>Avatar</label><div class="sws" id="avs"></div></div>
-      </div>
-      <div class="card"><h3>🎨 Appearance</h3>
-        <div class="row"><label>Theme</label><div class="sws" id="sws"></div></div>
-        <div class="row"><label for="bright"><span>Brightness</span><span id="bright-v">100%</span></label>
-          <input id="bright" type="range" min="10" max="100" value="100"></div>
-      </div>
-      <div class="card"><h3>💬 Chat</h3>
-        <div class="row"><label for="fsize"><span>Text size</span><span id="fsize-v">15px</span></label>
-          <input id="fsize" type="range" min="12" max="22" value="15"></div>
-        <div class="row"><label for="sound"><span>Message ping volume</span><span id="sound-v">80%</span></label>
-          <input id="sound" type="range" min="0" max="100" value="80"></div>
-        <label class="row" style="flex-direction:row;align-items:center;gap:8px"><input id="ts" type="checkbox" checked> Show timestamps</label>
-      </div>
-      <div class="card"><h3>🔒 Password</h3>
-        <input class="fld" id="mypw-cur" type="password" placeholder="Current password" autocomplete="current-password">
-        <input class="fld" id="mypw-new" type="password" placeholder="New password" autocomplete="new-password">
-        <button class="btn" id="mypw-save">Change password</button> <span class="mute" id="mypw-msg"></span>
-      </div>
-      <div class="card hide" id="profile-card"><h3>🌐 My public profile (18+)</h3>
-        <p class="mute">Shown in the Users directory. Minors' accounts don't appear there, so this is adults only.</p>
-        <textarea class="fld" id="bio-area" rows="3" maxlength="500" placeholder="About me (markdown: **bold** *italic* __underline__, [label](https://...))"></textarea>
-        <div id="link-rows"></div>
-        <button class="btn" id="link-add" type="button" style="margin:6px 0">+ Add a link</button>
-        <button class="btn" id="profile-save">Save profile</button> <span class="mute" id="profile-msg"></span>
-      </div>
-      <div class="card danger"><h3>⚠️ Account</h3>
-        <button class="btn" id="logout">Log out</button>
-        <button class="btn red" id="del" style="margin-left:8px">Delete account</button>
-      </div>
-    </div>
-  </section>
-
-  <section id="qr" class="view">
-    <h1>QR Code</h1>
-    <p class="mute">Copyrighted by no one except owner ©</p>
-    <h3>Totally not sus download</h3>
-    <button class="btn red" id="dl">Download file</button>
-    <div id="pixels"></div>
-  </section>
-
-  <section id="science" class="view">
-    <article>
-    <h1>Molecular Science</h1>
-    <p class="mute">Copyrighted by no one except owner ©</p>
-    <p><b>Hydrogen tank</b> + <b>oxygen tank</b> =<br>
-    <b>(desired result)</b> H2O <small>water</small><br>
-    <b>(byproduct)</b> OH <small>hydroxyl, a very reactive fragment</small><br>
-    <b>(byproduct)</b> H2O2 <small>hydrogen peroxide</small><br>
-    <b>(byproduct)</b> heat/energy <small>bonds forming release energy</small></p>
-    <p><b>Mix wrong:</b><br>
-    <b>(H2O2)</b> <small>hydrogen peroxide</small><br>
-    <b>(COOH)</b> <small>the carboxyl group found in amino acids</small><br>
-    <b>(HOOH2H2O3O3h3o4h8o2o2h3O12H14)</b> <small>your atomic reader shows what looks like monkey typing</small></p>
-      </article>
-  </section>
-
-  <section id="code" class="view">
-    <h1>Coding advice</h1>
-    <h3>HTML skeleton</h3>
-    <div class="doc"><button class="btn" id="copy">Copy</button><pre id="skeleton"></pre></div>
-  </section>
-
-  <section id="chat" class="view">
-    <h1>Global chat</h1>
-    <p class="mute">**bold** __underline__ *italic* ~~strike~~ {hidden from guests}</p>
-    <div id="chat-off" class="mute hide">Chat isn't available for accounts under 13.</div>
-    <div id="chat-box"><div id="msgs"></div>
-      <form id="chat-form"><input id="chat-in" maxlength="500" autocomplete="off" placeholder="Say something..."><button class="btn">Send</button></form></div>
-  </section>
-
-  <section id="staff" class="view">
-    <h1>Staff chat</h1>
-    <p class="mute">Mod and above only.</p>
-    <div id="staff-msgs" style="height:50vh;max-width:760px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px"></div>
-    <form id="staff-form" style="display:flex;gap:8px;margin-top:10px;max-width:760px"><input class="fld" id="staff-in" style="margin:0" maxlength="500" autocomplete="off" placeholder="Message the team..."><button class="btn">Send</button></form>
-  </section>
-
-  <section id="users" class="view">
-    <h1>Users</h1>
-    <p class="mute">Adult (18+) members with a public profile. Minors' accounts don't appear here.</p>
-    <input class="fld" id="user-search" placeholder="Search users..." style="max-width:400px">
-    <div id="user-list" style="margin-top:12px"></div>
-  </section>
-
-  <section id="admin" class="view">
-    <h1>Admin panel</h1>
-    <div class="adm">
-      <input id="a-user" placeholder="Username">
-      <input id="a-hours" type="number" min="1" placeholder="Ban hours">
-      <button class="btn" data-a="ban">Temp ban (mod+)</button>
-      <button class="btn red" data-a="perm">Perm ban (admin+)</button>
-      <button class="btn" data-a="unban">Unban</button>
-      <button class="btn" data-a="role:mod">Make mod</button>
-      <button class="btn" data-a="role:admin">Make admin</button>
-      <button class="btn" data-a="role:headadmin">Make head admin</button>
-      <button class="btn" data-a="role:legal">Make legal</button>
-      <button class="btn" data-a="role:dev">Make dev</button>
-      <button class="btn" data-a="role:user">Make user</button>
-      <button class="btn" data-a="dm">1-on-1 chat</button>
-      <button class="btn red" data-a="delete">Delete account (admin+)</button>
-    </div>
-    <div id="a-msg" class="mute"></div>
-
-    <div id="acc-card" class="card hide" style="max-width:560px"><h3>Create an account (dev+)</h3>
-      <input class="fld" id="nu-user" placeholder="Username">
-      <input class="fld" id="nu-dob" type="date" aria-label="Date of birth">
-      <input class="fld" id="nu-mail" type="email" placeholder="Email (skipped if under 13)">
-      <input class="fld" id="nu-pass" type="password" placeholder="Temporary password (6+ chars)">
-      <button class="btn" id="nu-save">Create</button> <span class="mute" id="nu-msg"></span></div>
-
-    <div id="pw-card" class="card hide" style="max-width:560px"><h3>Reset a password</h3>
-      <p class="mute">An owner-submitted request applies instantly. Anyone else needs 2 admins/head admins, or 1 dev/owner, to approve. Admin and above can start a request.</p>
-      <input class="fld" id="pw-user" placeholder="Username">
-      <input class="fld" id="pw-new" type="password" placeholder="New password (6+ chars)">
-      <button class="btn" id="pw-req">Request change</button> <span class="mute" id="pw-msg"></span>
-      <div id="pw-list"></div></div>
-
-    <div id="bot-card" class="card hide" style="max-width:560px"><h3>Chat bots (dev / head admin / owner)</h3>
-      <input class="fld" id="bot-name" placeholder="Bot name">
-      <input class="fld" id="bot-words" placeholder="Keywords, comma-separated">
-      <input class="fld" id="bot-x" type="number" min="1" placeholder="Strikes before action">
-      <select class="fld" id="bot-action"><option value="warn">Warn in chat</option><option value="ban">Temp ban (hours below)</option></select>
-      <input class="fld" id="bot-hours" type="number" min="1" placeholder="Ban hours (if temp ban)">
-      <div class="row" style="flex-direction:row;align-items:center;gap:16px;flex-wrap:wrap">
-        <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="bot-on" checked> Enabled</label>
-        <span>Active <input id="bot-from" type="time" aria-label="Active from"> to <input id="bot-to" type="time" aria-label="Active to"> (optional)</span>
-      </div>
-      <button class="btn" id="bot-save">Save bot</button> <span class="mute" id="bot-msg"></span>
-      <div id="bot-list"></div></div>
-
-    <h3>Users</h3><div id="a-users"></div>
-    <h3>Reports &amp; tickets</h3><div id="a-reports"></div>
-    <div id="a-binbox"><h3>Bin (kept 90 days)</h3><div id="a-bin"></div></div>
-  </section>
-
-  <section id="tos" class="view">
-  <h1>Terms of Service</h1>
-
-  <div id="tos-text" class="card" style="max-width:640px;white-space:pre-wrap"></div>
-
-  <a href="#" class="rift-shortcut" onclick="switchTab('rift'); return false;" aria-label="Open the Rift">
-    <div class="rift-card" role="button" tabindex="0">
-      <div style="display:flex;flex-direction:column">
-        <div style="font-size:12px;color:#cfe9ff;font-weight:700">Shortcut</div>
-        <div class="rip">
-          <span style="opacity:0.88">R</span>
-          <span class="i-dot" aria-hidden="true"></span>
-          <span style="opacity:0.88">FT</span>
-        </div>
-      </div>
-      <div style="flex:1">
-        <div style="font-weight:900;font-size:16px;letter-spacing:1px">THE RIFT</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.9)">A tear in the dashboard — click to enter</div>
-      </div>
-    </div>
-  </a>
-
-  <div id="tos-edit" class="hide" style="max-width:640px">
-    <textarea class="fld" id="tos-area" rows="12"></textarea>
-    <button class="btn" id="tos-save">Save</button> <span class="mute" id="tos-msg"></span>
-  </div>
-
-  <button class="btn hide" id="tos-editbtn" style="margin-top:10px">Edit (legal/owner)</button>
+<!-- Google AdSense placeholder: once your AdSense account is approved, swap this block for the
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX">
+        loader and your real <ins class="adsbygoogle"> ad-unit snippets from the AdSense dashboard.
+        This site has an under-13 user base — review Google's child-directed / mixed-audience ad
+        policy before enabling real ads: https://support.google.com/adsense/answer/9335564 -->
+<div class="card" style="max-width:640px"><h3>Sponsored</h3>
+<div id="ad-rotator" style="min-height:70px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:8px;color:var(--mute)"></div>
+</div>
 </section>
-    <!--here is it-->
-    <section id="HELLO_its_me" class="view">
-    <h1>Page</h1>
-    <p class="mute">Copyrighted by no one except him ©</p>
-      <article>
-    <h3>its me...</h3>
-        <p>hello i am <span id="OwnerName" var="OwnerName">GreatGamesGuy67</span> and I am writing this official emergency bulletin to document the heavy security breach on our studio's infrastructure.<br>
+
+<section id="settings" class="view">
+<h1>Settings</h1>
+<div class="set">
+<div class="card"><h3>👤 Profile</h3>
+<div class="prof"><div id="av">G</div>
+<div><div><span id="who" style="font-size:20px;font-weight:700">Guest</span><span class="badge" id="rolebadge">Guest</span></div>
+<div class="mute" id="mine"></div></div></div>
+<div class="row"><label>Avatar</label><div class="sws" id="avs"></div></div>
+</div>
+<div class="card"><h3>🎨 Appearance</h3>
+<div class="row"><label>Theme</label><div class="sws" id="sws"></div></div>
+<div class="row"><label for="bright"><span>Brightness</span><span id="bright-v">100%</span></label>
+<input id="bright" type="range" min="10" max="100" value="100"></div>
+</div>
+<div class="card"><h3>💬 Chat</h3>
+<div class="row"><label for="fsize"><span>Text size</span><span id="fsize-v">15px</span></label>
+<input id="fsize" type="range" min="12" max="22" value="15"></div>
+<div class="row"><label for="sound"><span>Message ping volume</span><span id="sound-v">80%</span></label>
+<input id="sound" type="range" min="0" max="100" value="80"></div>
+<label class="row" style="flex-direction:row;align-items:center;gap:8px"><input id="ts" type="checkbox" checked> Show timestamps</label>
+</div>
+<div class="card"><h3>🔒 Password</h3>
+<input class="fld" id="mypw-cur" type="password" placeholder="Current password" autocomplete="current-password">
+<input class="fld" id="mypw-new" type="password" placeholder="New password" autocomplete="new-password">
+<button class="btn" id="mypw-save">Change password</button> <span class="mute" id="mypw-msg"></span>
+</div>
+<div class="card hide" id="profile-card"><h3>🌐 My public profile (18+)</h3>
+<p class="mute">Shown in the Users directory. Minors' accounts don't appear there, so this is adults only.</p>
+<textarea class="fld" id="bio-area" rows="3" maxlength="500" placeholder="About me (markdown: **bold** *italic* __underline__, [label](https://...))"></textarea>
+<div id="link-rows"></div>
+<button class="btn" id="link-add" type="button" style="margin:6px 0">+ Add a link</button>
+<button class="btn" id="profile-save">Save profile</button> <span class="mute" id="profile-msg"></span>
+</div>
+<div class="card danger"><h3>⚠️ Account</h3>
+<button class="btn" id="logout">Log out</button>
+<button class="btn red" id="del" style="margin-left:8px">Delete account</button>
+</div>
+</div>
+</section>
+
+<section id="qr" class="view">
+<h1>QR Code</h1>
+<p class="mute">Copyrighted by no one except owner ©</p>
+<h3>Totally not sus download</h3>
+<button class="btn red" id="dl">Download file</button>
+<div id="pixels"></div>
+</section>
+
+<section id="science" class="view">
+<article>
+<h1>Molecular Science</h1>
+<p class="mute">Copyrighted by no one except owner ©</p>
+<p><b>Hydrogen tank</b> + <b>oxygen tank</b> =<br>
+<b>(desired result)</b> H2O <small>water</small><br>
+<b>(byproduct)</b> OH <small>hydroxyl, a very reactive fragment</small><br>
+<b>(byproduct)</b> H2O2 <small>hydrogen peroxide</small><br>
+<b>(byproduct)</b> heat/energy <small>bonds forming release energy</small></p>
+<p><b>Mix wrong:</b><br>
+<b>(H2O2)</b> <small>hydrogen peroxide</small><br>
+<b>(COOH)</b> <small>the carboxyl group found in amino acids</small><br>
+<b>(HOOH2H2O3O3h3o4h8o2o2h3O12H14)</b> <small>your atomic reader shows what looks like monkey typing</small></p>
+</article>
+</section>
+
+<section id="code" class="view">
+<h1>Coding advice</h1>
+<h3>HTML skeleton</h3>
+<div class="doc"><button class="btn" id="copy">Copy</button><pre id="skeleton"></pre></div>
+</section>
+
+<section id="chat" class="view">
+<h1>Global chat</h1>
+<p class="mute">**bold** __underline__ *italic* ~~strike~~ {hidden from guests}</p>
+<div id="chat-off" class="mute hide">Chat isn't available for accounts under 13.</div>
+<div id="chat-box"><div id="msgs"></div>
+<form id="chat-form"><input id="chat-in" maxlength="500" autocomplete="off" placeholder="Say something..."><button class="btn">Send</button></form></div>
+</section>
+
+<section id="staff" class="view">
+<h1>Staff chat</h1>
+<p class="mute">Mod and above only.</p>
+<div id="staff-msgs" style="height:50vh;max-width:760px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px"></div>
+<form id="staff-form" style="display:flex;gap:8px;margin-top:10px;max-width:760px"><input class="fld" id="staff-in" style="margin:0" maxlength="500" autocomplete="off" placeholder="Message the team..."><button class="btn">Send</button></form>
+</section>
+
+<section id="users" class="view">
+<h1>Users</h1>
+<p class="mute">Adult (18+) members with a public profile. Minors' accounts don't appear here.</p>
+<input class="fld" id="user-search" placeholder="Search users..." style="max-width:400px">
+<div id="user-list" style="margin-top:12px"></div>
+</section>
+
+<section id="admin" class="view">
+<h1>Admin panel</h1>
+<div class="adm">
+<input id="a-user" placeholder="Username">
+<input id="a-hours" type="number" min="1" placeholder="Ban hours">
+<button class="btn" data-a="ban">Temp ban (mod+)</button>
+<button class="btn red" data-a="perm">Perm ban (admin+)</button>
+<button class="btn" data-a="unban">Unban</button>
+<button class="btn" data-a="role:mod">Make mod</button>
+<button class="btn" data-a="role:admin">Make admin</button>
+<button class="btn" data-a="role:headadmin">Make head admin</button>
+<button class="btn" data-a="role:legal">Make legal</button>
+<button class="btn" data-a="role:dev">Make dev</button>
+<button class="btn" data-a="role:user">Make user</button>
+<button class="btn" data-a="dm">1-on-1 chat</button>
+<button class="btn red" data-a="delete">Delete account (admin+)</button>
+</div>
+<div id="a-msg" class="mute"></div>
+
+<div id="acc-card" class="card hide" style="max-width:560px"><h3>Create an account (dev+)</h3>
+<input class="fld" id="nu-user" placeholder="Username">
+<input class="fld" id="nu-dob" type="date" aria-label="Date of birth">
+<input class="fld" id="nu-mail" type="email" placeholder="Email (skipped if under 13)">
+<input class="fld" id="nu-pass" type="password" placeholder="Temporary password (6+ chars)">
+<button class="btn" id="nu-save">Create</button> <span class="mute" id="nu-msg"></span></div>
+
+<div id="pw-card" class="card hide" style="max-width:560px"><h3>Reset a password</h3>
+<p class="mute">An owner-submitted request applies instantly. Anyone else needs 2 admins/head admins, or 1 dev/owner, to approve. Admin and above can start a request.</p>
+<input class="fld" id="pw-user" placeholder="Username">
+<input class="fld" id="pw-new" type="password" placeholder="New password (6+ chars)">
+<button class="btn" id="pw-req">Request change</button> <span class="mute" id="pw-msg"></span>
+<div id="pw-list"></div></div>
+
+<div id="bot-card" class="card hide" style="max-width:560px"><h3>Chat bots (dev / head admin / owner)</h3>
+<input class="fld" id="bot-name" placeholder="Bot name">
+<input class="fld" id="bot-words" placeholder="Keywords, comma-separated">
+<input class="fld" id="bot-x" type="number" min="1" placeholder="Strikes before action">
+<select class="fld" id="bot-action"><option value="warn">Warn in chat</option><option value="ban">Temp ban (hours below)</option></select>
+<input class="fld" id="bot-hours" type="number" min="1" placeholder="Ban hours (if temp ban)">
+<div class="row" style="flex-direction:row;align-items:center;gap:16px;flex-wrap:wrap">
+<label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="bot-on" checked> Enabled</label>
+<span>Active <input id="bot-from" type="time" aria-label="Active from"> to <input id="bot-to" type="time" aria-label="Active to"> (optional)</span>
+</div>
+<button class="btn" id="bot-save">Save bot</button> <span class="mute" id="bot-msg"></span>
+<div id="bot-list"></div></div>
+
+<h3>Users</h3><div id="a-users"></div>
+<h3>Reports &amp; tickets</h3><div id="a-reports"></div>
+<div id="a-binbox"><h3>Bin (kept 90 days)</h3><div id="a-bin"></div></div>
+</section>
+
+<section id="tos" class="view">
+<h1>Terms of Service</h1>
+
+<div id="tos-text" class="card" style="max-width:640px;white-space:pre-wrap"></div>
+
+<a href="#" class="rift-shortcut" onclick="switchTab('rift'); return false;" aria-label="Open the Rift">
+<div class="rift-card" role="button" tabindex="0">
+<div style="display:flex;flex-direction:column">
+<div style="font-size:12px;color:#cfe9ff;font-weight:700">Shortcut</div>
+<div class="rip">
+<span style="opacity:0.88">R</span>
+<span class="i-dot" aria-hidden="true"></span>
+<span style="opacity:0.88">FT</span>
+</div>
+</div>
+<div style="flex:1">
+<div style="font-weight:900;font-size:16px;letter-spacing:1px">THE RIFT</div>
+<div style="font-size:13px;color:rgba(255,255,255,0.9)">A tear in the dashboard — click to enter</div>
+</div>
+</div>
+</a>
+
+<div id="tos-edit" class="hide" style="max-width:640px">
+<textarea class="fld" id="tos-area" rows="12"></textarea>
+<button class="btn" id="tos-save">Save</button> <span class="mute" id="tos-msg"></span>
+</div>
+
+<button class="btn hide" id="tos-editbtn" style="margin-top:10px">Edit (legal/owner)</button>
+</section>
+<!--here is it-->
+<section id="HELLO_its_me" class="view">
+<h1>Page</h1>
+<p class="mute">Copyrighted by no one except him ©</p>
+<article>
+<h3>its me...</h3>
+<p>hello i am <span id="OwnerName" var="OwnerName">GreatGamesGuy67</span> and I am writing this official emergency bulletin to document the heavy security breach on our studio's infrastructure.<br>
 <br>
 If you are reading this, it means you successfully bypassed the main menu and found this hidden file by using the <b>HELLO_its_me</b> directory override string. I had to stash this information here because it is currently the only place on the network that is hidden from our global search indexing algorithms.<br>
 <br>
@@ -371,94 +367,94 @@ Worse yet, Marcus has successfully anchored the entry point to the web client it
 We are doing everything we can to maintain the platform's stability. Our legal assistant, <b>legal_bot</b>, has already been isolated to a segregated sandbox server to prevent its automated moderation filters from being hijacked and weaponized against our own userbase. If you navigate back through the <b>Dashboard</b> tabs right now and see any corrupted text or strange entities, <b>do not interact with them</b>.<br>
 <br>
 Furthermore, under no circumstances should you click any external links, weird pop-ups, or strings of URL text generated in the <b>Chat</b> tab, as we work to lock him out completely before the rift page reaches 100% synchronization.</p>
-  </article>
-    </section>
-    <!--end of it-->
-  <section id="legal" class="view">
-    <h1>Legal panel</h1>
-    <h3>Chat &amp; contact reports</h3><div id="lg-reports"></div>
-    <h3>Under-13 users</h3><div id="lg-kids"></div>
-    <h3>Transferred tickets</h3><div id="lg-trans"></div>
-    <h3>Deleted accounts</h3><div id="lg-bin"></div>
-  </section>
-    <!--ai-->
-    <section id="Grape-Ai" class="view">
-        <iframe src="Grape_Ai/index.html" style="width: 1117px; height: 589px; border: none;"></iframe>
-  </section>
+</article>
+</section>
+<!--end of it-->
+<section id="legal" class="view">
+<h1>Legal panel</h1>
+<h3>Chat &amp; contact reports</h3><div id="lg-reports"></div>
+<h3>Under-13 users</h3><div id="lg-kids"></div>
+<h3>Transferred tickets</h3><div id="lg-trans"></div>
+<h3>Deleted accounts</h3><div id="lg-bin"></div>
+</section>
+<!--ai-->
+<section id="Grape-Ai" class="view">
+<iframe src="Grape_Ai/index.html" style="width: 1117px; height: 589px; border: none;"></iframe>
+</section>
 <!-- RIFT view: paste after the TOS section inside <main> -->
 <section id="rift" class="view">
-  <div class="rift-view">
-    <div class="rift-panel">
-      <div class="rift-title">THE RIFT</div>
-      <div class="rift-sub">A shimmering blue tear with corrupting echoes.</div>
+<div class="rift-view">
+<div class="rift-panel">
+<div class="rift-title">THE RIFT</div>
+<div class="rift-sub">A shimmering blue tear with corrupting echoes.</div>
 
-      <div class="rift-main">
-        <div class="rift-seam" aria-hidden="true">
-          R<span class="i-dot" style="width:26px;height:26px;border-radius:50%;
-              background: radial-gradient(circle at 25% 25%, #b355ff 0%, #2a002b 30%, #000 60%);
-              box-shadow:0 0 22px #9b3cff inset;border:1px solid rgba(255,255,255,0.04);display:inline-block;margin-left:6px;margin-right:6px;"></span>FT
-        </div>
+<div class="rift-main">
+<div class="rift-seam" aria-hidden="true">
+R<span class="i-dot" style="width:26px;height:26px;border-radius:50%;
+             background: radial-gradient(circle at 25% 25%, #b355ff 0%, #2a002b 30%, #000 60%);
+             box-shadow:0 0 22px #9b3cff inset;border:1px solid rgba(255,255,255,0.04);display:inline-block;margin-left:6px;margin-right:6px;"></span>FT
+</div>
 
-        <div class="corrupt-box">
-          <p style="margin:0 0 10px;font-weight:700">Reality near the seam fractures — purple-black corruption blooms across the surface.</p>
-          <p style="margin:0;color:#d0eaff">This is a static, atmospheric page. Use the button below to return to the Terms.</p>
-          <a href="#" id="rift-close" class="rift-close">Back to TOS</a>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="corrupt-box">
+<p style="margin:0 0 10px;font-weight:700">Reality near the seam fractures — purple-black corruption blooms across the surface.</p>
+<p style="margin:0;color:#d0eaff">This is a static, atmospheric page. Use the button below to return to the Terms.</p>
+<a href="#" id="rift-close" class="rift-close">Back to TOS</a>
+</div>
+</div>
+</div>
+</div>
 </section>
-  <section id="updates" class="view">
-    <h1>Update log</h1>
-    <div id="upl"></div>
-    <div id="upform" class="card hide" style="max-width:560px"><h3>Add or edit an entry (devs)</h3>
-      <input class="fld" id="up-v" placeholder="Version, like v1.3" maxlength="12">
-      <input class="fld" id="up-t" placeholder="Title, like Security+" maxlength="60">
-      <textarea class="fld" id="up-n" rows="4" maxlength="800" placeholder="One change per line. Start with + (add), ~ (change) or - (remove)"></textarea>
-      <button class="btn" id="up-save">Save</button> <span class="mute" id="up-msg"></span></div>
-  </section>
+<section id="updates" class="view">
+<h1>Update log</h1>
+<div id="upl"></div>
+<div id="upform" class="card hide" style="max-width:560px"><h3>Add or edit an entry (devs)</h3>
+<input class="fld" id="up-v" placeholder="Version, like v1.3" maxlength="12">
+<input class="fld" id="up-t" placeholder="Title, like Security+" maxlength="60">
+<textarea class="fld" id="up-n" rows="4" maxlength="800" placeholder="One change per line. Start with + (add), ~ (change) or - (remove)"></textarea>
+<button class="btn" id="up-save">Save</button> <span class="mute" id="up-msg"></span></div>
+</section>
 
-  <section id="help" class="view">
-    <h1>Help</h1>
-    <div class="card" style="max-width:560px;margin-bottom:16px"><h3>Limit of liability (lol)</h3>
-      <p class="mute">GrapeGreen is provided "as is" by a person with a keyboard. We are not liable for lost memes, emotional damage from the Wall of Memes, chat messages you regret, or the heat death of the universe. Use at your own risk. This summary card is a joke, but our official TOS tab is a real legal document!</p></div>
+<section id="help" class="view">
+<h1>Help</h1>
+<div class="card" style="max-width:560px;margin-bottom:16px"><h3>Limit of liability (lol)</h3>
+<p class="mute">GrapeGreen is provided "as is" by a person with a keyboard. We are not liable for lost memes, emotional damage from the Wall of Memes, chat messages you regret, or the heat death of the universe. Use at your own risk. This summary card is a joke, but our official TOS tab is a real legal document!</p></div>
 
-    <div class="card" id="bot-chat-card" style="max-width:560px;margin-bottom:16px"><h3>🤖 Support bot</h3>
-      <p class="mute"></p>
-      <div id="bot-chat-log" style="max-height:260px;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px"></div>
-      <div id="bot-chat-intro">
-        <p>Hi! Before we start, do you agree to our <a href="#" id="bot-tos-link">Terms of Service</a>?</p>
-        <button class="btn" id="bot-agree">I agree</button> <button class="btn" id="bot-decline">No thanks</button>
-      </div>
-      <form id="bot-chat-form" class="hide" style="display:flex;gap:8px">
-        <input class="fld" id="bot-chat-in" style="margin:0" placeholder="Type a message..." autocomplete="off">
-        <button class="btn">Send</button>
-      </form>
-    </div>
+<div class="card" id="bot-chat-card" style="max-width:560px;margin-bottom:16px"><h3>🤖 Support bot</h3>
+<p class="mute"></p>
+<div id="bot-chat-log" style="max-height:260px;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px"></div>
+<div id="bot-chat-intro">
+<p>Hi! Before we start, do you agree to our <a href="#" id="bot-tos-link">Terms of Service</a>?</p>
+<button class="btn" id="bot-agree">I agree</button> <button class="btn" id="bot-decline">No thanks</button>
+</div>
+<form id="bot-chat-form" class="hide" style="display:flex;gap:8px">
+<input class="fld" id="bot-chat-in" style="margin:0" placeholder="Type a message..." autocomplete="off">
+<button class="btn">Send</button>
+</form>
+</div>
 
-    <div class="card hide" id="mytickets-card" style="max-width:560px;margin-bottom:16px"><h3>Your tickets</h3>
-      <div id="mytickets"></div>
-    </div>
+<div class="card hide" id="mytickets-card" style="max-width:560px;margin-bottom:16px"><h3>Your tickets</h3>
+<div id="mytickets"></div>
+</div>
 
-    <form id="ct-form" class="card" style="max-width:560px"><h3>Contact us</h3>
-      <p class="mute">Prefer a form? See our <a href="#" id="ct-tos-link">Terms of Service</a> first if you like.</p>
-      <input class="fld hide" id="ct-mail" type="email" placeholder="Your Gmail so we can reply">
-      <label id="ct-age" class="hide"><input type="checkbox" id="ct-13"> I'm 13 or older</label>
-      <input class="fld" id="ct-title" placeholder="Title" maxlength="80" required>
-      <textarea class="fld" id="ct-det" rows="4" maxlength="1000" placeholder="Details" required></textarea>
-      <div id="ct-shotrow"><input id="ct-shot" type="file" accept="image/*"> <span class="mute"></span></div>
-      <button class="btn" style="margin-top:10px">Send</button> <span class="mute" id="ct-msg"></span></form>
-  </section>
+<form id="ct-form" class="card" style="max-width:560px"><h3>Contact us</h3>
+<p class="mute">Prefer a form? See our <a href="#" id="ct-tos-link">Terms of Service</a> first if you like.</p>
+<input class="fld hide" id="ct-mail" type="email" placeholder="Your Gmail so we can reply">
+<label id="ct-age" class="hide"><input type="checkbox" id="ct-13"> I'm 13 or older</label>
+<input class="fld" id="ct-title" placeholder="Title" maxlength="80" required>
+<textarea class="fld" id="ct-det" rows="4" maxlength="1000" placeholder="Details" required></textarea>
+<div id="ct-shotrow"><input id="ct-shot" type="file" accept="image/*"> <span class="mute"></span></div>
+<button class="btn" style="margin-top:10px">Send</button> <span class="mute" id="ct-msg"></span></form>
+</section>
 
-  <section id="memes" class="view">
-    <h1>Wall of memes</h1>
-    <p class="mute">Take nothing personal</p>
-    <div class="memes">
-      <img src="assets/images/scp173_meme.png" alt="SCP-173 meme">
-      <img src="assets/images/scp096_meme.png" alt="SCP-096 meme">
-      <img src="assets/images/stress_meme.png" alt="Stress meme">
-    </div>
-  </section>
+<section id="memes" class="view">
+<h1>Wall of memes</h1>
+<p class="mute">Take nothing personal</p>
+<div class="memes">
+<img src="assets/images/scp173_meme.png" alt="SCP-173 meme">
+<img src="assets/images/scp096_meme.png" alt="SCP-096 meme">
+<img src="assets/images/stress_meme.png" alt="Stress meme">
+</div>
+</section>
 </main>
 <script src="app.js"></script>
 </body>
