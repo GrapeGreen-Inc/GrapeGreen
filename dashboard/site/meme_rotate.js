@@ -33,28 +33,42 @@ onValue(memeRef, (snapshot) => {
   }
 });
 
-// Function to calculate time remaining until 12:00 AM Pacific Time
+// Accurate calculation of milliseconds remaining until midnight Pacific Time
 function msUntilMidnightPacific() {
   const now = new Date();
-  
-  // Convert current time to a Pacific Time string structure
-  const pacificString = now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
-  const pacificDate = new Date(pacificString);
-  
-  // Create a target date set to tomorrow at 00:00:00 Pacific
-  const midnightPacific = new Date(pacificString);
-  midnightPacific.setDate(midnightPacific.getDate() + 1);
-  midnightPacific.setHours(0, 0, 0, 0);
-  
-  // The variance between local runtime tracking and Pacific target tracking
-  const differenceInPacific = midnightPacific.getTime() - pacificDate.getTime();
-  return differenceInPacific;
+
+  // Create a formatter to extract the exact current elements according to Pacific rules
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric", month: "numeric", day: "numeric",
+    hour: "numeric", minute: "numeric", second: "numeric", hour12: false
+  });
+
+  const parts = formatter.formatToParts(now);
+  const partValues = {};
+  parts.forEach(p => { if (p.type !== 'literal') partValues[p.type] = parseInt(p.value, 10); });
+
+  // Reconstruct the exact current Pacific timestamp natively
+  const currentPacificTime = Date.UTC(
+    partValues.year, partValues.month - 1, partValues.day,
+    partValues.hour, partValues.minute, partValues.second, now.getMilliseconds()
+  );
+
+  // Set the target timestamp to the upcoming midnight Pacific
+  const targetPacificMidnight = Date.UTC(
+    partValues.year, partValues.month - 1, partValues.day + 1,
+    0, 0, 0, 0
+  );
+
+  return targetPacificMidnight - currentPacificTime;
 }
 
 // Triggers a snapshot fetch at exactly 12:00 AM Pacific
 function scheduleNextPacificRotation() {
   const delay = msUntilMidnightPacific();
   
+  console.log(`Meme rotation scheduled. Next rotation in ${(delay / 1000 / 60).toFixed(2)} minutes.`);
+
   setTimeout(async () => {
     try {
       // Force pull the latest path value at midnight from the reference node
