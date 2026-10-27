@@ -456,35 +456,40 @@ Furthermore, under no circumstances should you click any external links, weird p
     </div>
   </section>
     <section id="Videos" class="view">
-    <h1>Help Videos</h1>
-    <hr style="border: 0; border-top: 2px solid purple;">
+<!-- Help Videos Container -->
+<div class="video-gallery">
+  
+  <!-- Main Featured Video -->
+  <div class="main-video-container">
+    <h2>Featured: How To Use GrapeGreen</h2>
+    <video controls preload="metadata" width="100%">
+      <source src="assets/images/how_to_use.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+
+  <!-- Other Help Videos Grid -->
+  <h2>Other Support Guides</h2>
+  <div class="sub-video-grid" style="display: flex; gap: 20px; flex-wrap: wrap;">
     
-    <h2>How To Use GrapeGreen</h2>
-    <video controls style="width: 100%; max-width: 1027px; height: auto; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-        <source src="assets/videos/HelpVideo1.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+    <!-- Video 1: Registration -->
+    <div class="video-card" style="flex: 1; min-width: 280px;">
+      <h3>How To Create An Account</h3>
+      <video controls preload="metadata" width="100%">
+        <source src="assets/images/create_account.mp4" type="video/mp4">
+      </video>
+    </div>
 
-    <hr style="border: 0; border-top: 2px solid purple; margin: 20px 0;">
+    <!-- Video 2: Deletion -->
+    <div class="video-card" style="flex: 1; min-width: 280px;">
+      <h3>How To Delete An Account</h3>
+      <video controls preload="metadata" width="100%">
+        <source src="assets/images/delete_account.mp4" type="video/mp4">
+      </video>
+    </div>
 
-    <h2>How To Delete Accounts</h2>
-    <video controls style="width: 100%; max-width: 1027px; height: auto; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-        <source src="assets/videos/HelpVideo2.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-
-    <hr style="border: 0; border-top: 5px solid purple; margin: 20px 0;">
-
-    <h2>How To Create A Account</h2>
-    <video controls style="width: 100%; max-width: 1027px; height: auto; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-        <source src="assets/videos/HelpVideo3.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-
-    <hr style="border: 0; border-top: 5px solid purple; margin: 20px 0;">
-
-    <h1>Other Videos</h1>
-    <hr style="border: 0; border-top: 2px solid purple;">
+  </div>
+</div>
 </section>
 
 </main>
