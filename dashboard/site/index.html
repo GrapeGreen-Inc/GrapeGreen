@@ -134,6 +134,7 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
   <button class="side-item" data-tab="updates">Update log</button>
   <button class="side-item" data-tab="help">Help</button>
   <button class="side-item" data-tab="tos">TOS</button>
+    <button class="side-item" data-tab="Videos">Videos</button>
   <button class="side-item hide" id="nav-legal" data-tab="legal">Legal panel</button>
   <button class="side-item hide" id="nav-admin" data-tab="admin">Admin panel</button>
 </nav>
@@ -443,13 +444,6 @@ Furthermore, under no circumstances should you click any external links, weird p
       <textarea class="fld" id="ct-det" rows="4" maxlength="1000" placeholder="Details" required></textarea>
       <div id="ct-shotrow"><input id="ct-shot" type="file" accept="image/*"> <span class="mute"></span></div>
       <button class="btn" style="margin-top:10px">Send</button> <span class="mute" id="ct-msg"></span></form>
-      <hr style="border: 0; border-top: 2px solid purple;">
-      <h1>Help Videos</h1>
-<hr style="border: 0; border-top: 2px solid purple;">
-      <h2>How To Use GrapeGreen</h2>
-      <video src="assets/videos/HelpVideo1.mp4" controls style="width: 100%; max-width: 1027px; height: auto; aspect-ratio: 1027 / 443; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"></video>
-<hr style="border: 0; border-top: 2px solid purple;">
-      
   </section>
 
   <section id="memes" class="view">
@@ -461,6 +455,18 @@ Furthermore, under no circumstances should you click any external links, weird p
       <img src="assets/images/stress_meme.png" alt="Stress meme">
     </div>
   </section>
+    <section id="Videos" class="view">
+              <h1>Help Videos</h1>
+<hr style="border: 0; border-top: 2px solid purple;">
+      <h2>How To Use GrapeGreen</h2>
+      <video src="assets/videos/HelpVideo1.mp4" controls style="width: 100%; max-width: 1027px; height: auto; aspect-ratio: 1027 / 443; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"></video>
+<hr style="border: 0; border-top: 2px solid purple;">
+
+        <hr style="border: 0; border-top: 5px solid purple;">
+
+        <h1>Other Videos</h1>
+        <hr style="border: 0; border-top: 2px solid purple;">
+    </section>
 </main>
 <script src="app.js"></script>
 </body>
