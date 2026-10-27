@@ -6,6 +6,11 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://GreatGamesGuy67.github.io/GrapeGreen/dashboard/site/Grape_Ai/</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://GreatGamesGuy67.github.io/GrapeGreen/EmailOptions/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
