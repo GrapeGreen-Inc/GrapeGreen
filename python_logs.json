@@ -1,86 +1,56 @@
 [
     {
-        "last_active_timestamp": 1792983665,
+        "last_active_timestamp": 1793142760,
         "activated_by": "System Container Startup Loop",
         "commands_ran": [],
         "runtime_duration_seconds": 0.0
     },
     {
-        "last_active_timestamp": 1792983668,
+        "last_active_timestamp": 1793142763,
         "activated_by": "System Container Startup Loop",
         "commands_ran": [],
         "runtime_duration_seconds": 3.2
     },
     {
-        "last_active_timestamp": 1792983671,
+        "last_active_timestamp": 1793142766,
         "activated_by": "System Container Startup Loop",
         "commands_ran": [],
-        "runtime_duration_seconds": 6.4
+        "runtime_duration_seconds": 6.41
     },
     {
-        "last_active_timestamp": 1792983674,
+        "last_active_timestamp": 1793142769,
         "activated_by": "System Container Startup Loop",
         "commands_ran": [],
-        "runtime_duration_seconds": 9.6
+        "runtime_duration_seconds": 9.61
     },
     {
-        "last_active_timestamp": 1792983678,
+        "last_active_timestamp": 1793142772,
         "activated_by": "System Container Startup Loop",
         "commands_ran": [],
-        "runtime_duration_seconds": 12.8
+        "runtime_duration_seconds": 12.81
     },
     {
-        "last_active_timestamp": 1792983681,
+        "last_active_timestamp": 1793142776,
         "activated_by": "System Container Startup Loop",
         "commands_ran": [],
         "runtime_duration_seconds": 16.01
     },
     {
-        "last_active_timestamp": 1792983684,
+        "last_active_timestamp": 1793142779,
         "activated_by": "System Container Startup Loop",
         "commands_ran": [],
         "runtime_duration_seconds": 19.21
     },
     {
-        "last_active_timestamp": 1792983687,
+        "last_active_timestamp": 1793142782,
         "activated_by": "System Container Startup Loop",
         "commands_ran": [],
         "runtime_duration_seconds": 22.41
     },
     {
-        "last_active_timestamp": 1792983690,
-        "activated_by": "System Container Startup Loop",
-        "commands_ran": [],
-        "runtime_duration_seconds": 25.61
-    },
-    {
-        "last_active_timestamp": 1792983694,
-        "activated_by": "System Container Startup Loop",
-        "commands_ran": [],
-        "runtime_duration_seconds": 28.81
-    },
-    {
-        "last_active_timestamp": 1792983697,
-        "activated_by": "System Container Startup Loop",
-        "commands_ran": [],
-        "runtime_duration_seconds": 32.01
-    },
-    {
-        "last_active_timestamp": 1792983700,
-        "activated_by": "System Container Startup Loop",
-        "commands_ran": [],
-        "runtime_duration_seconds": 35.21
-    },
-    {
-        "last_active_timestamp": 1792983703,
-        "activated_by": "System Container Startup Loop",
-        "commands_ran": [],
-        "runtime_duration_seconds": 38.41
-    },
-    {
-        "last_active_timestamp": 1792983705,
+        "last_active_timestamp": 1793142784,
         "activated_by": "Manual Terminal Interruption SigTerm",
         "commands_ran": [],
-        "runtime_duration_seconds": 39.74
+        "runtime_duration_seconds": 23.94
     }
 ]
