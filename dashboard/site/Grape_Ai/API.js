@@ -1,5 +1,5 @@
 /**
- * API.js - Small Language Model Architecture with real 30,000 allocated parameters
+ * SLM.js - Small Language Model Architecture with real 30,000 allocated parameters
  * Pipeline Flow: Plaintext -> NLP -> FILTER -> SLM
  * Persistence: Cloud Firestore (grape-ai-grapegreen)
  * Security Policy: Read-only parameters/users matrix, read-write diagnostics history
@@ -82,8 +82,7 @@ let currentResponse = "";
 let nlpDecodedOutput = "";
 let currentMood = "neutral";
 
-// Persistent reference location indexes identifier in Cloud Firestore
-const userDocRef = doc(db, "Ai-Users", "shared_30k_matrix_state");
+// Persistent reference location matrix dataset identifier in Cloud Firestore
 const matrixDocRef = doc(db, "Parameters", "shared_30k_matrix_state");
 
 /**
@@ -99,7 +98,6 @@ function formatParamString(value) {
  */
 export async function loadWeightsMatrix() {
   try {
-    // Attempting download from the new Parameters route
     const docSnap = await getDoc(matrixDocRef);
     
     if (docSnap.exists()) {
@@ -133,7 +131,6 @@ export async function loadWeightsMatrix() {
  */
 async function saveWeightsMatrix() {
   try {
-    // Writes to the Parameters path to separate weights initialization states from core User objects
     await setDoc(matrixDocRef, {
       weights: parameters,
       lastUpdated: Date.now(),
@@ -300,3 +297,42 @@ export async function receiveRequest(userInput) {
 // Global state controller modifier exports
 export function setMode(mode) { internalMode = mode; }
 export function getMode() { return internalMode; }
+
+// --- AUTOMATED TESTING ENVIRONMENT RUNNER ---
+// Checks if this file is executed as the main script inside your Node environment terminal window
+if (process.argv[1] && process.argv[1].endsWith('API.js')) {
+  (async () => {
+    console.log("======================================================");
+    console.log("  Executing Built-in SLM.js 30k Automated Training Loop");
+    console.log("======================================================");
+    
+    // 1. Force state parameters initialization
+    internalMode = 1;
+    
+    // 2. Synchronize weight array matrices
+    console.log("-> Initializing Firestore Sync...");
+    const syncStatus = await loadWeightsMatrix();
+    console.log(`[Firestore Status]: ${syncStatus}`);
+    
+    // 3. Fire an active prompt test token down the architecture
+    const promptToken = "wiki test baseline tracking text";
+    console.log(`\n-> Injecting Prompt Token: "${promptToken}"`);
+    const initialResult = await receiveRequest(promptToken);
+    console.log(initialResult);
+    
+    // 4. Simulate a reward feedback cycle across all 30k indices
+    console.log("\n-> Testing Reinforcement Correction Mutation (/win)...");
+    const feedbackStatus = await submitTerminalFeedback("win");
+    console.log(feedbackStatus);
+    
+    // 5. Fire a follow-up verification check
+    console.log("\n-> Verification inference pass post-mutation:");
+    const postResult = await receiveRequest(promptToken);
+    console.log(postResult);
+    console.log("======================================================");
+    process.exit(0);
+  })().catch(err => {
+    console.error(`Runtime session crashed: ${err.message}`);
+    process.exit(1);
+  });
+}
