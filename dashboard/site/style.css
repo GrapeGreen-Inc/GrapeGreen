@@ -105,6 +105,69 @@ td img{display:block;margin-top:6px;border:1px solid var(--line);border-radius:6
 .ch.chg{background:#fff6d6;border-color:#e0a800;color:#6b4e00}
 .ch.rem{background:#fde8e8;border-color:#d63b3b;color:#7f1d1d}
 .ch.pl{border-color:var(--line)}
+/* Help Videos Layout Wrapper */
+.video-gallery {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 15px;
+    font-family: sans-serif;
+    color: #2c1a4d; /* GrapeGreen text color */
+}
+
+/* Titles inside the gallery */
+.video-gallery h2 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #2c1a4d;
+}
+
+.video-gallery h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #4a2874;
+}
+
+/* Main Featured Video Card */
+.main-video-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2d9f3;
+}
+
+/* Grid Wrapper for smaller help guides */
+.sub-video-grid {
+    /* Flex styles are already inline in your HTML, 
+       adding these completes the setup */
+    justify-content: flex-start;
+}
+
+/* Individual Support Video Cards */
+.video-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2d9f3;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Subtle hover effect for interactive look */
+.video-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(74, 40, 116, 0.1);
+}
+
+/* Responsive video elements matching interface curves */
+.video-gallery video {
+    border-radius: 8px;
+    border: 1px solid #d1c4e9;
+    background-color: #000000;
+    display: block;
+}
+
 /* --- RIFT: styles (paste into site-wide <style>) --- */
 .rift-shortcut { display:block; text-decoration:none; margin-top:16px; }
 .rift-card { display:flex; gap:16px; align-items:center; background: linear-gradient(90deg,#0f52c6 0%, #2a8df0 60%); padding:18px; border-radius:12px; box-shadow: 0 10px 30px rgba(10,40,90,0.5); color:#fff; width:min(100%,520px); }
