@@ -2,7 +2,11 @@
 
 ---
 
-## KEYWORDS
+## (V1.5.2)
+
+---
+
+### KEYWORDS
 * wall of memes
 * chat
 * grapegreen
@@ -15,5 +19,6 @@
 * dashboard
 * users
 * coding
+* (V1.5.2)
 
 ---
