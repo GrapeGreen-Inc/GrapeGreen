@@ -14,6 +14,18 @@ This project includes:
 - A meme gallery and community browsing features
 - Help, support, and account settings for users
 
+---
+
+### how to use grapegreen
+
+
+
+https://github.com/user-attachments/assets/9ce45de0-82ff-469d-9397-6ecfc67ed3d3
+
+
+
+---
+
 ## Features
 
 ### Authentication and accounts
