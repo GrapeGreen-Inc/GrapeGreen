@@ -76,4 +76,5 @@ GrapeGreen is built to be welcoming, engaging, and easy to explore. The communit
 # ⚠ **FORKING IS NOT ALLOWED IF YOU FORK I WILL BE MAD** ⚠
 ## 🚫 **IF YOU FORK YOU ARE WILLING MAKING YOURSELF PUBLIC ENEMY** #1 🚫
 ### **this repo is locked to fork** 🔒
-Error: You cannot disable or block someone from forking a public repo. Because this repo is currently public you cannot prevent anyone from forking it. - Ethan88438 (@Isan88438)
+
+###### Error: You cannot disable or block someone from forking a public repo. Because this repo is currently public you cannot prevent anyone from forking it. - Ethan88438 (@Isan88438)
