@@ -12,7 +12,7 @@
 ## To-Do
 - [ ] Fix staff chat.
 
-- [ ] get site indexed.
+- [x] get site indexed.
 
 - [x] Fix users lookup.
 
