@@ -19,7 +19,7 @@ This project includes:
 ### how to use grapegreen
 
 
-https://github.com/user-attachments/assets/a3087088-01f4-42db-9a4f-d1331816f9b8
+https://github.com/GrapeGreen-Inc/GrapeGreen/Dashboard/Site/assets/videos/HelpVideo1.mp4
 
 
 ---
