@@ -1,6 +1,15 @@
+## V1.6
+### Video+
+* [ADD] add video section
+* [ADD] how to delete a account help video
+* [ADD] how to use grapegreen help video
+* [ADD] how to create a account help video
+
+---
+
 ## V1.5.2
 ### AI+ patch 2
-* [change] made sign up work.
+* [CHANGE] made sign up work.
 
 ---
 
