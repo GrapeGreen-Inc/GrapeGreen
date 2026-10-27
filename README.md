@@ -19,9 +19,7 @@ This project includes:
 ### how to use grapegreen
 
 
-
-https://github.com/user-attachments/assets/9ce45de0-82ff-469d-9397-6ecfc67ed3d3
-
+https://github.com/user-attachments/assets/a3087088-01f4-42db-9a4f-d1331816f9b8
 
 
 ---
