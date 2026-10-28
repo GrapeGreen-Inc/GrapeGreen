@@ -191,46 +191,64 @@
           <button type="button" id="close-modal-btn">&times;</button>
         </div>
 
-        <div id="settings-modal-body">
-          <p class="modal-intro">Click your profile avatar to view or change your current plan tier.</p>
-          
-          <div id="tiers-grid">
-            
-            <!-- Plan Option: Free -->
-            <div class="tier-card active" id="plan-free">
-              <div class="tier-title">FREE</div>
+<div id="settings-modal-body">
+  <div class="settings-switcher" role="tablist">
+    <button type="button" id="plans-tab" class="settings-tab active" role="tab" aria-selected="true">Plans</button>
+    <button type="button" id="account-tab" class="settings-tab" role="tab" aria-selected="false">Settings</button>
+  </div>
 
-              <div class="tier-price">$0</div>
-              <p class="tier-description">Standard chat access with basic daily message limits for everyone.</p>
-            </div>
+  <section id="plans-panel" class="settings-panel">
+    <p class="modal-intro">View the available Grape AI plans.</p>
 
-            <!-- Plan Option: Plus -->
-            <div class="tier-card" id="plan-plus">
-              <div class="tier-title">PLUS</div>
-              <div class="tier-price">$4.99 / mo</div>
-              <p class="tier-description">Unlock custom folders to organize your chat threads into projects.</p>
-            </div>
+    <div id="tiers-grid">
+      <div class="tier-card active" id="plan-free">
+        <div class="tier-title">FREE</div>
+        <div class="tier-price">$0</div>
+        <p class="tier-description">Standard chat access with basic daily message limits.</p>
+      </div>
 
-            <!-- Plan Option: Pro -->
-            <div class="tier-card" id="plan-pro">
-              <div class="tier-title">PRO</div>
-              <div class="tier-price">$19.99 / mo</div>
-              <p class="tier-description">Higher messaging limits and faster AI answers for power users.</p>
-            </div>
+      <div class="tier-card" id="plan-plus">
+        <div class="tier-title">PLUS</div>
+        <div class="tier-price">$4.99 / mo</div>
+        <p class="tier-description">Custom folders to organise your chat threads.</p>
+      </div>
 
-            <!-- Plan Option: Max -->
+      <div class="tier-card" id="plan-pro">
+        <div class="tier-title">PRO</div>
+        <div class="tier-price">$19.99 / mo</div>
+        <p class="tier-description">Higher messaging limits and faster responses.</p>
+      </div>
 
-            <div class="tier-card" id="plan-max">
-              <div class="tier-title">MAX</div>
-              <div class="tier-price">$49.99 / mo</div>
-              <p class="tier-description">Ultimate performance and full system features. (Site owners get this plan automatically).</p>
-            </div>
-
-          </div>
-        </div>
-
+      <div class="tier-card" id="plan-max">
+        <div class="tier-title">MAX</div>
+        <div class="tier-price">$49.99 / mo</div>
+        <p class="tier-description">Ultimate performance and full system features.</p>
       </div>
     </div>
+  </section>
+
+  <section id="account-panel" class="settings-panel hidden" role="tabpanel" aria-labelledby="account-tab">
+    <div class="account-settings-grid">
+      <div class="account-setting-card">
+        <h4>Account overview</h4>
+        <p>Username: <strong id="settings-username">Guest User</strong></p>
+        <p>Current plan: <strong id="settings-plan">FREE Plan</strong></p>
+      </div>
+
+      <div class="account-setting-card">
+        <h4>Subscription</h4>
+        <p>Manage your current plan. Subscription cancellation will be available once billing is connected.</p>
+        <button type="button" id="cancel-plan-btn" disabled>Cancel Plan</button>
+      </div>
+
+      <div class="account-setting-card danger">
+        <h4>Delete account</h4>
+        <p>Account deletion will be enabled when a secure account and chat-history deletion process is available.</p>
+        <button type="button" id="delete-account-btn" disabled>Delete Account</button>
+      </div>
+    </div>
+  </section>
+</div>
 
     <!-- External script handling all background actions and encryption rules -->
     <script type="module" src="SLM.js"></script>
