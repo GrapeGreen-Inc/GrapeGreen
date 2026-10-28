@@ -3,6 +3,45 @@
 body{margin:0;font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif;background:var(--paper);color:var(--ink)}
 button{font:inherit;cursor:pointer}
 :focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+/* ==========================================
+   GRAPEGREEN WALL OF ADS (5x5 GRID SYSTEM)
+   ========================================== */
+.wall-of-ads-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* Enforces 5 side-by-side columns */
+    gap: 12px;
+    padding: 20px;
+    background-color: #140526; /* Deep dark purple matching style guide */
+    border-radius: 12px;
+    border: 1px solid #3c146e;
+    margin: 20px 0;
+}
+
+.grape-ad-box {
+    background: #1d0b33;
+    border: 2px solid #5d259e;
+    border-radius: 8px;
+    padding: 6px;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+/* Flash neon green when highlighted during rotation updates */
+.grape-ad-box.rotating-now {
+    border-color: #76ff03 !important;
+    box-shadow: 0 0 10px rgba(118, 255, 3, 0.4);
+}
+
+/* Make it wrap nicely on smaller laptop screens */
+@media (max-width: 1200px) {
+    .wall-of-ads-container {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+}
 
 /* app shell */
 .top{position:fixed;top:0;left:0;right:0;height:50px;background:var(--grape);display:flex;align-items:center;gap:8px;padding:0 10px;z-index:10}
