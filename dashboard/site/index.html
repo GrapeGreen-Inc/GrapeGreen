@@ -50,7 +50,17 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
-const db = getFirestore(initializeApp({ projectId: "app-iguess-39f2f", apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es" }));
+
+// ADDED: Modular Auth imports needed for Google Sign-In popups
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
+// Initialize App and Database
+const app = initializeApp({ projectId: "app-iguess-39f2f", apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es" });
+const db = getFirestore(app);
+
+// ADDED: Initialize the Auth instance
+const auth = getAuth(app);
+
 window.listenChat = (ok, bad) => onSnapshot(query(collection(db, "chat"), orderBy("t", "desc"), limit(60)), snap => ok(snap.docs.map(d => ({ id: d.id, ...d.data() }))), bad);
 window.listenStaff = (ok, bad) => onSnapshot(query(collection(db, "staffchat"), orderBy("t", "desc"), limit(60)), snap => ok(snap.docs.map(d => ({ id: d.id, ...d.data() }))), bad);
 window.listenNotices = (user, ok) => onSnapshot(query(collection(db, "notices"), where("to", "==", user)), snap => ok(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => {});
