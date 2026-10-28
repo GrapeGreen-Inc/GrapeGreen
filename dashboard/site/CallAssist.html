@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrapeGreen Inc. Support Desk</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1528;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+            padding: 12px;
+        }
+
+        .container {
+            background-color: #2b2244;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            width: 100%;
+            max-width: 440px;
+            border: 2px solid #5a4294;
+            text-align: center;
+            margin: auto;
+        }
+
+        h1 {
+            color: #9dff82;
+            font-size: clamp(20px, 5vw, 24px);
+            margin-bottom: 20px;
+            word-wrap: break-word;
+        }
+
+        .status-box {
+            background-color: #1a1528;
+            border: 1px solid #5a4294;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: clamp(14px, 3.5vw, 16px);
+            color: #d1c4e9;
+            word-wrap: break-word;
+        }
+
+        .status-highlight {
+            color: #9dff82;
+            font-weight: bold;
+        }
+
+        .btn {
+            width: 100%;
+            color: white;
+            border: none;
+            min-height: 52px;
+            padding: 14px 20px;
+            font-size: clamp(15px, 4vw, 18px);
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            margin-bottom: 12px;
+            word-wrap: break-word;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .btn:last-child {
+            margin-bottom: 0;
+        }
+
+        .btn-hold {
+            background-color: #5a4294;
+        }
+
+        .btn-hold:hover, .btn-hold:active {
+            background-color: #7b5dc7;
+            box-shadow: 0 0 12px rgba(157, 255, 130, 0.4);
+        }
+
+        .btn-pickup {
+            background-color: #2e7d32;
+            display: none;
+        }
+
+        .btn-pickup:hover, .btn-pickup:active {
+            background-color: #388e3c;
+            box-shadow: 0 0 12px rgba(157, 255, 130, 0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>GrapeGreen Call Routing</h1>
+        
+        <div class="status-box" id="status-display">
+            System Status: <span class="status-highlight">Idle</span>
+        </div>
+
+        <button class="btn btn-hold" id="hold-btn">Put Call on Hold</button>
+        <button class="btn btn-pickup" id="pickup-btn">Pick Up Button</button>
+    </div>
+
+    <!-- Background Hold Music Element -->
+    <audio id="hold-music" src="music.mp3" loop playsinline></audio>
+
+    <script>
+        const holdBtn = document.getElementById('hold-btn');
+        const pickupBtn = document.getElementById('pickup-btn');
+        const statusDisplay = document.getElementById('status-display');
+        const holdMusic = document.getElementById('hold-music');
+
+        // Lock music tracking streams straight to 65% volume
+        holdMusic.volume = 0.65;
+
+        let targetVoice = null;
+
+        const holdText = "Please hold. A GrapeGreen Incorporated team member will be with you shortly.";
+        const pickupText = "You will now speak with a GrapeGreen Incorporated representative. This call may be recorded.";
+
+        function initVoicePreference() {
+            if (typeof speechSynthesis === 'undefined') return;
+            const voices = speechSynthesis.getVoices();
+            
+            targetVoice = voices.find(voice => 
+                voice.name.includes('Google') && 
+                (voice.lang === 'en-US' || voice.lang === 'en_US')
+            ) || voices.find(voice => voice.lang.startsWith('en-')) || voices;
+        }
+
+        if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = initVoicePreference;
+        }
+        initVoicePreference();
+
+        function speakLine(textToSpeak, callback) {
+            if (typeof speechSynthesis === 'undefined') {
+                if (callback) callback();
+                return;
+            }
+            
+            speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            if (targetVoice) {
+                utterance.voice = targetVoice;
+            }
+
+            let callbackTriggered = false;
+            const handleEnd = () => {
+                if (!callbackTriggered) {
+                    callbackTriggered = true;
+                    if (callback) callback();
+                }
+            };
+
+            utterance.onend = handleEnd;
+            utterance.onerror = handleEnd;
+            
+            speechSynthesis.speak(utterance);
+
+            setTimeout(() => {
+                if (!speechSynthesis.speaking && !callbackTriggered) {
+                    handleEnd();
+                }
+            }, 2500);
+        }
+
+        holdBtn.addEventListener('click', () => {
+            holdBtn.style.display = 'none';
+            statusDisplay.innerHTML = 'Status: <span class="status-highlight" style="color: #ffb300;">Speaking Hold Message...</span>';
+            
+            holdMusic.play().then(() => {
+                holdMusic.pause();
+            }).catch(e => console.log("Pre-auth skipped:", e));
+
+            speakLine(holdText, () => {
+                statusDisplay.innerHTML = 'Status: <span class="status-highlight" style="color: #ff5252;">On Hold (Playing Music)</span>';
+                holdMusic.play().catch(err => console.log("Audio target blocked on device shell:", err));
+                pickupBtn.style.display = 'inline-flex';
+            });
+        });
+
+        pickupBtn.addEventListener('click', () => {
+            pickupBtn.style.display = 'none';
+            statusDisplay.innerHTML = 'Status: <span class="status-highlight" style="color: #ffb300;">Speaking Connecting Message...</span>';
+            
+            holdMusic.pause();
+            holdMusic.currentTime = 0;
+
+            speakLine(pickupText, () => {
+                statusDisplay.innerHTML = 'Status: <span class="status-highlight" style="color: #9dff82;">Connected to Representative</span>';
+                setTimeout(() => {
+                    holdBtn.style.display = 'inline-flex';
+                    statusDisplay.innerHTML = 'Status: <span class="status-highlight">Idle</span>';
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>
