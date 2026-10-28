@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grape Vortex 3D</title>
+    <!-- Relative resource hook directly matching your game folder infrastructure layout rules -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- INTERACTIVE ACCELERATED INITIAL COELUM WORMHOLE PRELOAD SCREEN -->
+    <div id="wormhole-loading-screen">
+        <div class="wormhole-effect-canvas" id="wormhole-visual-bg"></div>
+        <div class="loading-overlay-content">
+            <h1 class="game-branding-title">GRAPE VORTEX 3D</h1>
+            <p class="loading-status-text" id="loading-stage-label">Initializing Firebase Client Framework...</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="loading-progress-fill"></div>
+            </div>
+            <div class="percentage-display" id="loading-percentage-text">0%</div>
+        </div>
+    </div>
+
+    <!-- MAIN ACCESS GATEWAY PANEL (ACCOUNT GENERATION & SYSTEM SETUP SETTINGS) -->
+    <div id="auth-gateway-overlay" class="hidden-ui-layer">
+        <div class="auth-modal-card">
+            <h2>Account Generation Portal</h2>
+            <p class="modal-subtext">Register your player credentials to join the galactic node clusters.</p>
+            
+            <div class="input-field-group">
+                <label>Galactic Username</label>
+                <input type="text" id="reg-username" placeholder="Enter username...">
+            </div>
+            <div class="input-field-group">
+                <label>Secure Key Passphrase</label>
+                <input type="password" id="reg-password" placeholder="••••••••">
+            </div>
+            <div class="input-field-group">
+                <label>Date of Birth</label>
+                <input type="date" id="reg-dob">
+            </div>
+            <div class="input-field-group">
+                <label>Communications Gmail</label>
+                <input type="email" id="reg-email" placeholder="user@gmail.com">
+            </div>
+
+            <!-- AVATAR MODULAR DESIGN HIERARCHY SELECTOR SECTIONS -->
+            <div class="avatar-customization-row">
+                <div class="selector-subblock">
+                    <label>Avatar Base Gender</label>
+                    <select id="avatar-gender">
+                        <option value="BOY">BOY (Segmented Uniform Block)</option>
+                        <option value="GIRL">GIRL (Segmented Adjusted Block)</option>
+                    </select>
+                </div>
+                <div class="selector-subblock">
+                    <label>Shirt Color Filament</label>
+                    <input type="color" id="avatar-shirt-color" value="#ff0000">
+                </div>
+            </div>
+
+            <!-- NETWORK ENVIRONMENT MODE SELECTOR -->
+            <div class="input-field-group">
+                <label>Game Server Mode</label>
+                <select id="network-mode">
+                    <option value="SINGLEPLAYER">Single Player Void Environment</option>
+                    <option value="ROOM_CODE">Multiplayer Cluster (With Room Code)</option>
+                    <option value="MAIN_SERVER">Primary Galactic Cluster Main Server</option>
+                </select>
+            </div>
+            <div id="room-code-input-container" class="hidden-ui-layer input-field-group">
+                <label>Secure Room Entry Hash Code</label>
+                <input type="text" id="network-room-code" placeholder="XYZ-444">
+            </div>
+
+            <!-- CONTROL ENVIRONMENT MODE SELECTOR -->
+            <div class="input-field-group">
+                <label>Input Interface Matrix Environment</label>
+                <select id="hardware-environment-mode">
+                    <option value="PC">PC Keyboard (WASD, Mouse Vectors, E, C, Shift, Space)</option>
+                    <option value="MOBILE">Mobile System Layout (Dual Joystick, Screen Swipe, Touch Knobs)</option>
+                </select>
+            </div>
+
+            <button id="btn-submit-registration" class="portal-action-button">Authorize Cluster Access</button>
+        </div>
+    </div>
+
+    <!-- ADMIN COMMAND CENTRE CONSOLE (RESERVED HIGHER AUTHORITY OVERLAY SHIELDS) -->
+    <div id="admin-authority-panel" class="hidden-ui-layer">
+        <div class="admin-panel-header">
+            <h3>🛡️ Administrative Node Overlord Controller</h3>
+            <button id="btn-close-admin">Close Console</button>
+        </div>
+        <div class="admin-panel-body">
+            <div class="user-database-table-wrapper">
+                <table id="admin-user-matrix-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email Node</th>
+                            <th>Assigned Security Classification Privilege Role</th>
+                            <th>Active Direct Actions Commands</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-user-rows-container">
+                        <!-- Dynamic operational programmatic rows generated by main game client logic script loops -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAMEPLAY HUD COMPONENT OVERLAYS FRAME LAYOUTS -->
+    <div id="gameplay-interface-hud" class="hidden-ui-layer">
+        <!-- 9 SLOT CORE ACTION ITEM HOTBAR SCHEMAS -->
+        <div id="action-hotbar-container">
+            <div class="hotbar-slot active-hotbar-frame" data-slot-idx="0">📻</div>
+            <div class="hotbar-slot" data-slot-idx="1"></div>
+            <div class="hotbar-slot" data-slot-idx="2"></div>
+            <div class="hotbar-slot" data-slot-idx="3"></div>
+            <div class="hotbar-slot" data-slot-idx="4"></div>
+            <div class="hotbar-slot" data-slot-idx="5"></div>
+            <div class="hotbar-slot" data-slot-idx="6"></div>
+            <div class="hotbar-slot" data-slot-idx="7"></div>
+            <div class="hotbar-slot" data-slot-idx="8">...</div>
+        </div>
+    </div>
+
+    <!-- FULL 36 SLOT INVENTORY EXPANSION CARD + 3X3 DESIGN MATRIX FRAME -->
+    <div id="inventory-screen-overlay" class="hidden-ui-layer">
+        <div class="inventory-modal-frame">
+            <div class="inventory-layout-header">
+                <h3>🎒 Interstellar Storage Matrix & Workbench Module</h3>
+                <button id="btn-close-inventory">Resume Flight</button>
+            </div>
+            <div class="inventory-workbench-flex-row">
+                <!-- Core 36 Item Slots Canvas Container Grid System -->
+                <div class="storage-slots-grid" id="inventory-grid-wrapper"></div>
+                
+                <!-- 3x3 Assembly Matrix Workspace Layer -->
+                <div class="assembly-workbench-panel">
+                    <h4>🛠️ 3x3 Blueprint Assembly Matrix</h4>
+                    <div class="crafting-3x3-grid" id="crafting-grid-wrapper">
+                        <div class="craft-cell" data-craft-idx="0"></div>
+                        <div class="craft-cell" data-craft-idx="1"></div>
+                        <div class="craft-cell" data-craft-idx="2"></div>
+                        <div class="craft-cell" data-craft-idx="3"></div>
+                        <div class="craft-cell" data-craft-idx="4"></div>
+                        <div class="craft-cell" data-craft-idx="5"></div>
+                        <div class="craft-cell" data-craft-idx="6"></div>
+                        <div class="craft-cell" data-craft-idx="7"></div>
+                        <div class="craft-cell" data-craft-idx="8"></div>
+                    </div>
+                    <div class="crafting-action-box">
+                        <div class="craft-result-preview-slot" id="crafting-output-preview"></div>
+                        <button id="btn-execute-craft" class="craft-dispatch-button">Manufacture Blueprint</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Primary target mount anchor point node element container for WebGL render pipeline execution loops -->
+    <div id="game-canvas-container"></div>
+
+    <!-- Explicit safe module asset mapping schemas definition declarations -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js"
+        }
+    }
+    </script>
+
+    <!-- Hook script logic components into system loops framework environment pipelines via standard source loading tags -->
+    <script src="app.js"></script>
+
+    <!-- LOGICAL ASSET PRELOAD AND WORMHOLE GENERATOR EXECUTION CONTEXT RUNNER SCRIPTS -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const progressBarFill = document.getElementById("loading-progress-fill");
+            const loadingTextLabel = document.getElementById("loading-stage-label");
+            const percentageText = document.getElementById("loading-percentage-text");
+
+            // Explicit target lists files matching asset directories to preload into browser active runtime memory cache (Currently set to empty per criteria rules)
+            const assetPacksFileList = [];
+
+            let assetProgressCounter = 0;
+            const absoluteTotalFileSlots = assetPacksFileList.length;
+            const startTimeTick = Date.now();
+            const totalForcedLoadingTimeMs = 5000; // Exact 5-second gate requirement
+
+            function processPreloaderSequence() {
+                const totalElapsedTime = Date.now() - startTimeTick;
+                const mathematicalTemporalPercentage = Math.min(1, totalElapsedTime / totalForcedLoadingTimeMs);
+
+                // 1. Evaluate genuine physical resource asset retrieval bounds up to 90%
+                if (mathematicalTemporalPercentage < 0.90) {
+                    if (absoluteTotalFileSlots > 0 && assetProgressCounter < absoluteTotalFileSlots) {
+                        const calculatedStepPercentage = Math.floor((assetProgressCounter / absoluteTotalFileSlots) * 90);
+                        updateProgressBarState(calculatedStepPercentage, `Caching dynamic layout asset stream: [${assetProgressCounter + 1}/${absoluteTotalFileSlots}]`);
+                        
+                        const prefetchImgInstance = new Image();
+                        prefetchImgInstance.onload = prefetchImgInstance.onerror = () => {
+                            assetProgressCounter++;
+                        };
+                        prefetchImgInstance.src = assetPacksFileList[assetProgressCounter];
+                    } else {
+                        // Fallback progression pacing matching empty file inventory arrays seamlessly
+                        const standalonePacedProgressValue = Math.floor(mathematicalTemporalPercentage * 100);
+                        updateProgressBarState(Math.min(90, standalonePacedProgressValue), "Synchronizing security certificates with Firebase backend infrastructure...");
+                    }
+                } 
+                // 2. Transition gracefully into the simulated final initialization phase up to 100%
+                else {
+                    const structuralFinalPercentageValue = Math.floor(90 + ((mathematicalTemporalPercentage - 0.90) / 0.10) * 10);
+                    const systemStatusLabels = [
+                        "Assembling segmented R15 player geometry arrays...",
+                        "Unsealing planetary platform gateway node modules...",
+                        "Calibrating administrative privilege access lists...",
+                        "Ready for access authorization."
+                    ];
+                    const selectedLabelIndex = Math.min(systemStatusLabels.length - 1, Math.floor((structuralFinalPercentageValue - 90) / 2.5));
+                    updateProgressBarState(Math.min(100, structuralFinalPercentageValue), systemStatusLabels[selectedLabelIndex]);
+                }
+
+                if (totalElapsedTime < totalForcedLoadingTimeMs) {
+                    requestAnimationFrame(processPreloaderSequence);
+                } else {
+                    updateProgressBarState(100, "Cluster stabilization complete.");
+                    setTimeout(() => {
+                        const preloaderScreenDiv = document.getElementById("wormhole-loading-screen");
+                        if (preloaderScreenDiv) {
+                            preloaderScreenDiv.classList.add("hidden-ui-layer");
+                            const authPortalOverlay = document.getElementById("auth-gateway-overlay");
+                            if (authPortalOverlay) authPortalOverlay.classList.remove("hidden-ui-layer");
+                        }
+                    }, 400);
+                }
+            }
+
+            function updateProgressBarState(percentageValue, executionStatusString) {
+                progressBarFill.style.width = `${percentageValue}%`;
+                percentageText.innerText = `${percentageValue}%`;
+                loadingTextLabel.innerText = executionStatusString;
+            }
+
+            // Launch preloader loop
+            requestAnimationFrame(processPreloaderSequence);
+        });
+    </script>
+</body>
+</html>
