@@ -49,17 +49,23 @@
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getFirestore, collection, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-// ADDED: Modular Auth imports needed for Google Sign-In popups
+// ADDED: Exact v12 Modular Auth module endpoints
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
-// Initialize App and Database
-const app = initializeApp({ projectId: "app-iguess-39f2f", apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es" });
+// Initialize App and Database Instance Safely
+const app = initializeApp({ 
+  projectId: "app-iguess-39f2f", 
+  apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es" 
+});
 const db = getFirestore(app);
 
 // ADDED: Initialize the Auth instance
 const auth = getAuth(app);
+
+// Setup the modern Google Provider instance globally for your click listeners
+const googleProvider = new GoogleAuthProvider();
 
 window.listenChat = (ok, bad) => onSnapshot(query(collection(db, "chat"), orderBy("t", "desc"), limit(60)), snap => ok(snap.docs.map(d => ({ id: d.id, ...d.data() }))), bad);
 window.listenStaff = (ok, bad) => onSnapshot(query(collection(db, "staffchat"), orderBy("t", "desc"), limit(60)), snap => ok(snap.docs.map(d => ({ id: d.id, ...d.data() }))), bad);
