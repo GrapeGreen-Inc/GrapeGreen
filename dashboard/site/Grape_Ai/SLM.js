@@ -992,6 +992,41 @@ document.addEventListener("DOMContentLoaded", () => {
   const userProfileTrigger = safeGetElement("user-profile-trigger");
   const closeModalButton = safeGetElement("close-modal-btn");
   const settingsModalOverlay = safeGetElement("settings-modal-overlay");
+      const plansTabButton = safeGetElement("plans-tab");
+  const accountTabButton = safeGetElement("account-tab");
+  const plansPanel = safeGetElement("plans-panel");
+  const accountPanel = safeGetElement("account-panel");
+  
+  const setSettingsTab = (tab) => {
+    const showAccount = tab === "account";
+  
+    if (plansPanel) plansPanel.classList.toggle("hidden", showAccount);
+    if (accountPanel) accountPanel.classList.toggle("hidden", !showAccount);
+  
+    if (plansTabButton) {
+      plansTabButton.classList.toggle("active", !showAccount);
+      plansTabButton.setAttribute("aria-selected", String(!showAccount));
+    }
+  
+    if (accountTabButton) {
+      accountTabButton.classList.toggle("active", showAccount);
+      accountTabButton.setAttribute("aria-selected", String(showAccount));
+    }
+  
+    const username = safeGetElement("settings-username");
+    const plan = safeGetElement("settings-plan");
+  
+    if (username) username.textContent = currentUsername || "Guest User";
+    if (plan) plan.textContent = `${String(activeUserPlan || "free").toUpperCase()} Plan`;
+  };
+  
+  if (plansTabButton) {
+    plansTabButton.addEventListener("click", () => setSettingsTab("plans"));
+  }
+  
+  if (accountTabButton) {
+    accountTabButton.addEventListener("click", () => setSettingsTab("account"));
+  }
   const guestModeButton = safeGetElement("guest-mode-btn");
 
   if (!showLoginButton || !showSignupButton || !loginForm || !signupForm) {
