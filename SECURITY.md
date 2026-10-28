@@ -6,8 +6,8 @@ Please check the table below to see the security status of your current GrapeGre
 
 | Version | Status | Notes |
 | ------- | :---: | ----- |
-| **V1.6.x** | :shield: | Latest production update. Fully supported. |
-| **V1.3.x - V1.5.2** | :key: | Functional older versions. Move to V1.6 if possible. |
+| **V1.7.x** | :shield: | Latest production update. Fully supported. |
+| **V1.6.x** | :key: | Functional older version. Move to V1.7 if possible. |
 | **V1.2 (Security+)** | :lock: | Security+ update. Active security support milestone. |
 | **< V1.2** | :warning: | No security updates. Fully deprecated. |
 
@@ -22,4 +22,3 @@ If you discover a bug, exploit, or flaw in our backend system or messaging modul
 * **Initial Response:** We will acknowledge your report and begin investigating within 24 to 48 hours.
 * **Status Updates:** We will keep you updated as we work on a fix.
 * **Fix & Release:** Once the patch is completed, it will be pushed to our active branches, and you will be credited in our `Update_Log.md` if you choose.
-
