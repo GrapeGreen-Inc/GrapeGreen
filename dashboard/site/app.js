@@ -1521,90 +1521,96 @@ $("copy").onclick = async () => {
   if (document.getElementById(TEMP_TAB)?.classList.contains("active")) createTempSideTab();
 
 })();
-// Google Auth Sign-up Flow
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-// Create a new button dynamically or attach to an existing one
-const createGoogleSignupButton = () => {
-  const signupForm = document.getElementById("signup-form");
-  if (!signupForm) return;
-
-  const gBtn = document.createElement("button");
-  gBtn.type = "button";
-  gBtn.id = "google-signup-btn";
-  gBtn.style = "display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 12px; background: white; color: #444; border: 1px solid #dadce0; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: pointer; margin: 10px 0; box-shadow: 0 1px 2px rgba(0,0,0,0.1);";
-  gBtn.innerHTML = `<img src="https://gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px; height:18px;"> Sign up with Google`;
+// Initialize both buttons
+const initGoogleAuthButtons = () => {
+  const loginTarget = document.getElementById("google-login-container");
+  const signupTarget = document.getElementById("google-signup-container");
   
-  // Inserts it right at the top of your signup form
-  signupForm.insertBefore(gBtn, signupForm.firstChild);
+  const btnStyle = "display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 10px; background: white; color: #444; border: 1px solid #dadce0; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-family: inherit;";
+  const gLogo = `<img src="https://gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px; height:18px;">`;
 
-  gBtn.onclick = async (e) => {
-    e.preventDefault();
-    err("");
-    gBtn.disabled = true;
+  // 1. Setup Login Button
+  if (loginTarget) {
+    const loginBtn = document.createElement("button");
+    loginBtn.type = "button";
+    loginBtn.style = btnStyle;
+    loginBtn.innerHTML = `${gLogo} Sign in with Google`;
+    loginTarget.appendChild(loginBtn);
 
-    try {
-      // 1. Trigger the Firebase Google Popup
-      const result = await firebase.auth().signInWithPopup(googleProvider);
-      const googleUser = result.user;
+    loginBtn.onclick = async (e) => {
+      e.preventDefault(); err(""); loginBtn.disabled = true;
+      try {
+        const result = await firebase.auth().signInWithPopup(googleProvider);
+        const user = result.user;
+        
+        // Find existing custom user profile linked to this unique Google account
+        const dbUser = await getUser(user.uid); 
+        if (!dbUser) {
+          return err("No GrapeGreen profile found for this Google account. Please use Sign Up first!");
+        }
+        if (dbUser.deletedAt) return err("This account was deleted.");
+        if (banLeft(dbUser)) return err("This account is " + banText(dbUser) + ".");
 
-      // 2. Extract Google First Name & Email
-      const googleFirstName = googleUser.displayName ? googleUser.displayName.split(" ")[0] : "GoogleUser";
-      const em = googleUser.email;
+        sessionKey = deriveKey(user.uid, dbUser.salt);
+        localStorage.setItem("lastUser", user.uid);
+        enter(user.uid, dbUser);
+      } catch (x) {
+        console.error(x);
+        err("Google login failed. Please try again.");
+      } finally { loginBtn.disabled = false; }
+    };
+  }
 
-      // 3. Since Google blocks birthday reading, ask the user to input it
-      const dob = prompt("Please enter your Date of Birth (mm/dd/yyyy):", "01/01/2010");
-      if (!dob) return err("Sign up cancelled. Date of Birth is required.");
+  // 2. Setup Signup Button
+  if (signupTarget) {
+    const signupBtn = document.createElement("button");
+    signupBtn.type = "button";
+    signupBtn.style = btnStyle;
+    signupBtn.innerHTML = `${gLogo} Sign up with Google`;
+    signupTarget.appendChild(signupBtn);
 
-      const age = tier(dob);
-      if (!age) return err("Enter a valid birth date that isn't in the future.");
+    signupBtn.onclick = async (e) => {
+      e.preventDefault(); err(""); signupBtn.disabled = true;
+      try {
+        const result = await firebase.auth().signInWithPopup(googleProvider);
+        const googleUser = result.user;
+        const em = googleUser.email;
 
-      // Generate a unique clean username based on their first name
-      let u = googleFirstName.replace(/[^A-Za-z0-9_.-]/g, "");
-      if (u.length < 3) u = "User_" + Math.floor(Math.random() * 1000);
+        // Ask for the birthday explicitly since Google blocks auto-reading it
+        const dob = prompt("Confirm your Date of Birth (mm/dd/yyyy) for safety compliance:", "01/01/2010");
+        if (!dob) return err("Sign up canceled. Date of Birth is required.");
 
-      // Check if username collision exists
-      if (await getUser(u)) {
-        u = u + Math.floor(Math.random() * 10000);
-      }
+        const age = tier(dob);
+        if (!age) return err("Enter a valid birth date.");
 
-      // 4. Generate the Encryption Key using the unique Google UID instead of a text password
-      const salt = CryptoJS.lib.WordArray.random(16).toString();
-      const role = u === OWNER ? "owner" : "user";
-      
-      // We use the unchangeable google UID string as the seed password
-      sessionKey = deriveKey(googleUser.uid, salt);
+        // Generate username using Google display name or clean backup fallback
+        let u = googleUser.displayName ? googleUser.displayName.replace(/[^A-Za-z0-9_.-]/g, "") : "User";
+        if (u.length < 3) u = "User_" + Math.floor(Math.random() * 1000);
+        if (await getUser(u)) u = u + Math.floor(Math.random() * 10000);
 
-      // 5. Encrypt data following your exact custom layer 1-3 rules
-      const box = age === "1" ? {} : { gmail: wrap(em, sessionKey), dob: wrap(dob, sessionKey) };
-      
-      if (age !== "1" && (unwrap(box.gmail, sessionKey) !== em || unwrap(box.dob, sessionKey) !== dob)) {
-        throw new Error("encryption check failed");
-      }
+        const salt = CryptoJS.lib.WordArray.random(16).toString();
+        const role = u === OWNER ? "owner" : "user";
+        sessionKey = deriveKey(googleUser.uid, salt);
 
-      // Create a random text pass hash just to keep database structure completely uniform
-      const dummyHash = hash(googleUser.uid, salt);
+        const box = age === "1" ? {} : { gmail: wrap(em, sessionKey), dob: wrap(dob, sessionKey) };
+        if (age !== "1" && (unwrap(box.gmail, sessionKey) !== em || unwrap(box.dob, sessionKey) !== dob)) {
+          throw new Error("encryption check failed");
+        }
 
-      // 6. Save to database using your built-in functions
-      await saveUser(u, { age, salt, hash: dummyHash, ...box, role, googleAuth: true });
-      
-      localStorage.setItem("lastUser", u);
-      
-      if (age !== "1" && em) {
-        sendWelcomeEmail(u, em); 
-      }
+        await saveUser(u, { age, salt, hash: hash(googleUser.uid, salt), ...box, role, googleUid: googleUser.uid });
+        localStorage.setItem("lastUser", u);
+        if (age !== "1" && em) sendWelcomeEmail(u, em);
 
-      // Log them into the session dashboard
-      enter(u, { role, age, ...box });
-
-    } catch (x) {
-      console.error(x);
-      err("Google signup failed. Check console or your Firebase project settings.");
-    } finally {
-      gBtn.disabled = false;
-    }
-  };
+        enter(u, { role, age, ...box });
+      } catch (x) {
+        console.error(x);
+        err("Google registration failed. Ensure your console configuration is active.");
+      } finally { signupBtn.disabled = false; }
+    };
+  }
 };
 
-// Initialize the button visibility onto the UI screen layout
-createGoogleSignupButton();
+// Initialize execution hook
+initGoogleAuthButtons();
