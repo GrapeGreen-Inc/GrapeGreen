@@ -6,6 +6,13 @@ button{font:inherit;cursor:pointer}
 
 /* app shell */
 .top{position:fixed;top:0;left:0;right:0;height:50px;background:var(--grape);display:flex;align-items:center;gap:8px;padding:0 10px;z-index:10}
+.or-separator {
+  text-align: center;
+  margin: 12px 0;
+  font-size: 14px;
+  color: #888;
+  position: relative;
+}
 .top b{color:var(--leaf);width:160px;font-size:18px}
 .top input{height:30px;width:min(240px,45vw);border:0;border-radius:8px;padding:0 10px}
 .top button{height:30px;border:0;border-radius:8px;background:var(--leaf);font-weight:700;padding:0 12px}
