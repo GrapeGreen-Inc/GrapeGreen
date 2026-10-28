@@ -91,25 +91,36 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
     </div>
 
     <form id="login-form">
-      <h2>Welcome back</h2>
-      <div class="f"><label for="li-user">Username</label><input id="li-user" autocomplete="username" required></div>
-      <div class="f"><label for="li-pass">Password</label>
-        <div class="pw"><input id="li-pass" type="password" autocomplete="current-password" required><button type="button" data-show="li-pass">Show</button></div></div>
-      <button class="go" type="submit">Log in</button>
-      <a href="#" class="guest" id="guest">Continue as guest</a>
-    </form>
+  <h2>Welcome back</h2>
+  <div class="f"><label for="li-user">Username</label><input id="li-user" autocomplete="username" required></div>
+  <div class="f"><label for="li-pass">Password</label>
+    <div class="pw"><input id="li-pass" type="password" autocomplete="current-password" required><button type="button" data-show="li-pass">Show</button></div></div>
+  
+  <button class="go" type="submit">Log in</button>
+  
+  <!-- Google Login Separation Hook -->
+  <div class="or-separator">or</div>
+  <div id="google-login-container"></div>
 
-    <form id="signup-form" class="hide">
-      <h2>Make an account</h2>
-      <div class="f"><label for="su-user">Username</label><input id="su-user" autocomplete="username" required></div>
-      <div class="f"><label for="su-dob">Date of birth</label><input id="su-dob" type="date" required></div>
-      <div class="f" id="mailrow"><label for="su-mail">Email</label><input id="su-mail" type="email" placeholder="you@gmail.com"></div>
-      <div class="f mute hide" id="kidnote">You're under 13, so we won't ask for or keep your email or birthday. You'll log in with your username and password.</div>
-      <div class="f"><label for="su-pass">Password (6+ characters)</label>
-        <div class="pw"><input id="su-pass" type="password" autocomplete="new-password" required minlength="6"><button type="button" data-show="su-pass">Show</button></div></div>
-      <button class="go" type="submit">Create account</button>
-    </form>
-    <div id="err" role="alert"></div>
+  <a href="#" class="guest" id="guest">Continue as guest</a>
+</form>
+
+<form id="signup-form" class="hide">
+  <h2>Make an account</h2>
+  <div class="f"><label for="su-user">Username</label><input id="su-user" autocomplete="username" required></div>
+  <div class="f"><label for="su-dob">Date of birth</label><input id="su-dob" type="date" required></div>
+  <div class="f" id="mailrow"><label for="su-mail">Email</label><input id="su-mail" type="email" placeholder="you@gmail.com"></div>
+  <div class="f mute hide" id="kidnote">You're under 13, so we won't ask for or keep your email or birthday. You'll log in with your username and password.</div>
+  <div class="f"><label for="su-pass">Password (6+ characters)</label>
+    <div class="pw"><input id="su-pass" type="password" autocomplete="new-password" required minlength="6"><button type="button" data-show="su-pass">Show</button></div></div>
+  
+  <button class="go" type="submit">Create account</button>
+  
+  <!-- Google Signup Separation Hook -->
+  <div class="or-separator">or</div>
+  <div id="google-signup-container"></div>
+</form>
+<div id="err" role="alert"></div>
   </div></div>
 </div>
 
