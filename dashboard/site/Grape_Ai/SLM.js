@@ -1075,6 +1075,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (userProfileTrigger) {
     userProfileTrigger.addEventListener("click", () => {
+      setSettingsTab("plans");
       const overlay = safeGetElement("settings-modal-overlay");
       if (overlay) overlay.classList.remove("hidden");
     });
