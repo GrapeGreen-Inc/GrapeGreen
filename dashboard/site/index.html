@@ -67,6 +67,21 @@ const auth = getAuth(app);
 // Setup the modern Google Provider instance globally for your click listeners
 const googleProvider = new GoogleAuthProvider();
 
+// ============================================================================
+// EXPOSE FIREBASE MODULAR METHODS GLOBALLY FOR APP.JS
+// ============================================================================
+window.F12Auth = auth;
+window.F12Db = db;
+window.F12Provider = googleProvider;
+
+window.F12Methods = {
+  signInWithPopup,
+  getDocs,
+  collection,
+  query,
+  where
+};
+
 window.listenChat = (ok, bad) => onSnapshot(query(collection(db, "chat"), orderBy("t", "desc"), limit(60)), snap => ok(snap.docs.map(d => ({ id: d.id, ...d.data() }))), bad);
 window.listenStaff = (ok, bad) => onSnapshot(query(collection(db, "staffchat"), orderBy("t", "desc"), limit(60)), snap => ok(snap.docs.map(d => ({ id: d.id, ...d.data() }))), bad);
 window.listenNotices = (user, ok) => onSnapshot(query(collection(db, "notices"), where("to", "==", user)), snap => ok(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => {});
