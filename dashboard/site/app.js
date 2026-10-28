@@ -1521,17 +1521,29 @@ $("copy").onclick = async () => {
   if (document.getElementById(TEMP_TAB)?.classList.contains("active")) createTempSideTab();
 
 })();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
-
-// Initialize both buttons safely
+// ============================================================================
+// MODULAR GOOGLE AUTH INJECTION ENGINE FOR CLAUDE APP.JS ENVIRONMENT
+// ============================================================================
 const initGoogleAuthButtons = () => {
   const loginTarget = document.getElementById("google-login-container");
   const signupTarget = document.getElementById("google-signup-container");
   
+  // Wait for index.html's module thread to expose the modular v12 engines
+  if (!window.F12Methods || !window.F12Auth) {
+    setTimeout(initGoogleAuthButtons, 50);
+    return;
+  }
+
+  // Destructure the official v12 modular methods passed from the HTML scope
+  const { signInWithPopup, getDocs, collection, query, where } = window.F12Methods;
+  const auth = window.F12Auth;
+  const db = window.F12Db;
+  const googleProvider = window.F12Provider;
+
   const btnStyle = "display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 10px; background: white; color: #444; border: 1px solid #dadce0; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-family: inherit;";
   const gLogo = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px; height:18px;">`;
 
-  // 1. Setup Login Button
+  // 1. Setup Login Button Flow
   if (loginTarget && !document.getElementById("google-login-btn")) {
     const loginBtn = document.createElement("button");
     loginBtn.type = "button";
@@ -1543,12 +1555,11 @@ const initGoogleAuthButtons = () => {
     loginBtn.onclick = async (e) => {
       e.preventDefault(); err(""); loginBtn.disabled = true;
       try {
-        const result = await firebase.auth().signInWithPopup(googleProvider);
+        const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
         
         // Find existing custom user profile linked to this unique Google ID field
-        const usersRef = firebase.firestore().collection("users");
-        const snapshot = await usersRef.where("googleUid", "==", user.uid).get();
+        const snapshot = await getDocs(query(collection(db, "users"), where("googleUid", "==", user.uid)));
 
         if (snapshot.empty) {
           return err("No GrapeGreen profile found for this Google account. Please use Sign Up first!");
@@ -1559,7 +1570,7 @@ const initGoogleAuthButtons = () => {
         const username = userDoc.id; // Extracts their actual account username string
         
         if (dbUser.deletedAt) return err("This account was deleted. Ask an admin to restore it.");
-        if (banLeft(dbUser)) return err("This account is " + banText(dbUser) + ".");
+        if (typeof banLeft !== 'undefined' && banLeft(dbUser)) return err("This account is " + banText(dbUser) + ".");
 
         sessionKey = deriveKey(user.uid, dbUser.salt);
         localStorage.setItem("lastUser", username);
@@ -1571,7 +1582,7 @@ const initGoogleAuthButtons = () => {
     };
   }
 
-  // 2. Setup Signup Button
+  // 2. Setup Signup Button Flow
   if (signupTarget && !document.getElementById("google-signup-btn")) {
     const signupBtn = document.createElement("button");
     signupBtn.type = "button";
@@ -1583,7 +1594,7 @@ const initGoogleAuthButtons = () => {
     signupBtn.onclick = async (e) => {
       e.preventDefault(); err(""); signupBtn.disabled = true;
       try {
-        const result = await firebase.auth().signInWithPopup(googleProvider);
+        const result = await signInWithPopup(auth, googleProvider);
         const googleUser = result.user;
         const em = googleUser.email;
 
@@ -1601,7 +1612,8 @@ const initGoogleAuthButtons = () => {
         if (await getUser(u)) u = u + Math.floor(Math.random() * 10000);
 
         const salt = CryptoJS.lib.WordArray.random(16).toString();
-        const role = u === OWNER ? "owner" : "user";
+        const ownerBackup = typeof OWNER !== 'undefined' ? OWNER : 'MattyGrapeGreenOwner';
+        const role = u === ownerBackup ? "owner" : "user";
         sessionKey = deriveKey(googleUser.uid, salt);
 
         const box = age === "1" ? {} : { gmail: wrap(em, sessionKey), dob: wrap(dob, sessionKey) };
@@ -1611,7 +1623,7 @@ const initGoogleAuthButtons = () => {
 
         await saveUser(u, { age, salt, hash: hash(googleUser.uid, salt), ...box, role, googleUid: googleUser.uid });
         localStorage.setItem("lastUser", u);
-        if (age !== "1" && em) sendWelcomeEmail(u, em);
+        if (age !== "1" && em && typeof sendWelcomeEmail !== 'undefined') sendWelcomeEmail(u, em);
 
         enter(u, { role, age, ...box });
       } catch (x) {
