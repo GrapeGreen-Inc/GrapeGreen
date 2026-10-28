@@ -1649,3 +1649,60 @@ if (document.readyState === "loading") {
 } else {
   mountGoogleButtons();
 }
+// ==========================================
+// GRAPEGREEN ASYNCHRONOUS AD ROTATION ENGINE
+// ==========================================
+(function() {
+    const ADSENSE_PUB_ID = 'ca-pub-XXXXXXXXXXXXXXXX'; // Replace with real Pub ID
+    const ROTATION_TIME = 45000; // 45 seconds
+
+    // Helper function to safely cycle a target box layout container
+    function refreshAdContainer(box) {
+        const slotId = box.getAttribute('data-slot');
+        if (!slotId) return;
+
+        // Visual flash indicating rotation is executing
+        box.classList.add('rotating-now');
+        setTimeout(() => box.classList.remove('rotating-now'), 1500);
+
+        // Wipe container to prepare for programmatic element insertion
+        box.innerHTML = '';
+
+        // Construct AdSense structure elements
+        const newIns = document.createElement('ins');
+        newIns.className = 'adsbygoogle';
+        newIns.style.display = 'block';
+        newIns.setAttribute('data-ad-client', ADSENSE_PUB_ID);
+        newIns.setAttribute('data-ad-slot', slotId);
+        newIns.setAttribute('data-ad-format', 'auto');
+        newIns.setAttribute('data-full-width-responsive', 'true');
+
+        const newScript = document.createElement('script');
+        newScript.innerText = '(adsbygoogle = window.adsbygoogle || []).push({});';
+
+        // Mount components to DOM tree
+        box.appendChild(newIns);
+        box.appendChild(newScript);
+    }
+
+    // Initialize individual staggered loop intervals
+    document.querySelectorAll('.grape-ad-box').forEach((adBox, index) => {
+        // Run initial configuration render immediately
+        refreshAdContainer(adBox);
+
+        // Generate an out-of-sync random delay (adds 1 to 6 seconds variance)
+        const randomStaggerOffset = (index * 400) + (Math.random() * 3000);
+
+        // Queue individual asynchronous permanent loop chains
+        setTimeout(() => {
+            // First out-of-sync reload
+            refreshAdContainer(adBox);
+
+            // Establish the locked 45-second cycle for this block node
+            setInterval(() => {
+                refreshAdContainer(adBox);
+            }, ROTATION_TIME);
+
+        }, randomStaggerOffset);
+    });
+})();
