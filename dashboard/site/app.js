@@ -1523,7 +1523,7 @@ $("copy").onclick = async () => {
 })();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-// Initialize both buttons
+// Initialize both buttons safely
 const initGoogleAuthButtons = () => {
   const loginTarget = document.getElementById("google-login-container");
   const signupTarget = document.getElementById("google-signup-container");
@@ -1532,9 +1532,10 @@ const initGoogleAuthButtons = () => {
   const gLogo = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px; height:18px;">`;
 
   // 1. Setup Login Button
-  if (loginTarget) {
+  if (loginTarget && !document.getElementById("google-login-btn")) {
     const loginBtn = document.createElement("button");
     loginBtn.type = "button";
+    loginBtn.id = "google-login-btn";
     loginBtn.style = btnStyle;
     loginBtn.innerHTML = `${gLogo} Sign in with Google`;
     loginTarget.appendChild(loginBtn);
@@ -1571,9 +1572,10 @@ const initGoogleAuthButtons = () => {
   }
 
   // 2. Setup Signup Button
-  if (signupTarget) {
+  if (signupTarget && !document.getElementById("google-signup-btn")) {
     const signupBtn = document.createElement("button");
     signupBtn.type = "button";
+    signupBtn.id = "google-signup-btn";
     signupBtn.style = btnStyle;
     signupBtn.innerHTML = `${gLogo} Sign up with Google`;
     signupTarget.appendChild(signupBtn);
@@ -1620,7 +1622,18 @@ const initGoogleAuthButtons = () => {
   }
 };
 
-// Initialize execution hook safely after elements render structurally on-screen
-window.addEventListener("DOMContentLoaded", () => {
-  initGoogleAuthButtons();
-});
+// Continuous layout check loop ensures the button hooks load even if components mount late
+const mountGoogleButtons = () => {
+  if (document.getElementById("google-login-container") || document.getElementById("google-signup-container")) {
+    initGoogleAuthButtons();
+  } else {
+    setTimeout(mountGoogleButtons, 100);
+  }
+};
+
+// Start initialization checklist safety sequence
+if (document.readyState === "loading") {
+  window.addEventListener("DOMContentLoaded", mountGoogleButtons);
+} else {
+  mountGoogleButtons();
+}
