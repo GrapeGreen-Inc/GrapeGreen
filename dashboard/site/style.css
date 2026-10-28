@@ -250,3 +250,60 @@ td img{display:block;margin-top:6px;border:1px solid var(--line);border-radius:6
   .rift-seam { width:160px; height:260px; font-size:26px; }
 }
 @media(max-width:760px){#gate{grid-template-columns:1fr}.brand{display:none}.side{width:120px}main{margin-left:120px}}
+
+/*CSS for the Science Article by @Isan88438.*/
+#science article {
+  max-width: 760px;
+  margin: 24px auto;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+#science article h1 {
+  margin-bottom: 8px;
+  color: var(--grape);
+  font-size: 32px;
+}
+
+#science article p.mute {
+  margin-bottom: 18px;
+}
+
+#science article p:not(.mute) {
+  margin: 14px 0;
+  padding: 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--grape2);
+  border-radius: 10px;
+  line-height: 1.7;
+}
+
+#science article p b {
+  color: var(--grape);
+}
+
+#science article p small {
+  color: var(--mute);
+  font-size: 13px;
+}
+
+#science article p:nth-of-type(3) {
+  border-left-color: #d63b3b;
+}
+
+#science article p:nth-of-type(3) b {
+  color: #b42318;
+}
+
+@media (max-width: 760px) {
+  #science article {
+    padding: 14px;
+  }
+
+  #science article p:not(.mute) {
+    padding: 12px;
+  }
+}
