@@ -70,6 +70,8 @@ GrapeGreen is built to be welcoming, engaging, and easy to explore. The communit
 ## ERROR LIST
 
 - the [4568] error in the Grape Ai means the Ai is unfinished and not ready to respond.
+- the [404]] error is a fetch error
+- the [8262] error means you have exceeded message limit
 
 ---
 
