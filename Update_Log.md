@@ -1,3 +1,10 @@
+## V1.7
+### Style+
+* [ADD] Add Style in Atomic science
+* [CHANGE] Grape AI Style
+
+---
+
 ## V1.6
 ### Video+
 * [ADD] add video section
