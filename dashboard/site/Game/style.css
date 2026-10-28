@@ -1,0 +1,552 @@
+/**
+ * Grape Vortex 3D - Universal Application Layout Stylesheet
+ * Optimized for Three.js r186 Responsive Viewport Overlays
+ */
+
+/* ============================================================================
+ * 1. BASE SYSTEM CORE RESET BLOCKS
+ * ============================================================================ */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none; /* Prevents text highlights during heavy drag-and-drop gameplay */
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #020205;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #ffffff;
+}
+
+/* Primary WebGL Target Mounting Frame Viewport */
+#game-canvas-container {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+/* Utility Class to Handle Context Screen Hiding Across Game Ticks */
+.hidden-ui-layer {
+    display: none !important;
+}
+
+/* ============================================================================
+ * 2. INITIAL COELUM WORMHOLE PRELOAD SCREEN LAYOUT
+ * ============================================================================ */
+#wormhole-loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999; /* Force rendering above all game layouts */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at center, #0d001a 0%, #030008 100%);
+}
+
+/* Simulated Deep-Space Vortex Background Tunnel Loop */
+.wormhole-effect-canvas {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-image: 
+        radial-gradient(transparent 50%, rgba(0, 0, 0, 0.9) 100%),
+        repeating-linear-gradient(45deg, rgba(106, 27, 154, 0.04) 0px, rgba(106, 27, 154, 0.04) 2px, transparent 2px, transparent 10px),
+        repeating-linear-gradient(-45deg, rgba(0, 210, 255, 0.03) 0px, rgba(0, 210, 255, 0.03) 2px, transparent 2px, transparent 10px);
+    background-size: 100% 100%, 400% 400%, 400% 400%;
+    animation: spaceVortexTunnelSpin 25s linear infinite;
+    opacity: 0.85;
+}
+
+@keyframes spaceVortexTunnelSpin {
+    0% { background-position: 0% 0%, 0% 0%, 0% 0%; transform: scale(1.0); }
+    50% { background-position: 0% 0%, 100% 50%, -100% 50%; transform: scale(1.08); }
+    100% { background-position: 0% 0%, 200% 100%, -200% 100%; transform: scale(1.0); }
+}
+
+.loading-overlay-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    width: 90%;
+    max-width: 480px;
+}
+
+.game-branding-title {
+    font-size: 2.8rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    background: linear-gradient(135deg, #00d2ff 0%, #9c27b0 50%, #ff007f 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+    text-shadow: 0px 0px 30px rgba(156, 39, 176, 0.4);
+}
+
+.loading-status-text {
+    font-size: 0.9rem;
+    color: #b0bec5;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    height: 1.2rem;
+}
+
+/* Custom Preloader Metric Tracks */
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+    margin-bottom: 12px;
+}
+
+.progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #00d2ff, #9c27b0, #ff007f);
+    box-shadow: 0 0 12px #00d2ff;
+    transition: width 0.1s linear;
+}
+
+.percentage-display {
+    font-family: monospace;
+    font-size: 1.2rem;
+    color: #00d2ff;
+    text-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+}
+
+/* ============================================================================
+ * 3. MAIN PORTAL ACCOUNT GENERATION MODAL
+ * ============================================================================ */
+#auth-gateway-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 5000;
+    background: rgba(2, 2, 5, 0.85);
+    backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.auth-modal-card {
+    background: linear-gradient(185deg, #10101c 0%, #07070d 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.05);
+    width: 100%;
+    max-width: 500px;
+    border-radius: 16px;
+    padding: 35px;
+}
+
+.auth-modal-card h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
+
+.modal-subtext {
+    font-size: 0.85rem;
+    color: #78909c;
+    margin-bottom: 25px;
+}
+
+.input-field-group {
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-field-group label, .selector-subblock label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #90a4ae;
+    margin-bottom: 6px;
+}
+
+.input-field-group input, .input-field-group select, .selector-subblock select {
+    background: #141424;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #ffffff;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-field-group input:focus, .input-field-group select:focus, .selector-subblock select:focus {
+    border-color: #9c27b0;
+    box-shadow: 0 0 8px rgba(156, 39, 176, 0.3);
+}
+
+/* Horizontal split blocks for localized parameters matrix definitions */
+.avatar-customization-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.selector-subblock {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.selector-subblock input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 100%;
+    height: 45px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: transparent;
+}
+
+.selector-subblock input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.selector-subblock input[type="color"]::-webkit-color-swatch { border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; }
+
+.portal-action-button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, #9c27b0, #6a1b9a);
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(156, 39, 176, 0.4);
+    transition: transform 0.1s, opacity 0.2s;
+    margin-top: 10px;
+}
+
+.portal-action-button:hover { filter: brightness(1.15); }
+.portal-action-button:active { transform: scale(0.98); }
+
+/* ============================================================================
+ * 4. HEAD ADMINISTRATIVE AUTHORITY COMMAND OVERLAY PANELS
+ * ============================================================================ */
+#admin-authority-panel {
+    position: fixed;
+    top: 5%;
+    left: 5%;
+    width: 90vw;
+    height: 80vh;
+    z-index: 4000;
+    background: linear-gradient(180deg, #0e0e16 rgba(14, 14, 22, 0.98), #05050a rgba(5, 5, 10, 0.99));
+    border: 1px solid rgba(255, 0, 85, 0.25);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.95), 0 0 30px rgba(255, 0, 85, 0.1);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.admin-panel-header {
+    padding: 18px 25px;
+    background: #161118;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-panel-header h3 {
+    font-size: 1.1rem;
+    color: #ff0055;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.admin-panel-header button, #btn-close-inventory {
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cfd8dc;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.admin-panel-header button:hover, #btn-close-inventory:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+.admin-panel-body {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+}
+
+.user-database-table-wrapper {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table {
+    width: 100%;
+    text-align: left;
+    border-spacing: 0;
+}
+
+th {
+    background: #09090f;
+    color: #78909c;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid rgba(255,255,255,0.05);
+}
+
+td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-size: 0.9rem;
+    color: #e0e0e0;
+}
+
+tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+.admin-role-select {
+    background: #12121f;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    outline: none;
+}
+
+.admin-ban-btn { background: #b71c1c; border: none; padding: 6px 12px; border-radius: 4px; color: #fff; font-weight: 600; cursor: pointer; font-size: 0.8rem; margin-right: 6px; }
+.admin-delete-btn { background: #37474f; border: none; padding: 6px 12px; border-radius: 4px; color: #fff; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
+.admin-ban-btn:hover { background: #e53935; }
+.admin-delete-btn:hover { background: #4f5b66; }
+
+/* ============================================================================
+ * 5. CORE INTERACTION HUD OVERLAYS (9 SLOT ACTION HOTBAR SYSTEM)
+ * ============================================================================ */
+#gameplay-interface-hud {
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none; /* Let clicks tunnel through space void background layer */
+}
+
+#action-hotbar-container {
+    display: flex;
+    gap: 8px;
+    background: rgba(5, 5, 10, 0.75);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    pointer-events: auto; /* Re-engage cursor vectors inside component perimeter */
+}
+
+.hotbar-slot {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+    position: relative;
+}
+
+.hotbar-slot:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.active-hotbar-frame {
+    border-color: #00d2ff !important;
+    background: rgba(0, 210, 255, 0.15) !important;
+    box-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+}
+
+/* ============================================================================
+ * 6. EXPANDED INVENTORY OVERLAY CARD & WORKBENCH MODULUS SYSTEMS
+ * ============================================================================ */
+#inventory-screen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2000;
+    background: rgba(2, 2, 5, 0.75);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.inventory-modal-frame {
+    background: linear-gradient(145deg, #0b0b12 0%, #040408 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.9);
+    width: 100%;
+    max-width: 920px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.inventory-layout-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0e0e18;
+}
+
+.inventory-layout-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #eceff1;
+}
+
+.inventory-workbench-flex-row {
+    display: flex;
+    padding: 30px;
+    gap: 35px;
+    flex-wrap: wrap;
+}
+
+/* Core 36 Grid System Specification Layouts */
+.storage-slots-grid {
+    flex: 1.4;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(65px, 1fr));
+    gap: 10px;
+    min-width: 320px;
+}
+
+.inventory-item-slot-cell {
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    cursor: grab;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.inventory-item-slot-cell:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 3x3 Assembly Workbench Construction Frames */
+.assembly-workbench-panel {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 280px;
+}
+
+.assembly-workbench-panel h4 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #90a4ae;
+    margin-bottom: 20px;
+    width: 100%;
+    text-align: left;
+}
+
+.crafting-3x3-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 70px);
+    grid-template-rows: repeat(3, 70px);
+    gap: 8px;
+    margin-bottom: 25px;
+}
+
+.craft-cell {
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.6rem;
+    cursor: pointer;
+}
+
+.craft-cell:hover { background: rgba(255,255,255,0.03); border-color: #9c27b0; }
+
+.crafting-action-box {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+}
+
+.craft-result-preview-slot {
+    width: 75px;
+    height: 75px;
+    background: rgba(156, 39, 176, 0.05);
+    border: 2px dashed rgba(156, 39, 176, 0.3);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.2rem;
+}
+
+.craft-dispatch-button {
+    flex: 1;
+    padding: 15px;
+    background: #2e7d32;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+    transition: filter 0.2s;
+}
+
+.craft-dispatch-button:hover { filter: brightness(1.2); }
