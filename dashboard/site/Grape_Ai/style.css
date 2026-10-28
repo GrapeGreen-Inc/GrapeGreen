@@ -767,7 +767,98 @@ body {
   color: #fef08a;
 }
 
+#settings-modal-card {
+  max-height: 88vh;
+  overflow-y: auto;
+}
 
+.settings-switcher {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 18px;
+}
+
+.settings-tab {
+  padding: 10px 16px;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.settings-tab.active {
+  color: var(--text-white);
+  border-bottom-color: var(--grape-primary);
+}
+
+.settings-panel.hidden {
+  display: none;
+}
+
+.account-settings-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.account-setting-card {
+  padding: 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+
+.account-setting-card h4 {
+  margin-bottom: 12px;
+  color: var(--text-white);
+  font-size: 14px;
+}
+
+.account-setting-card p {
+  margin-bottom: 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.account-setting-card strong {
+  color: var(--text-bright);
+}
+
+.account-setting-card button {
+  padding: 9px 12px;
+  color: var(--text-white);
+  background: var(--grape-dark);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.account-setting-card button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.account-setting-card.danger {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.account-setting-card.danger button {
+  background: #7f1d1d;
+  border-color: #991b1b;
+}
+
+@media (max-width: 540px) {
+  #settings-modal-card {
+    padding: 16px;
+  }
+
+  .settings-tab {
+    padding: 10px;
+  }
+}
 
 
 
