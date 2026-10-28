@@ -1529,7 +1529,7 @@ const initGoogleAuthButtons = () => {
   const signupTarget = document.getElementById("google-signup-container");
   
   const btnStyle = "display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 10px; background: white; color: #444; border: 1px solid #dadce0; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-family: inherit;";
-  const gLogo = `<img src="https://gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px; height:18px;">`;
+  const gLogo = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px; height:18px;">`;
 
   // 1. Setup Login Button
   if (loginTarget) {
@@ -1545,17 +1545,24 @@ const initGoogleAuthButtons = () => {
         const result = await firebase.auth().signInWithPopup(googleProvider);
         const user = result.user;
         
-        // Find existing custom user profile linked to this unique Google account
-        const dbUser = await getUser(user.uid); 
-        if (!dbUser) {
+        // Find existing custom user profile linked to this unique Google ID field
+        const usersRef = firebase.firestore().collection("users");
+        const snapshot = await usersRef.where("googleUid", "==", user.uid).get();
+
+        if (snapshot.empty) {
           return err("No GrapeGreen profile found for this Google account. Please use Sign Up first!");
         }
-        if (dbUser.deletedAt) return err("This account was deleted.");
+
+        const userDoc = snapshot.docs[0];
+        const dbUser = userDoc.data();
+        const username = userDoc.id; // Extracts their actual account username string
+        
+        if (dbUser.deletedAt) return err("This account was deleted. Ask an admin to restore it.");
         if (banLeft(dbUser)) return err("This account is " + banText(dbUser) + ".");
 
         sessionKey = deriveKey(user.uid, dbUser.salt);
-        localStorage.setItem("lastUser", user.uid);
-        enter(user.uid, dbUser);
+        localStorage.setItem("lastUser", username);
+        enter(username, dbUser);
       } catch (x) {
         console.error(x);
         err("Google login failed. Please try again.");
@@ -1583,10 +1590,11 @@ const initGoogleAuthButtons = () => {
         if (!dob) return err("Sign up canceled. Date of Birth is required.");
 
         const age = tier(dob);
-        if (!age) return err("Enter a valid birth date.");
+        if (!age) return err("Enter a valid birth date that isn't in the future.");
 
-        // Generate username using Google display name or clean backup fallback
-        let u = googleUser.displayName ? googleUser.displayName.replace(/[^A-Za-z0-9_.-]/g, "") : "User";
+        // Safe validation fallback to extract and clean their name strings safely
+        const rawName = googleUser.displayName || "User";
+        let u = rawName.replace(/[^A-Za-z0-9_.-]/g, "");
         if (u.length < 3) u = "User_" + Math.floor(Math.random() * 1000);
         if (await getUser(u)) u = u + Math.floor(Math.random() * 10000);
 
@@ -1612,5 +1620,7 @@ const initGoogleAuthButtons = () => {
   }
 };
 
-// Initialize execution hook
-initGoogleAuthButtons();
+// Initialize execution hook safely after elements render structurally on-screen
+window.addEventListener("DOMContentLoaded", () => {
+  initGoogleAuthButtons();
+});
