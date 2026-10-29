@@ -55,9 +55,10 @@ import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, get
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
 // Initialize App and Database Instance Safely
-const app = initializeApp({ 
-  projectId: "app-iguess-39f2f", 
-  apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es" 
+const app = initializeApp({
+  projectId: "app-iguess-39f2f",
+  apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es",
+  authDomain: "app-iguess-39f2f.firebaseapp.com"
 });
 const db = getFirestore(app);
 
