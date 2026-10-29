@@ -22,6 +22,9 @@ async function saveUser(u, p) {
     passwordHash: { stringValue: p.hash },
     role: { stringValue: p.role }
   };
+  if (p.googleUid) {
+    f.googleUid = { stringValue: p.googleUid };
+  }
   if (p.age !== "1") { // under-13: no email, no birthday stored
     f.gmail = { stringValue: p.gmail };
     f.dob = { stringValue: p.dob };
