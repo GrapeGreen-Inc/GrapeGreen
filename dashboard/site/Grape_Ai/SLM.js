@@ -1062,6 +1062,83 @@ document.addEventListener("DOMContentLoaded", () => {
     processSecureLogin(userVal.value.trim(), passVal.value);
   });
 
+  const changePasswordForm = safeGetElement("change-password-form");
+
+  if (changePasswordForm) {
+    changePasswordForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+  
+      const currentInput = safeGetElement("current-ai-password");
+      const newInput = safeGetElement("new-ai-password");
+      const confirmInput = safeGetElement("confirm-ai-password");
+      const status = safeGetElement("change-password-status");
+      const button = safeGetElement("change-password-submit");
+  
+      if (!currentInput || !newInput || !confirmInput || !status || !button) return;
+  
+      const currentPassword = currentInput.value;
+      const newPassword = newInput.value;
+      const confirmPassword = confirmInput.value;
+  
+      if (!activeUserSession || isGuestSession(activeUserSession)) {
+        status.textContent = "Sign in to a Grape AI account before changing its password.";
+        return;
+      }
+  
+      if (newPassword.length < 8) {
+        status.textContent = "Your new password must contain at least 8 characters.";
+        return;
+      }
+  
+      if (newPassword === currentPassword) {
+        status.textContent = "Choose a different password from your current one.";
+        return;
+      }
+  
+      if (newPassword !== confirmPassword) {
+        status.textContent = "The new passwords do not match.";
+        return;
+      }
+  
+      button.disabled = true;
+      status.textContent = "Verifying your account...";
+  
+      try {
+        const accountRef = doc(db, "Ai-Users", activeUserSession);
+        const accountSnapshot = await getDoc(accountRef);
+  
+        if (!accountSnapshot.exists()) {
+          status.textContent = "The account record could not be found.";
+          return;
+        }
+  
+        const accountData = accountSnapshot.data();
+        const storedPassword = decodeSecurePipeline(accountData.password);
+  
+        if (storedPassword !== currentPassword) {
+          status.textContent = "Your current password is incorrect.";
+          return;
+        }
+  
+        await setDoc(
+          accountRef,
+          { password: encodeSecurePipeline(newPassword) },
+          { merge: true }
+        );
+  
+        changePasswordForm.reset();
+        status.textContent = "Password updated successfully.";
+      } catch (error) {
+        console.error("Grape AI password update failed:", error);
+  
+        status.textContent = error.code === "permission-denied"
+          ? "The database blocked this update. Contact the site maintainer."
+          : "The password could not be updated. Please try again.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
   if (newChatButton) {
     newChatButton.addEventListener("click", createNewChatWorkspaceNode);
   }
