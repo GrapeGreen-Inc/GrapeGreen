@@ -250,6 +250,42 @@
   </section>
 </div>
 
+<div class="account-setting-card">
+  <h4>Change password</h4>
+  <p>Update the password for your Grape AI account.</p>
+
+  <form id="change-password-form" class="change-password-form">
+    <label for="current-ai-password">Current password</label>
+    <input
+      id="current-ai-password"
+      type="password"
+      autocomplete="current-password"
+      required
+    >
+
+    <label for="new-ai-password">New password</label>
+    <input
+      id="new-ai-password"
+      type="password"
+      autocomplete="new-password"
+      minlength="8"
+      required
+    >
+
+    <label for="confirm-ai-password">Confirm new password</label>
+    <input
+      id="confirm-ai-password"
+      type="password"
+      autocomplete="new-password"
+      minlength="8"
+      required
+    >
+
+    <button type="submit" id="change-password-submit">Update Password</button>
+    <p id="change-password-status" role="status" aria-live="polite"></p>
+  </form>
+</div>
+
     <!-- External script handling all background actions and encryption rules -->
     <script type="module" src="SLM.js"></script>
   </body>
