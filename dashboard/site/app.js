@@ -6,17 +6,6 @@ const KEY = `?key=${CFG.apiKey}`;
 /* ---------- data layer ---------- */
 const hash = (pw, salt) => CryptoJS.PBKDF2(pw, salt, { keySize: 8, iterations: 10000 }).toString();
 
-const parsePurchases = value => {
-  if (!value && value !== 0) return [];
-  try {
-    const parsed = typeof value === "string" ? JSON.parse(value) : value;
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-const userIsVerified = d => !!(d && (d.verified === true || d.verified === "true" || d.verified === 1 || d.verified === "1"));
-
 async function getUser(u) {
   const r = await fetch(`${DB}/${encodeURIComponent(u)}${KEY}`);
   if (r.status === 404) return null;
@@ -31,10 +20,7 @@ async function saveUser(u, p) {
     age: { stringValue: p.age },
     salt: { stringValue: p.salt },
     passwordHash: { stringValue: p.hash },
-    role: { stringValue: p.role },
-    verified: { booleanValue: !!p.verified },
-    tokens: { integerValue: String(Number(p.tokens || 0)) },
-    purchases: { stringValue: JSON.stringify(Array.isArray(p.purchases) ? p.purchases : parsePurchases(p.purchases)) }
+    role: { stringValue: p.role }
   };
   if (p.googleUid) {
     f.googleUid = { stringValue: p.googleUid };
@@ -54,9 +40,9 @@ async function sendWelcomeEmail(username, recipientEmail) {
   // 🍇 Updated to route exactly to your custom GitHub Pages path directories
   const likeUrl = "https://grapegreen-inc.github.io/GrapeGreen/EmailOptions/like.html";
   const dislikeUrl = "https://grapegreen-inc.github.io/GrapeGreen/EmailOptions/dislike.html";
- 
+
   const htmlTemplate = `
-    <div style="background-color: #120024; color: white; padding: 30px; font-family: sans-serif; border-radius: 12px; max-width: 500px; margin: auto; border: 2px solid #4b0082; text-align: center;[...]
+    <div style="background-color: #120024; color: white; padding: 30px; font-family: sans-serif; border-radius: 12px; max-width: 500px; margin: auto; border: 2px solid #4b0082; text-align: center;">
       <h1 style="color: #a992fa; margin-top: 0;">🍇 Welcome to GrapeGreen!</h1>
       <p style="font-size: 16px; line-height: 1.5; color: #ffffff; text-align: left;">Hey <strong>${username}</strong>,</p>
       <p style="font-size: 14px; line-height: 1.6; color: #dcd0ff; text-align: left; margin-bottom: 25px;">
@@ -69,10 +55,10 @@ async function sendWelcomeEmail(username, recipientEmail) {
       
       <!-- Interactive Feedback Buttons Container Box -->
       <div style="margin: 20px 0;">
-        <a href="${likeUrl}" target="_blank" style="background-color: #4c1c9c; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; margin-right: 10px; d[...]
+        <a href="${likeUrl}" target="_blank" style="background-color: #4c1c9c; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; margin-right: 10px; display: inline-block; border: 1px solid #8a2be2;">
           👍 Like
         </a>
-        <a href="${dislikeUrl}" target="_blank" style="background-color: #240046; color: #a992fa; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-[...]
+        <a href="${dislikeUrl}" target="_blank" style="background-color: #240046; color: #a992fa; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-block; border: 1px solid #4b0082;">
           👎 Dislike
         </a>
       </div>
@@ -133,17 +119,9 @@ function tier(dob) {
 /* ---------- login screen ---------- */
 const err = m => { $("err").textContent = m || ""; };
 
-let me = { name: "", role: "guest", age: "", verified: false, tokens: 0, purchases: [] };
+let me = { name: "", role: "guest", age: "" };
 function enter(u, d) {
-  me = {
-    name: u,
-    role: d ? d.role || "user" : "guest",
-    age: d ? d.age || "" : "",
-    avatar: d ? d.avatar || "" : "",
-    verified: userIsVerified(d),
-    tokens: Number(d && d.tokens !== undefined ? d.tokens : 0),
-    purchases: parsePurchases(d && d.purchases)
-  };
+  me = { name: u, role: d ? d.role || "user" : "guest", age: d ? d.age || "" : "", avatar: d ? d.avatar || "" : "" };
   lastAct = began = Date.now();
   $("gate").classList.add("hide");
   $("who").textContent = u;
@@ -170,7 +148,6 @@ function enter(u, d) {
   if (me.role !== "guest" && (me.age === "3" || me.age === "4")) loadMyProfile();
   if (me.role !== "guest") loadMyTickets();
   listenStaffChat();
-  loadProducts();
   const em = d && sessionKey && d.gmail ? unwrap(d.gmail, sessionKey) : null;
   const bd = d && sessionKey && d.dob ? unwrap(d.dob, sessionKey) : null;
   $("mine").textContent = em ? `Email: ${em}${bd ? " · Born: " + bd : ""} (stored encrypted)` : "";
@@ -218,13 +195,13 @@ $("signup-form").addEventListener("submit", async e => {
     const em = $("su-mail").value;
     const box = age === "1" ? {} : { gmail: wrap(em, sessionKey), dob: wrap(dob, sessionKey) };
     if (age !== "1" && (unwrap(box.gmail, sessionKey) !== em || unwrap(box.dob, sessionKey) !== dob)) throw new Error("encryption check failed");
-    await saveUser(u, { age, salt, hash: hash(pw, salt), ...box, role, verified: false, tokens: 0, purchases: [] });
+    await saveUser(u, { age, salt, hash: hash(pw, salt), ...box, role });
     localStorage.setItem("lastUser", u);
     if (age !== "1" && em) {
       sendWelcomeEmail(u, em); 
     }
     $("su-dob").value = ""; $("su-mail").value = ""; // don't leave them in the form
-    enter(u, { role, age, verified: false, tokens: 0, purchases: "[]", ...box });
+    enter(u, { role, age, ...box });
   } catch (x) {
     console.error(x);
     err("Couldn't create the account. Check your connection and try again.");
@@ -274,7 +251,6 @@ function switchTab(id) {
   if (id === "legal") loadLegal();
   if (id === "tos") loadTos();
   if (id === "users") loadUsers();
-  if (id === "products") loadProducts();
   if (id === "staff") listenStaffChat();
   if (id === "chat" && !window.listenChat) pollChat(true);
   if (id === "updates") loadUpdates();
@@ -290,83 +266,6 @@ function search() {
 $("find-btn").onclick = search;
 $("find").addEventListener("keydown", e => { if (e.key === "Enter") search(); });
 
-/* ---------- products and tokens ---------- */
-const PRODUCT_CATALOG = [
-  { id: "grape-token-pack", name: "Grape Token Pack", icon: "🍇", cost: 25, type: "token", description: "Adds 25 Grape Tokens to your wallet." },
-  { id: "verified-badge", name: "Verified Badge", icon: "✅", cost: 120, type: "verified", description: "Adds a verification checkmark next to your name in chat and profile." },
-  { id: "meme-pack", name: "Meme Pack", icon: "😂", cost: 80, type: "item", description: "Unlocks the exclusive meme pack collection." },
-  { id: "vip-theme", name: "VIP Theme", icon: "✨", cost: 150, type: "item", description: "Unlock the VIP dashboard theme for your account." }
-];
-
-async function loadProducts() {
-  if (!document.getElementById("products-grid")) return;
-  const box = $("products-grid");
-  if (!box) return;
-
-  const wallet = $("product-wallet-balance");
-  const inv = $("product-inventory");
-  const guest = me.role === "guest";
-
-  const currentTokens = guest ? 0 : Number(me.tokens || 0);
-  if (wallet) wallet.textContent = `${currentTokens} tokens`;
-  if (inv) {
-    const myItems = guest ? [] : me.purchases.filter(Boolean);
-    inv.innerHTML = myItems.length ? myItems.map(item => `<span class="small-chip">${item}</span>`).join("") : '<span class="muted">No purchases yet.</span>';
-  }
-
-  const owned = guest ? [] : me.purchases;
-  box.innerHTML = PRODUCT_CATALOG.map(product => {
-    const isOwned = owned.includes(product.id);
-    const canBuy = !guest && !isOwned && currentTokens >= product.cost;
-    const buttonLabel = isOwned ? "Owned" : guest ? "Log in to buy" : `Buy for ${product.cost}`;
-    return `
-      <div class="product-card" style="background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 16px; padding: 18px; min-height: 185px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div style="font-size: 2rem; margin-bottom: 10px;">${product.icon}</div>
-          <h3 style="margin: 0 0 6px; font-size: 1.1rem;">${product.name}</h3>
-          <p style="margin: 0 0 10px; color: var(--mute); min-height: 48px;">${product.description}</p>
-        </div>
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px;">
-          <span style="font-weight: 700; color: var(--leaf);">${product.cost} tokens</span>
-          <button type="button" class="btn product-buy" data-product-id="${product.id}" data-product-cost="${product.cost}" ${isOwned || guest ? "disabled" : ""} style="opacity: ${isOwned || guest ? 0.6 : 1};">
-            ${buttonLabel}
-          </button>
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  box.querySelectorAll(".product-buy").forEach(btn => {
-    btn.onclick = async () => {
-      const id = btn.dataset.productId;
-      const cost = Number(btn.dataset.productCost || 0);
-      if (me.role === "guest") return toast("Log in to purchase products.");
-      try {
-        const d = await getUser(me.name);
-        if (!d) return toast("Your account couldn't be loaded.");
-        const current = Number(d.tokens || 0);
-        const owned = parsePurchases(d.purchases);
-        if (owned.includes(id)) return toast("You already own this item.");
-        if (current < cost) return toast("You do not have enough tokens.");
-        const nextTokens = current - cost;
-        const nextOwned = [...owned, id];
-        await patch(me.name, { tokens: nextTokens, purchases: JSON.stringify(nextOwned) });
-        if (id === "verified-badge") {
-          await patch(me.name, { verified: true });
-          me.verified = true;
-        }
-        me.tokens = nextTokens;
-        me.purchases = nextOwned;
-        toast(`${id === "verified-badge" ? "Verified badge unlocked" : "Purchase complete"}.`);
-        loadProducts();
-      } catch (error) {
-        console.error(error);
-        toast("Purchase failed.");
-      }
-    };
-  });
-}
-
 /* ---------- settings ---------- */
 $("bright").oninput = e => {
   $("bright-v").textContent = e.target.value + "%";
@@ -375,7 +274,7 @@ $("bright").oninput = e => {
 $("sound").oninput = e => { $("sound-v").textContent = e.target.value + "%"; };
 
 /* ---------- themes ---------- */
-const THEMES = { grape: ["#3b1a63", "#7a4bb8", "#a3d95c"], ocean: ["#0b3c5d", "#1d7fb8", "#7be0d1"], sunset: ["#5a1a2e", "#d0553a", "#ffc857"], mint: ["#0f4a3c", "#2f9e7a", "#e9f77a"], rose: ["#4[...]
+const THEMES = { grape: ["#3b1a63", "#7a4bb8", "#a3d95c"], ocean: ["#0b3c5d", "#1d7fb8", "#7be0d1"], sunset: ["#5a1a2e", "#d0553a", "#ffc857"], mint: ["#0f4a3c", "#2f9e7a", "#e9f77a"], rose: ["#4a1236", "#c2417f", "#ffd6e8"] };
 function setTheme(n) {
   const [a, b, c] = THEMES[n] || THEMES.grape, r = document.documentElement.style;
   r.setProperty("--grape", a); r.setProperty("--grape2", b); r.setProperty("--leaf", c);
@@ -400,7 +299,7 @@ const ART = [
 "84844844884484844448444844488448","44488484484848484488448488844848","48848448848484448444848844484844","48444488448888884484484484848848",
 "48444848484444444444444444444444","44444488484844884848848444444444","48888848884884848844844848888884","48444888448884484884484484844484",
 "88888848448888488844488484844484","44444448448884484884484484844484","48888848884884848844844848888884","48444848484844884848848444444444",
-"48444848448884484884484484484848848","48444848844844448444844488448448","48888848444444444444444444444444","44444448444444444444444444444444444"];
+"48444848448884484884484484848848","48444848844844448444844488448448","48888848444444444444444444444444","44444448444444444444444444444444"];
 const COL = { 4: "#111", 8: "#fff", 5: "#f5f5f5" };
 ART.join("").split("").forEach(c => {
   const p = document.createElement("div");
@@ -449,7 +348,6 @@ function parseDoc(doc) {
   const o = { id: decodeURIComponent(doc.name.split("/").pop()) }, f = doc.fields || {};
   for (const k in f) { const v = f[k]; o[k] = v.stringValue ?? (v.integerValue !== undefined ? Number(v.integerValue) : v.booleanValue); }
   o.hash = o.passwordHash;
-  o.verified = userIsVerified(o);
   return o;
 }
 let OwnerName = "MattyGrapeGreenOwner";
@@ -488,10 +386,7 @@ async function watch() { // every 30s: kick out banned/deleted users, sync role 
     const d = await getUser(me.name);
     const bad = !d ? "no longer exists" : d.deletedAt ? "deleted" : banLeft(d) ? banText(d) : "";
     if (bad) { sessionStorage.setItem("kick", "Your account is " + bad + "."); return location.reload(); }
-    if ((d.role || "user") !== me.role) { me.role = d.role || "user"; $("nav-admin").classList.toggle("hide", !isMod() || me.role === "legal"); $("nav-legal").classList.toggle("hide", !isLegal()); }
-    me.verified = userIsVerified(d);
-    me.tokens = Number(d.tokens || 0);
-    me.purchases = parsePurchases(d.purchases);
+    if ((d.role || "user") !== me.role) { me.role = d.role || "user"; $("nav-admin").classList.toggle("hide", !isMod() || me.role === "legal"); $("nav-legal").classList.toggle("hide", !isLegal()); $("cmd-in").classList.toggle("hide", !isDev()); }
   } catch {}
 }
 
@@ -521,9 +416,8 @@ function render() {
     const time = ts && !m.local ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
     const tag = m.r === "bot" ? '<span class="tag">bot</span>' : rk(m.r) >= 3 ? `<span class="tag">${m.r}</span>`
       : m.r === "mod" ? '<span class="tag">mod</span> <span class="chk" title="Verified moderator">&check;</span>' : kidMsg ? '<span class="tag">kid</span>' : "";
-    const verified = m.v ? ' <span class="chk" title="Verified user">&check;</span>' : "";
     const av = AVATARS.includes(m.a) ? m.a + " " : "";
-    return `<p class="msg">${time}${av}<b>${esc(m.u)}</b>${verified}${tag}: ${fmt(filt(m.x || ""))}${acts}</p>`;
+    return `<p class="msg">${time}${av}<b>${esc(m.u)}</b>${tag}: ${fmt(filt(m.x || ""))}${acts}</p>`;
   }).join("");
   box.innerHTML = html || '<p class="mute">No messages yet. Say hi!</p>';
   if (near) box.scrollTop = box.scrollHeight;
@@ -543,13 +437,13 @@ $("msgs").addEventListener("click", async e => {
 });
 function applyDocs(list) { // realtime: called whenever chat changes, no refresh needed
   const had = seen;
-  lastMsgs = list.map(o => ({ id: o.id, u: o.u, x: dec(o.x), r: o.r, k: o.k, a: o.a, v: !!o.v, t: o.t })).reverse();
+  lastMsgs = list.map(o => ({ id: o.id, u: o.u, x: dec(o.x), r: o.r, k: o.k, a: o.a, t: o.t })).reverse();
   if (had && lastMsgs.some(m => m.t > had && m.u !== me.name)) ping();
   const n = lastMsgs[lastMsgs.length - 1];
   if (n) seen = n.t;
   render();
 }
-const pick = d => { const o = parseDoc(d); return { id: o.id, u: o.u, x: dec(o.x), r: o.r, k: o.k, a: o.a, v: !!o.v, t: o.t }; };
+const pick = d => { const o = parseDoc(d); return { id: o.id, u: o.u, x: dec(o.x), r: o.r, k: o.k, a: o.a, t: o.t }; };
 let tick = 0;
 async function pollChat(force) {
   if (document.hidden || (!force && !$("chat").classList.contains("active"))) return; // no reads unless chat is open
@@ -603,15 +497,14 @@ $("chat-form").addEventListener("submit", async e => {
     const hit = await botCheck(clean, d);
     if (hit) {
       $("chat-in").value = "";
-      await add("chat", { u: "Bot: " + hit.name, x: wrap(hit.action === "ban" ? `${me.name}, that's strike ${hit.x}. Temp banned for ${hit.hours}h.` : `${me.name}, please watch your language.`, CHAT_KEY), a: "", k: "0", r: "bot", t: Date.now(), v: false });
+      await add("chat", { u: "Bot: " + hit.name, x: wrap(hit.action === "ban" ? `${me.name}, that's strike ${hit.x}. Temp banned for ${hit.hours}h.` : `${me.name}, please watch your language.`, CHAT_KEY), a: "\uD83E\uDD16", k: "0", r: "bot", t: Date.now() });
       if (hit.action === "ban") { await patch(me.name, { banUntil: Date.now() + hit.hours * 36e5 }); return watch(); }
       pollChat();
       return;
     }
     $("chat-in").value = "";
     await fetch(`${ROOT}/chat${KEY}`, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fields: { u: { stringValue: me.name }, x: { stringValue: wrap(filt(clean), CHAT_KEY) }, a: { stringValue: me.avatar || "" }, k: { stringValue: kid ? "1" : "0" }, r: { stringValue: me.role }, t: { integerValue: String(Date.now()) }, v: { booleanValue: !!me.verified } } })
-    });
+      body: JSON.stringify({ fields: { u: { stringValue: me.name }, x: { stringValue: wrap(filt(clean), CHAT_KEY) }, a: { stringValue: me.avatar || "" }, k: { stringValue: kid ? "1" : "0" }, r: { stringValue: me.role }, t: { integerValue: String(Date.now()) } } }) });
     pollChat();
   } catch { toast("Message didn't send. Try again."); }
 });
@@ -675,10 +568,10 @@ async function loadAdmin() {
   users = users.filter(u => !(u.deletedAt && !u.legalHold && u.purgeAt < now));
   const live = users.filter(u => !u.deletedAt), bin = users.filter(u => u.deletedAt);
   $("a-users").innerHTML = "<table><tr><th>User</th><th>Role</th><th>Status</th><th></th></tr>" + live.map(u =>
-    `<tr><td><a href="#" data-pick="${esc(u.id)}">${esc(u.id)}</a>${userIsVerified(u) ? ' <span class="chk" title="Verified user">&check;</span>' : ""}</td><td>${esc(u.role || "user")}</td><td>${banLeft(u) ? banText(u) : "active"}</td><td>${u.id !== me.name ? `<a href="#" data-dm="${esc(u.id)}">DM</a>` : ""}</td></tr>`).join("") + "</table>";
+    `<tr><td><a href="#" data-pick="${esc(u.id)}">${esc(u.id)}</a></td><td>${esc(u.role || "user")}</td><td>${banLeft(u) ? banText(u) : "active"}</td><td>${u.id !== me.name ? `<a href="#" data-dm="${esc(u.id)}">1-on-1</a>` : ""}</td></tr>`).join("") + "</table>";
   $("a-bin").innerHTML = bin.length ? "<table><tr><th>User</th><th>Days left</th><th></th></tr>" + bin.map(u => u.legalHold
     ? `<tr><td>${esc(u.id)}</td><td>on hold</td><td class="mute">Paused by Legal</td></tr>`
-    : `<tr><td>${esc(u.id)}</td><td>${Math.ceil((u.purgeAt - now) / 864e5)}</td><td><button class="btn" data-restore="${esc(u.id)}">Restore</button> <button class="btn red" data-perm="${esc(u.id)}">Perm delete</button></td></tr>`).join("") + "</table>" : "<p class='mute'>No deleted accounts.</p>";
+    : `<tr><td>${esc(u.id)}</td><td>${Math.ceil((u.purgeAt - now) / 864e5)}</td><td><button class="btn" data-restore="${esc(u.id)}">Restore</button> <button class="btn red" data-perm="${esc(u.id)}">Perm delete</button>${u.extUsed ? "" : ` <button class="btn" data-ext="${esc(u.id)}">+7 days</button>`}</td></tr>`).join("") + "</table>" : '<p class="mute">The bin is empty.</p>';
 }
 $("admin").addEventListener("click", async e => {
   const t = e.target, msg = m => { $("a-msg").textContent = m; };
@@ -705,9 +598,7 @@ $("admin").addEventListener("click", async e => {
       if (!u) return msg("No user with that name.");
       const mine = rk(me.role), theirs = rk(u.role || "user"), nr = a.startsWith("role:") ? a.slice(5) : null;
       if (a === "dm") { if (me.role === "owner") openDM(u.id); else invite(u.id); return; }
-      if (a === "verify") { if (!isAdmin()) return msg("Admins and above only."); await patch(u.id, { verified: true }); }
-      else if (a === "unverify") { if (!isAdmin()) return msg("Admins and above only."); await patch(u.id, { verified: false }); }
-      else if (theirs >= mine || u.id === me.name) return msg("You can't do that to this account.");
+      if (theirs >= mine || u.id === me.name) return msg("You can't do that to this account.");
       if (nr) { if (!isHeadAdmin() || rk(nr) >= mine) return msg("You can't do that to this account."); await patch(u.id, { role: nr }); }
       else if (a === "ban") { if (!isMod()) return; const h = Number($("a-hours").value); if (!(h > 0)) return msg("Enter ban hours."); await patch(u.id, { banUntil: Date.now() + h * 36e5 }); }
       else if (a === "perm") { if (!isAdmin()) return msg("Admins and above only."); await patch(u.id, { banUntil: -1 }); }
@@ -720,7 +611,7 @@ $("admin").addEventListener("click", async e => {
 });
 
 /* ---------- safety helpers ---------- */
-const cleanText = t => String(t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/\bon[a-z]{3,}\s*=/gi, "").replace(/javascript\s*:/gi, "").trim(); // no onload=, onerror= etc. (https://developer.mozilla.org/en-US/docs/Web/Security/Spoofing/Clickjacking)
+const cleanText = t => String(t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/\bon[a-z]{3,}\s*=/gi, "").replace(/javascript\s*:/gi, "").trim(); // no onload=, onerror= etc. (output is HTML-escaped too)
 const BAD = ["fuck", "shit", "bitch", "asshole", "bastard", "dick", "cunt", "slut", "whore", "piss"]; // add more words here
 const LEET = { a: "[a4@]", e: "[e3]", i: "[i1!]", o: "[o0]", s: "[s5$]", t: "[t7]" };
 const BAD_RX = new RegExp(BAD.map(w => "(?<![a-z])" + [...w].map(c => LEET[c] || c).join("[\\W_]*") + "(?![a-z])").join("|"), "gi");
@@ -771,7 +662,7 @@ async function loadUpdates() {
   try { const r = await fetch(`${ROOT}/updates${KEY}&pageSize=100`);
     ((await r.json()).documents || []).map(parseDoc).forEach(o => { if (VOK.test(o.v || "")) m.set(o.v, { v: o.v, title: o.title || "", notes: o.notes || "" }); }); } catch {}
   ups = [...m.values()].sort((a, b) => vcmp(a.v, b.v));
-  $("upl").innerHTML = ups.map(e => `<div class="card" style="max-width:560px;margin-bottom:12px"><h3>${esc(e.v)}${isDev() ? ` · <a href="#" data-up="${esc(e.v)}">edit</a>` : ""}</h3><b>${esc(e.title)}</b><ul>${(e.notes || "").split("\n").map(chLine).join("")}</ul></div>`).join("");
+  $("upl").innerHTML = ups.map(e => `<div class="card" style="max-width:560px;margin-bottom:12px"><h3>${esc(e.v)}${isDev() ? ` · <a href="#" data-up="${esc(e.v)}">edit</a>` : ""}</h3><b>${esc(e.title)}</b><ul>${e.notes.split("\n").filter(Boolean).map(chLine).join("")}</ul></div>`).join("");
 }
 $("upl").addEventListener("click", e => {
   const u = ups.find(x => x.v === e.target.dataset.up); if (!u) return;
@@ -839,7 +730,7 @@ function ticketHTML(o) {
     body = `<p class="mute">Chat report</p><p><b>${esc(o.author)}</b> said: ${esc(o.text)}</p><p class="mute">Reported by ${esc(o.by)}</p>`;
   } else {
     const from = o.gmail ? esc(unwrap(o.gmail, CHAT_KEY) || "?") + " (guest)" : esc(o.by || "?");
-    body = `<p class="mute">Contact us, from ${from}</p><b>${esc(o.title)}</b><p>${esc(o.details)}</p>${okImg(o.shot) ? `<img src="${o.shot}" alt="screenshot">` : ""}<p class="mute" id="tk-viewer"></p>`;
+    body = `<p class="mute">Contact us, from ${from}</p><b>${esc(o.title)}</b><p>${esc(o.details)}</p>${okImg(o.shot) ? `<img src="${o.shot}" alt="screenshot">` : ""}<p class="mute" id="tk-viewer"></p><div id="tk-thread" style="max-height:200px;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px;margin:8px 0"></div>`;
   }
   let acts;
   if (!canAct) acts = o.status === "transferred" ? '<p class="mute">Transferred to Legal. Only Legal and the owner can respond now.</p>' : "";
@@ -877,7 +768,7 @@ $("ticket-body").addEventListener("click", async e => {
   const act = e.target.dataset.tk; if (!act || !curTicket) return;
   const o = curTicket, close = () => { $("ticket").classList.add("hide"); loadReports(isLegal() ? "lg-reports" : "a-reports"); };
   try {
-    if (act === "accept") { await patchDoc("reports/" + o.id, { status: "accepted", assignedTo: me.name }); if (o.by && o.by !== "guest") await add("notices", { to: o.by, type: "accepted", text: "A moderator accepted your ticket.", t: Date.now() }); close(); }
+    if (act === "accept") { await patchDoc("reports/" + o.id, { status: "accepted", assignedTo: me.name }); if (o.by && o.by !== "guest") await add("notices", { to: o.by, type: "accepted", text: "Your ticket was accepted and is being worked on.", t: Date.now() }); close(); }
     else if (act === "queue") { await patchDoc("reports/" + o.id, { status: "open", assignedTo: "" }); close(); }
     else if (act === "legal") { await patchDoc("reports/" + o.id, { status: "transferred", assignedTo: "" }); close(); }
     else if (act === "del") { await fetch(`${ROOT}/reports/${encodeURIComponent(o.id)}${KEY}`, { method: "DELETE" }); close(); }
@@ -887,7 +778,7 @@ $("ticket-body").addEventListener("click", async e => {
     else if (act === "reply") {
       const box = $("tk-reply"), raw = box.value.trim(); if (!raw) return;
       box.value = "";
-      if (raw.startsWith("/") && isDev()) { toast(await runCommand(raw)); return; }
+      if (raw.startsWith("/") && isDev()) { toast(await runCommand(raw)); return; } // runs locally for you only, never on the user's side
       const txt = cleanText(raw).slice(0, 500);
       await add("dm", { room: "ticket:" + o.id, u: me.name, x: wrap(txt, CHAT_KEY), t: Date.now() });
       if (o.by && o.by !== "guest") await add("notices", { to: o.by, type: "ticket", text: "Support replied to your ticket.", t: Date.now() });
@@ -969,7 +860,7 @@ $("nu-save").onclick = async () => {
     if (await getUser(u)) return msg("That username is taken.");
     const salt = CryptoJS.lib.WordArray.random(16).toString(), k = deriveKey(pw, salt);
     const box = age === "1" ? {} : { gmail: wrap(em, k), dob: wrap(dob, k) };
-    await saveUser(u, { age, salt, hash: hash(pw, salt), ...box, role: "user", verified: false, tokens: 100, purchases: [] });
+    await saveUser(u, { age, salt, hash: hash(pw, salt), ...box, role: "user" });
     msg("Account created — share the username and temporary password with them. They'll know the password, so suggest they change it.");
     $("nu-user").value = ""; $("nu-dob").value = ""; $("nu-mail").value = ""; $("nu-pass").value = "";
   } catch { msg("Couldn't create the account."); }
@@ -983,7 +874,7 @@ async function loadPwReqs() {
     const rows = ((await r.json()).documents || []).map(parseDoc);
     $("pw-list").innerHTML = rows.length ? "<table><tr><th>For</th><th>By</th><th>Approvals</th><th></th></tr>" + rows.map(o => {
       const approvals = (o.approvals || "").split(",").filter(Boolean);
-      return `<tr><td>${esc(o.target)}</td><td>${esc(o.by)}</td><td>${isDev() ? "owner/dev approval" : approvals.length + "/3 admins"}</td><td>${o.by !== me.name ? `<button class="btn" data-appr="${esc(o.id)}">Approve</button>` : ""} <button class="btn red" data-pwdel="${esc(o.id)}">Delete</button></td></tr>`;
+      return `<tr><td>${esc(o.target)}</td><td>${esc(o.by)}</td><td>${isDev() ? "owner/dev approval" : approvals.length + "/3 admins"}</td><td>${o.by !== me.name ? `<button class="btn" data-appr="${esc(o.id)}">Approve</button>` : '<span class="mute">awaiting others</span>'} <button class="btn red" data-pwdel="${esc(o.id)}">Cancel</button></td></tr>`;
     }).join("") + "</table>" : '<p class="mute">No pending requests.</p>';
   } catch { $("pw-list").textContent = "Couldn't load requests."; }
 }
@@ -1042,7 +933,7 @@ async function loadBots() {
     const r = await fetch(`${ROOT}/bots${KEY}&pageSize=50`);
     bots = ((await r.json()).documents || []).map(parseDoc);
     $("bot-list").innerHTML = bots.length ? "<table><tr><th>Name</th><th>Keywords</th><th>Strikes</th><th>Action</th><th>On</th><th></th></tr>" + bots.map(b =>
-      `<tr><td>${esc(b.name)}</td><td>${esc(b.words)}</td><td>${b.x}</td><td>${b.action === "ban" ? b.hours + "h ban" : "warn"}</td><td>${b.on ? "yes" : "no"}</td><td><button class="btn red" data-botdel="${esc(b.id)}">Delete</button></td></tr>`).join("") + "</table>" : '<p class="mute">No bots configured.</p>';
+      `<tr><td>${esc(b.name)}</td><td>${esc(b.words)}</td><td>${b.x}</td><td>${b.action === "ban" ? b.hours + "h ban" : "warn"}</td><td>${b.on ? "yes" : "no"}</td><td><button class="btn red" data-botdel="${esc(b.id)}">Delete</button></td></tr>`).join("") + "</table>" : '<p class="mute">No bots yet.</p>';
   } catch { $("bot-list").textContent = "Couldn't load bots."; }
 }
 $("bot-save").onclick = async () => {
@@ -1086,13 +977,13 @@ async function loadLegal() {
     $("lg-kids").innerHTML = kids.length ? "<table><tr><th>User</th></tr>" + kids.map(u => `<tr><td>${esc(u.id)}</td></tr>`).join("") + "</table>" : '<p class="mute">None.</p>';
     legalBin = all.filter(u => u.deletedAt);
     $("lg-bin").innerHTML = legalBin.length ? "<table><tr><th>User</th><th>Status</th><th></th></tr>" + legalBin.map(u =>
-      `<tr><td>${esc(u.id)}</td><td>${u.legalHold ? "on hold" : Math.ceil((u.purgeAt - Date.now()) / 864e5) + " days left"}</td><td><button class="btn" data-hold="${esc(u.id)}">${u.legalHold ? "Unhold" : "Hold"}</button> <button class="btn" data-lexport="${esc(u.id)}">Export</button> <button class="btn red" data-lperm="${esc(u.id)}">Perm delete</button></td></tr>`).join("") + "</table>" : '<p class="mute">No deleted accounts.</p>';
+      `<tr><td>${esc(u.id)}</td><td>${u.legalHold ? "on hold" : Math.ceil((u.purgeAt - Date.now()) / 864e5) + " days left"}</td><td><button class="btn" data-hold="${esc(u.id)}">${u.legalHold ? "Unpause" : "Pause"}</button> <button class="btn" data-lexport="${esc(u.id)}">Export JSON</button> <button class="btn red" data-lperm="${esc(u.id)}">Perm delete</button></td></tr>`).join("") + "</table>" : '<p class="mute">Nothing in the bin.</p>';
   } catch { $("lg-kids").textContent = "Couldn't load."; }
   try {
     const r = await fetch(`${ROOT}/reports${KEY}&orderBy=t%20desc&pageSize=50`);
     const rows = ((await r.json()).documents || []).map(parseDoc).filter(o => o.status === "transferred");
     $("lg-trans").innerHTML = rows.length ? "<table><tr><th>Type</th><th>From</th><th></th></tr>" + rows.map(o =>
-      `<tr><td>${esc(o.type)}</td><td>${esc(o.by || "?")}</td><td><button class="btn" data-ticket="${esc(o.id)}">Open</button> <button class="btn red" data-tkdel="${esc(o.id)}">Delete</button></td></tr>`).join("") + "</table>" : '<p class="mute">No transferred tickets.</p>';
+      `<tr><td>${esc(o.type)}</td><td>${esc(o.by || "?")}</td><td><button class="btn" data-ticket="${esc(o.id)}">Open</button> <button class="btn red" data-tkdel="${esc(o.id)}">Delete</button></td></tr>`).join("") + "</table>" : '<p class="mute">Nothing transferred.</p>';
   } catch { $("lg-trans").textContent = "Couldn't load."; }
 }
 document.body.addEventListener("click", async e => {
@@ -1232,7 +1123,7 @@ $("bot-chat-form").addEventListener("submit", async e => {
     } else if (botTicket) {
       await add("dm", { room: "ticket:" + botTicket, u: by, x: wrap(x, CHAT_KEY), t: Date.now() });
     } else {
-      botSay(low.includes("password") ? "You can change your password from Settings." : low.includes("ban") ? "If a ban seems wrong, tell me more and I'll pass it to the team if needed." : "Got it — tell me a bit more and I'll help you decide the best next step.");
+      botSay(low.includes("password") ? "You can change your password from Settings." : low.includes("ban") ? "If a ban seems wrong, tell me more and I'll pass it to the team if needed." : "Got it — tell me more, or say \"human\" to talk to a team member.");
     }
   } catch { botSay("Something went wrong sending that. Try again."); }
 });
@@ -1391,9 +1282,7 @@ function renderUsers() {
   const q = $("user-search").value.trim().toLowerCase();
   const rows = directory.filter(u => !q || u.id.toLowerCase().includes(q));
   $("user-list").innerHTML = rows.length ? rows.map(u => `<div class="card" style="max-width:560px;margin-bottom:10px">
-    <div style="display:flex;align-items:center;gap:10px"><div class="userav" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--grape2),var(--leaf));color:#fff;display:grid;place-items:center;border:2px solid rgba(255,255,255,0.2)">${(u.avatar || u.id[0] || "G").toUpperCase()}</div>
-      <div><div style="font-weight:700">${esc(u.id)}${userIsVerified(u) ? ' <span class="chk" title="Verified user">&check;</span>' : ""}</div></div>
-    </div>
+    <div style="display:flex;align-items:center;gap:10px"><div class="userav" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--grape2),var(--leaf));color:#fff;display:grid;place-items:center;font-size:18px;font-weight:800">${esc(u.avatar || u.id[0].toUpperCase())}</div><b>${esc(u.id)}</b></div>
     ${u.bio ? `<p style="margin:8px 0 0">${mdSafe(u.bio)}</p>` : ""}
     ${(() => { try { const ls = JSON.parse(u.links || "[]"); return ls.length ? `<div style="margin-top:8px">${ls.map(l => `<a class="btn" style="display:inline-block;margin:2px 4px 0 0;text-decoration:none" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.label)}</a>`).join("")}</div>` : ""; } catch { return ""; } })()}
   </div>`).join("") : '<p class="mute">No one found.</p>';
@@ -1654,7 +1543,7 @@ const initGoogleAuthButtons = () => {
   const db = window.F12Db;
   const googleProvider = window.F12Provider;
 
-  const btnStyle = "display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 10px; background: white; color: #444; border: 1px solid #dadce0; border-radius: 999px; cursor: pointer; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.12);";
+  const btnStyle = "display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 10px; background: white; color: #444; border: 1px solid #dadce0; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-family: inherit;";
   const gLogo = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px; height:18px;">`;
 
   // 1. Setup Login Button Flow
@@ -1735,11 +1624,11 @@ const initGoogleAuthButtons = () => {
           throw new Error("encryption check failed");
         }
 
-        await saveUser(u, { age, salt, hash: hash(googleUser.uid, salt), ...box, role, googleUid: googleUser.uid, verified: false, tokens: 100, purchases: [] });
+        await saveUser(u, { age, salt, hash: hash(googleUser.uid, salt), ...box, role, googleUid: googleUser.uid });
         localStorage.setItem("lastUser", u);
         if (age !== "1" && em && typeof sendWelcomeEmail !== 'undefined') sendWelcomeEmail(u, em);
 
-        enter(u, { role, age, ...box, verified: false, tokens: 100, purchases: "[]" });
+        enter(u, { role, age, ...box });
       } catch (x) {
         console.error(x);
         err("Google registration failed. Ensure your console configuration is active.");
