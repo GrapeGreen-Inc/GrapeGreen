@@ -24,13 +24,26 @@ self.addEventListener('fetch', (event) => {
                     const query = await clonedRequest.json(); 
                     let output = "";
 
+                    // 📄 Read your parameters out of params.txt located in the same folder
+                    let paramsData = "";
+                    try {
+                        const paramsResponse = await fetch('params.txt');
+                        if (paramsResponse.ok) {
+                            paramsData = await paramsResponse.text();
+                        } else {
+                            paramsData = "[Warning: params.txt file found but unreachable]";
+                        }
+                    } catch (fileErr) {
+                        paramsData = "[Warning: Failed to fetch local params.txt source resource]";
+                    }
+
                     if (query && query.prompt) {
                         // 2. Extracts exactly what you said out of your structured template text block
                         const match = query.prompt.match(/the user said:\s*"([^"]+)"/);
                         
                         if (match && match[1]) {
-                            // 3. Assigns your exact words to your output variable
-                            output = match[1]; 
+                            // 3. Assigns your exact words to your output variable and appends the params file context
+                            output = match[1] + "\n\n[SYSTEM PARAMS CONTEXT]:\n" + paramsData.trim(); 
                         } else {
                             output = "Could not parse your words out of the prompt format.";
                         }
