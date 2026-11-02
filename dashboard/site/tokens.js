@@ -17,8 +17,10 @@ window.GrapeGreenTokens = {
     ]
   },
   generateWalletId(username) {
-    const base = (username || "user").toString().replace(/[^a-zA-Z0-9]/g, "").slice(0, 4) || "user";
-    const nums = Array.from({ length: 3 }, () => String(Math.floor(Math.random() * 9000) + 1000));
-    return `${base.toLowerCase()}-${nums.join("-")}`;
+    const base = (username || "user").toString().replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toLowerCase() || "user";
+    const a = String(Math.floor(Math.random() * 9000) + 1000);
+    const b = String(Math.floor(Math.random() * 9000) + 1000);
+    const c = String(Math.floor(Math.random() * 9000) + 1000);
+    return `${base}-${a}-${b}-${c}`;
   }
 };
