@@ -8,3 +8,12 @@ devs:
 
 ---
 
+## guide on contirbuting:
+
+- fix bugs
+- add features
+- finish tasks
+- be happy
+- ban anyone who says grapes taste bad
+
+---
