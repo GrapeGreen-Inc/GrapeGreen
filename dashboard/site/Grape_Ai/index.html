@@ -287,6 +287,24 @@
 </div>
 
     <!-- External script handling all background actions and encryption rules -->
+        <!-- Put this script inside your dashboard index.html or top of app.js -->
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        // Registers from your root repo layout path so it covers all directories and subfolders
+        navigator.serviceWorker.register('/GrapeGreen/ai/api/grape-ai.js', { scope: '/GrapeGreen/' })
+            .then((registration) => {
+                console.log('🍇 Grape AI Core Worker Registered! Scope:', registration.scope);
+                
+                // Automatically updates the worker whenever you save changes or reload the page
+                registration.update();
+            })
+            .catch((error) => {
+                console.error('Grape AI Worker failed to spin up:', error);
+            });
+    });
+}
+</script>
     <script type="module" src="SLM.js"></script>
   </body>
 </html>
