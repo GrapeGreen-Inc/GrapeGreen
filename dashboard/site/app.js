@@ -142,6 +142,15 @@ function enter(u, d) {
   $("nav-staff").classList.toggle("hide", !isMod());
   $("profile-card").classList.toggle("hide", !(me.age === "3" || me.age === "4"));
   $("mytickets-card").classList.toggle("hide", me.role === "guest");
+  updateCreditAdminVisibility();
+renderCreditsOverview();
+if (me.role !== "guest") {
+  const state = getCreditsState(me.name);
+  if (!state.walletId) state.walletId = buildWalletId(me.name);
+  if (!Number.isFinite(Number(state.balance))) state.balance = 5;
+  saveCreditsState(me.name, state);
+  renderCreditsOverview();
+}
   listenMine();
   loadMotd();
   loadAbout();
@@ -289,7 +298,9 @@ Object.entries(THEMES).forEach(([n, [a, b, c]]) => {
   $("sws").appendChild(el);
 });
 setTheme(localStorage.getItem("theme") || "grape");
-
+$("theme-buy-btn").onclick = () => buyTheme($("theme-buy-select").value);
+$("subscription-buy-btn").onclick = () => buySubscription($("subscription-buy-select").value);
+$("credit-earn-btn").onclick = () => awardFreeCreditIfActive();
 /* ---------- pixel art ---------- */
 const ART = [
 "44444448484488484884488484444444","48888848884884848844844484888884","45444848448884484884484484844484","45444848448888488844488484844484",
@@ -575,6 +586,33 @@ async function loadAdmin() {
 }
 $("admin").addEventListener("click", async e => {
   const t = e.target, msg = m => { $("a-msg").textContent = m; };
+
+  // Credit manager button inside Admin panel
+  if (t.id === "credit-admin-run" || t.closest("#credit-admin-run")) {
+    e.preventDefault();
+    if (!me || me.role === "guest") {
+      $("credit-admin-msg").textContent = "Guests cannot use this.";
+      return;
+    }
+    const allowed = ["mod", "admin", "headadmin", "legal", "dev", "owner"];
+    if (!allowed.includes(me.role)) {
+      $("credit-admin-msg").textContent = "You do not have permission.";
+      return;
+    }
+
+    const raw = `/credits ${$("credit-admin-action").value} ${$("credit-admin-user").value.trim()} ${$("credit-admin-amount").value} ${$("credit-admin-time").value || "now"}`;
+    const parsed = runCreditCommand(raw);
+
+    if (!parsed.ok) {
+      $("credit-admin-msg").textContent = parsed.message;
+      return;
+    }
+
+    const result = applyCreditChange(parsed.username, parsed.action, parsed.amount, parsed.delayMs);
+    $("credit-admin-msg").textContent = result.message;
+    return;
+  }
+
   if (t.dataset.pick) { e.preventDefault(); $("a-user").value = t.dataset.pick; return; }
   if (t.dataset.dm) { e.preventDefault(); if (me.role === "owner") openDM(t.dataset.dm); else invite(t.dataset.dm); return; }
   if (!isMod()) return;
@@ -603,13 +641,201 @@ $("admin").addEventListener("click", async e => {
       else if (a === "ban") { if (!isMod()) return; const h = Number($("a-hours").value); if (!(h > 0)) return msg("Enter ban hours."); await patch(u.id, { banUntil: Date.now() + h * 36e5 }); }
       else if (a === "perm") { if (!isAdmin()) return msg("Admins and above only."); await patch(u.id, { banUntil: -1 }); }
       else if (a === "unban") { if (!isMod()) return; await patch(u.id, { banUntil: 0 }); }
-      else if (a === "delete") { if (!isAdmin()) return msg("Admins and above only."); await patch(u.id, { deletedAt: Date.now(), purgeAt: Date.now() + 90 * 864e5 }); }
-      msg("Done.");
-    } else return;
-    loadAdmin();
-  } catch (x) { console.error(x); msg("That didn't work. Check your connection and rules."); }
-});
+      else if (a === "*
+
+function buildWalletId(username) {
+  const base = String(username || "user").replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toLowerCase() || "user";
+  const a = String(Math.floor(Math.random() * 9000) + 1000);
+  const b = String(Math.floor(Math.random() * 9000) + 1000);
+  const c = String(Math.floor(Math.random() * 9000) + 1000);
+  return `${base}-${a}-${b}-${c}`;
+}
 
+function getCreditsState(username) {
+  const key = "credits_" + username;
+  const raw = JSON.parse(localStorage.getItem(key) || '{"balance":5,"walletId":"","items":[],"subscriptions":[],"theme":""}');
+  if (!raw.walletId) raw.walletId = buildWalletId(username);
+  if (!Number.isFinite(Number(raw.balance))) raw.balance = 5;
+  raw.items = Array.isArray(raw.items) ? raw.items : [];
+  raw.subscriptions = Array.isArray(raw.subscriptions) ? raw.subscriptions : [];
+  return raw;
+}
+
+function saveCreditsState(username, data) {
+  localStorage.setItem("credits_" + username, JSON.stringify(data));
+}
+
+function syncCreditsToFirestore(username, data) {
+  if (!window.F12Db) return Promise.resolve();
+  const fields = {
+    credits: { integerValue: String(Number(data.balance || 0)) },
+    walletId: { stringValue: data.walletId || buildWalletId(username) },
+    theme: { stringValue: data.theme || "" },
+    purchased: { arrayValue: { values: (data.items || []).map(v => ({ stringValue: JSON.stringify(v) })) } },
+    subscriptions: { arrayValue: { values: (data.subscriptions || []).map(v => ({ stringValue: String(v) })) } }
+  };
+  return fetch(`${DB}/${encodeURIComponent(username)}${KEY}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fields })
+  }).catch(() => {});
+}
+
+function parseCreditDelay(raw) {
+  const text = String(raw || "").trim().toLowerCase();
+  if (!text || text === "now") return 0;
+  const match = text.match(/^in\s+(\d+)\s*(s|sec|secs|second|seconds|m|min|mins|minute|minutes)$/i);
+  if (!match) return 0;
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  return unit.startsWith("s") ? amount * 1000 : amount * 60000;
+}
+
+function runCreditCommand(raw) {
+  const text = String(raw || "").trim();
+  const match = text.match(/^\/?credits\s+(add|remove)\s+([A-Za-z0-9_.-]+)\s+(\d+)\s*(.*)$/i);
+  if (!match) return { ok: false, message: "Usage: /credits add user38 3 now" };
+
+  const [, action, username, amountRaw, delayText] = match;
+  const amount = Number(amountRaw);
+  const delayMs = parseCreditDelay(delayText);
+
+  if (!(amount > 0)) return { ok: false, message: "Amount must be greater than 0." };
+  return { ok: true, action: action.toLowerCase(), username: username.trim(), amount, delayMs };
+}
+
+function applyCreditChange(username, action, amount, delayMs = 0) {
+  const state = getCreditsState(username);
+
+  const apply = () => {
+    if (action === "add") state.balance = Number(state.balance || 0) + amount;
+    if (action === "remove") state.balance = Math.max(0, Number(state.balance || 0) - amount);
+
+    state.items = Array.isArray(state.items) ? state.items : [];
+    state.items.unshift({
+      name: action === "add" ? `Admin added ${amount}` : `Admin removed ${amount}`,
+      type: "credit",
+      amount,
+      createdAt: Date.now()
+    });
+    state.items = state.items.slice(0, 40);
+
+    saveCreditsState(username, state);
+    syncCreditsToFirestore(username, state);
+    return state;
+  };
+
+  if (delayMs > 0) {
+    setTimeout(() => {
+      apply();
+      toast(`Credits updated for ${username}.`);
+      if (typeof renderCredits === "function") renderCredits();
+    }, delayMs);
+    return {
+      ok: true,
+      message: `${action === "add" ? "Added" : "Removed"} ${amount} credit(s) for ${username} in ${Math.round(delayMs / 1000)}s.`
+    };
+  }
+
+  apply();
+  return {
+    ok: true,
+    message: `${action === "add" ? "Added" : "Removed"} ${amount} credit(s) for ${username}.`
+  };
+}
+
+function updateCreditAdminVisibility() {
+  const panel = document.getElementById("credit-manager-card");
+  if (!panel) return;
+  const canUse = !!me && !!me.role && ["mod", "admin", "headadmin", "legal", "dev", "owner"].includes(me.role);
+  panel.classList.toggle("hide", !canUse);
+}
+
+function renderCreditsOverview() {
+  const user = me && me.name ? me.name : (localStorage.getItem("lastUser") || "guest");
+  if (user === "guest") {
+    const bal = document.getElementById("credits-balance");
+    if (bal) bal.textContent = "0 credits";
+    const wallet = document.getElementById("credit-wallet-id");
+    if (wallet) wallet.textContent = "Wallet ID: guest";
+    return;
+  }
+
+  const state = getCreditsState(user);
+  const bal = document.getElementById("credits-balance");
+  if (bal) bal.textContent = `${Number(state.balance || 0)} credits`;
+
+  const wallet = document.getElementById("credit-wallet-id");
+  if (wallet) wallet.textContent = `Wallet ID: ${state.walletId || buildWalletId(user)}`;
+
+  const list = document.getElementById("credits-item-list");
+  if (list) {
+    if (!state.items.length) {
+      list.innerHTML = "<li>No items purchased yet.</li>";
+    } else {
+      list.innerHTML = state.items.map(item => `<li>${String(item.name || "Item")} (${String(item.type || "item")})</li>`).join("");
+    }
+  }
+}
+
+function buyTheme(themeId) {
+  const user = me && me.name ? me.name : localStorage.getItem("lastUser");
+  if (!user || user === "guest") return toast("Log in to buy a theme.");
+  const state = getCreditsState(user);
+  const theme = (window.GrapeGreenTokens && window.GrapeGreenTokens.creditConfig && window.GrapeGreenTokens.creditConfig.themes || []).find(t => t.id === themeId);
+  if (!theme) return toast("Theme not found.");
+  if (state.balance < theme.price) return toast(`You need ${theme.price} credits for ${theme.name}.`);
+
+  state.balance -= theme.price;
+  state.theme = themeId;
+  state.items.unshift({ name: theme.name, type: "theme", price: theme.price, createdAt: Date.now() });
+  state.items = state.items.slice(0, 40);
+
+  saveCreditsState(user, state);
+  syncCreditsToFirestore(user, state);
+  renderCreditsOverview();
+  toast(`${theme.name} purchased.`);
+}
+
+function buySubscription(subId) {
+  const user = me && me.name ? me.name : localStorage.getItem("lastUser");
+  if (!user || user === "guest") return toast("Log in to buy a subscription.");
+  const state = getCreditsState(user);
+  const sub = (window.GrapeGreenTokens && window.GrapeGreenTokens.creditConfig && window.GrapeGreenTokens.creditConfig.subscriptions || []).find(s => s.id === subId);
+  if (!sub) return toast("Subscription not found.");
+  if (state.balance < sub.price) return toast(`You need ${sub.price} credits for ${sub.name}.`);
+
+  state.balance -= sub.price;
+  state.subscriptions = Array.isArray(state.subscriptions) ? state.subscriptions : [];
+  state.subscriptions.push(sub.id);
+  state.items.unshift({ name: `${sub.name} (${sub.interval})`, type: "subscription", price: sub.price, createdAt: Date.now() });
+  state.items = state.items.slice(0, 40);
+
+  saveCreditsState(user, state);
+  syncCreditsToFirestore(user, state);
+  renderCreditsOverview();
+  toast(`${sub.name} activated.`);
+}
+
+function awardFreeCreditIfActive() {
+  const user = me && me.name ? me.name : localStorage.getItem("lastUser");
+  if (!user || user === "guest") return;
+  const state = getCreditsState(user);
+  const activeMinutes = (window.GrapeGreenTokens && window.GrapeGreenTokens.creditConfig && window.GrapeGreenTokens.creditConfig.activeMinutesToEarnOne) || 20;
+  const now = Date.now();
+  const awardEvery = activeMinutes * 60 * 1000;
+  if (now - Number(state.activeAwardAt || 0) >= awardEvery) {
+    state.balance = Number(state.balance || 0) + 1;
+    state.activeAwardAt = now;
+    state.items.unshift({ name: "20-minute active reward", type: "reward", amount: 1, createdAt: now });
+    state.items = state.items.slice(0, 40);
+
+    saveCreditsState(user, state);
+    syncCreditsToFirestore(user, state);
+    renderCreditsOverview();
+    toast("You earned 1 free credit for being active.");
+  }
+}
 /* ---------- safety helpers ---------- */
 const cleanText = t => String(t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/\bon[a-z]{3,}\s*=/gi, "").replace(/javascript\s*:/gi, "").trim(); // no onload=, onerror= etc. (output is HTML-escaped too)
 const BAD = ["fuck", "shit", "bitch", "asshole", "bastard", "dick", "cunt", "slut", "whore", "piss"]; // add more words here
@@ -622,7 +848,202 @@ const post = (path, set, method) => fetch(`${ROOT}/${path}${KEY}`, { method, hea
   body: JSON.stringify({ fields: Object.fromEntries(Object.entries(set).map(([k, v]) => [k, fv(v)])) }) }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
 const add = (col, set) => post(col, set, "POST");
 const put = (path, set) => post(path, set, "PATCH");
+function buildWalletId(username) {
+  const base = String(username || "user").replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toLowerCase() || "user";
+  const a = String(Math.floor(Math.random() * 9000) + 1000);
+  const b = String(Math.floor(Math.random() * 9000) + 1000);
+  const c = String(Math.floor(Math.random() * 9000) + 1000);
+  return `${base}-${a}-${b}-${c}`;
+}
 
+function getCreditsState(username) {
+  const key = "credits_" + username;
+  let raw = {};
+  try { raw = JSON.parse(localStorage.getItem(key) || '{"balance":5,"walletId":"","items":[],"subscriptions":[],"theme":""}'); } catch {}
+  if (!raw.walletId) raw.walletId = buildWalletId(username);
+  if (!Number.isFinite(Number(raw.balance))) raw.balance = 5;
+  raw.items = Array.isArray(raw.items) ? raw.items : [];
+  raw.subscriptions = Array.isArray(raw.subscriptions) ? raw.subscriptions : [];
+  return raw;
+}
+
+function saveCreditsState(username, data) {
+  localStorage.setItem("credits_" + username, JSON.stringify(data));
+}
+
+function syncCreditsToFirestore(username, data) {
+  if (!window.F12Db || !username || username === "guest") return Promise.resolve();
+  const fields = {
+    credits: { integerValue: String(Number(data.balance || 0)) },
+    walletId: { stringValue: data.walletId || buildWalletId(username) },
+    theme: { stringValue: data.theme || "" },
+    purchased: { arrayValue: { values: (data.items || []).map(v => ({ stringValue: JSON.stringify(v) })) } },
+    subscriptions: { arrayValue: { values: (data.subscriptions || []).map(v => ({ stringValue: String(v) })) } }
+  };
+
+  return fetch(`${DB}/${encodeURIComponent(username)}${KEY}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fields })
+  }).catch(() => {});
+}
+
+function parseCreditDelay(raw) {
+  const text = String(raw || "").trim().toLowerCase();
+  if (!text || text === "now") return 0;
+  const match = text.match(/^in\s+(\d+)\s*(s|sec|secs|second|seconds|m|min|mins|minute|minutes)$/i);
+  if (!match) return 0;
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  return unit.startsWith("s") ? amount * 1000 : amount * 60000;
+}
+
+function runCreditCommand(raw) {
+  const text = String(raw || "").trim();
+  const match = text.match(/^\/?credits\s+(add|remove)\s+([A-Za-z0-9_.-]+)\s+(\d+)\s*(.*)$/i);
+  if (!match) return { ok: false, message: "Usage: /credits add user38 3 now" };
+
+  const [, action, username, amountRaw, delayText] = match;
+  const amount = Number(amountRaw);
+  const delayMs = parseCreditDelay(delayText);
+
+  if (!(amount > 0)) return { ok: false, message: "Amount must be greater than 0." };
+
+  return { ok: true, action: action.toLowerCase(), username: username.trim(), amount, delayMs };
+}
+
+function applyCreditChange(username, action, amount, delayMs = 0) {
+  const state = getCreditsState(username);
+
+  const apply = () => {
+    if (action === "add") state.balance = Number(state.balance || 0) + amount;
+    if (action === "remove") state.balance = Math.max(0, Number(state.balance || 0) - amount);
+
+    state.items = Array.isArray(state.items) ? state.items : [];
+    state.items.unshift({
+      name: action === "add" ? `Admin added ${amount}` : `Admin removed ${amount}`,
+      type: "credit",
+      amount,
+      createdAt: Date.now()
+    });
+    state.items = state.items.slice(0, 40);
+
+    saveCreditsState(username, state);
+    syncCreditsToFirestore(username, state);
+    return state;
+  };
+
+  if (delayMs > 0) {
+    setTimeout(() => {
+      apply();
+      toast(`Credits updated for ${username}.`);
+      if (typeof renderCreditsOverview === "function") renderCreditsOverview();
+    }, delayMs);
+    return {
+      ok: true,
+      message: `${action === "add" ? "Added" : "Removed"} ${amount} credit(s) for ${username} in ${Math.round(delayMs / 1000)}s.`
+    };
+  }
+
+  apply();
+  return {
+    ok: true,
+    message: `${action === "add" ? "Added" : "Removed"} ${amount} credit(s) for ${username}.`
+  };
+}
+
+function renderCreditsOverview() {
+  const user = me && me.name ? me.name : (localStorage.getItem("lastUser") || "guest");
+  if (user === "guest") {
+    const bal = document.getElementById("credits-balance");
+    if (bal) bal.textContent = "0 credits";
+    const wallet = document.getElementById("credit-wallet-id");
+    if (wallet) wallet.textContent = "Wallet ID: guest";
+    return;
+  }
+
+  const state = getCreditsState(user);
+  const bal = document.getElementById("credits-balance");
+  if (bal) bal.textContent = `${Number(state.balance || 0)} credits`;
+
+  const wallet = document.getElementById("credit-wallet-id");
+  if (wallet) wallet.textContent = `Wallet ID: ${state.walletId || buildWalletId(user)}`;
+
+  const list = document.getElementById("credits-item-list");
+  if (list) {
+    if (!state.items.length) {
+      list.innerHTML = "<li>No items purchased yet.</li>";
+    } else {
+      list.innerHTML = state.items.map(item => `<li>${String(item.name || "Item")} (${String(item.type || "item")})</li>`).join("");
+    }
+  }
+}
+
+function buyTheme(themeId) {
+  const user = me && me.name ? me.name : localStorage.getItem("lastUser");
+  if (!user || user === "guest") return toast("Log in to buy a theme.");
+  const state = getCreditsState(user);
+  const theme = (window.GrapeGreenTokens && window.GrapeGreenTokens.creditConfig && window.GrapeGreenTokens.creditConfig.themes || []).find(t => t.id === themeId);
+  if (!theme) return toast("Theme not found.");
+  if (state.balance < theme.price) return toast(`You need ${theme.price} credits for ${theme.name}.`);
+
+  state.balance -= theme.price;
+  state.theme = themeId;
+  state.items.unshift({ name: theme.name, type: "theme", price: theme.price, createdAt: Date.now() });
+  state.items = state.items.slice(0, 40);
+
+  saveCreditsState(user, state);
+  syncCreditsToFirestore(user, state);
+  renderCreditsOverview();
+  toast(`${theme.name} purchased.`);
+}
+
+function buySubscription(subId) {
+  const user = me && me.name ? me.name : localStorage.getItem("lastUser");
+  if (!user || user === "guest") return toast("Log in to buy a subscription.");
+  const state = getCreditsState(user);
+  const sub = (window.GrapeGreenTokens && window.GrapeGreenTokens.creditConfig && window.GrapeGreenTokens.creditConfig.subscriptions || []).find(s => s.id === subId);
+  if (!sub) return toast("Subscription not found.");
+  if (state.balance < sub.price) return toast(`You need ${sub.price} credits for ${sub.name}.`);
+
+  state.balance -= sub.price;
+  state.subscriptions = Array.isArray(state.subscriptions) ? state.subscriptions : [];
+  state.subscriptions.push(sub.id);
+  state.items.unshift({ name: `${sub.name} (${sub.interval})`, type: "subscription", price: sub.price, createdAt: Date.now() });
+  state.items = state.items.slice(0, 40);
+
+  saveCreditsState(user, state);
+  syncCreditsToFirestore(user, state);
+  renderCreditsOverview();
+  toast(`${sub.name} activated.`);
+}
+
+function awardFreeCreditIfActive() {
+  const user = me && me.name ? me.name : localStorage.getItem("lastUser");
+  if (!user || user === "guest") return;
+  const state = getCreditsState(user);
+  const activeMinutes = (window.GrapeGreenTokens && window.GrapeGreenTokens.creditConfig && window.GrapeGreenTokens.creditConfig.activeMinutesToEarnOne) || 20;
+  const now = Date.now();
+  const awardEvery = activeMinutes * 60 * 1000;
+  if (now - Number(state.activeAwardAt || 0) >= awardEvery) {
+    state.balance = Number(state.balance || 0) + 1;
+    state.activeAwardAt = now;
+    state.items.unshift({ name: "20-minute active reward", type: "reward", amount: 1, createdAt: now });
+    state.items = state.items.slice(0, 40);
+
+    saveCreditsState(user, state);
+    syncCreditsToFirestore(user, state);
+    renderCreditsOverview();
+    toast("You earned 1 free credit for being active.");
+  }
+}
+
+function updateCreditAdminVisibility() {
+  const panel = document.getElementById("credit-manager-card");
+  if (!panel) return;
+  const canUse = !!me && !!me.role && ["mod", "admin", "headadmin", "legal", "dev", "owner"].includes(me.role);
+  panel.classList.toggle("hide", !canUse);
+}
 /* ---------- idle sign-out (60 min) and guest expiry (1 hour) ---------- */
 let lastAct = Date.now(), began = Date.now();
 ["mousemove", "keydown", "click", "touchstart", "scroll"].forEach(ev => addEventListener(ev, () => { lastAct = Date.now(); }, { passive: true }));
