@@ -466,15 +466,32 @@ async function AiBrainFunction(inputPromptString, historicalMemorySummaryText = 
     `last 800 tokens of memory summary "${historicalMemorySummaryText}".`
   );
 
-  // 🧠 Pass your hidden variable right into your local JavaScript processing engine
+  // 🧠 Sends an asynchronous fetch request to your GitHub Pages endpoint path and awaits the raw content return stream
   try {
-    const aiResponseText = await executeLocalGrapeEngine(Grape_Api_Prompt);
+    const response = await fetch("https://grapegreen-inc.github.io/GrapeGreen/ai/api/grape-ai.js", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        prompt: Grape_Api_Prompt,
+        user: username,
+        timestamp: Date.now()
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Network response was not ok " + response.status);
+    }
+
+    const aiResponseText = await response.text();
     return aiResponseText; // Only the clean final reply goes to the chat bubble!
   } catch (error) {
     console.error("Local processing dropped:", error);
     return "[GRAPE AI ERROR]: Local processing engine encountered an issue.";
   }
 }
+
 
 // ==========================================================================
 // 8. SIGNUP & DATABASE MANAGEMENT FUNCTIONS
