@@ -169,6 +169,7 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
   <button class="side-item" data-tab="qr">QR Code</button>
   <button class="side-item" style="display: none;" data-tab="HELLO_its_me">HELLO_its_me</button>
   <button class="side-item" data-tab="science">Atomic science</button>
+  <button class="side-item" data-tab="Credits">Credits And Products</button>
   <button class="side-item" data-tab="code">Coding advice</button>
   <button class="side-item" data-tab="memes">Wall of memes</button>
   <button class="side-item" data-tab="chat">Chat</button>
@@ -452,7 +453,10 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
       </div>
       <button class="btn" id="bot-save">Save bot</button> <span class="mute" id="bot-msg"></span>
       <div id="bot-list"></div></div>
-
+      <h3>Token Panel</h3>
+      <div>
+          <!--COPIOLET FIND THIS AND INSERT TOKEN LOGIC-->
+      </div>
     <h3>Users</h3><div id="a-users"></div>
     <h3>Reports &amp; tickets</h3><div id="a-reports"></div>
     <div id="a-binbox"><h3>Bin (kept 90 days)</h3><div id="a-bin"></div></div>
@@ -615,6 +619,9 @@ Furthermore, under no circumstances should you click any external links, weird p
         allowfullscreen>
     </iframe>
 </section>
+    <section id="Credits" class="view">
+        <!--TOKENS AND PRODUCTS HERE-->
+    </section>
     <section id="Videos" class="view">
 <!-- Help Videos Container -->
 <div class="video-gallery">
@@ -659,5 +666,6 @@ Furthermore, under no circumstances should you click any external links, weird p
 </main>
 <script type="module" src="meme_rotate.js"></script>
 <script src="app.js"></script>
+<script src="tokens.js"></script>
 </body>
 </html>
