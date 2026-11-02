@@ -42,7 +42,7 @@ async function sendWelcomeEmail(username, recipientEmail) {
   const dislikeUrl = "https://grapegreen-inc.github.io/GrapeGreen/EmailOptions/dislike.html";
 
   const htmlTemplate = `
-    <div style="background-color: #120024; color: white; padding: 30px; font-family: sans-serif; border-radius: 12px; max-width: 500px; margin: auto; border: 2px solid #4b0082; text-align: center;">
+    <div style="background-color: #120024; color: white; padding: 30px; font-family: sans-serif; border-radius: 12px; max-width: 500px; margin: auto; border: 2px solid #4b0082; text-align: center;[...]
       <h1 style="color: #a992fa; margin-top: 0;">🍇 Welcome to GrapeGreen!</h1>
       <p style="font-size: 16px; line-height: 1.5; color: #ffffff; text-align: left;">Hey <strong>${username}</strong>,</p>
       <p style="font-size: 14px; line-height: 1.6; color: #dcd0ff; text-align: left; margin-bottom: 25px;">
@@ -55,10 +55,10 @@ async function sendWelcomeEmail(username, recipientEmail) {
       
       <!-- Interactive Feedback Buttons Container Box -->
       <div style="margin: 20px 0;">
-        <a href="${likeUrl}" target="_blank" style="background-color: #4c1c9c; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; margin-right: 10px; display: inline-block; border: 1px solid #8a2be2;">
+        <a href="${likeUrl}" target="_blank" style="background-color: #4c1c9c; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; margin-right: 10px; d[...]
           👍 Like
         </a>
-        <a href="${dislikeUrl}" target="_blank" style="background-color: #240046; color: #a992fa; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-block; border: 1px solid #4b0082;">
+        <a href="${dislikeUrl}" target="_blank" style="background-color: #240046; color: #a992fa; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-[...]
           👎 Dislike
         </a>
       </div>
@@ -143,14 +143,7 @@ function enter(u, d) {
   $("profile-card").classList.toggle("hide", !(me.age === "3" || me.age === "4"));
   $("mytickets-card").classList.toggle("hide", me.role === "guest");
   updateCreditAdminVisibility();
-renderCreditsOverview();
-if (me.role !== "guest") {
-  const state = getCreditsState(me.name);
-  if (!state.walletId) state.walletId = buildWalletId(me.name);
-  if (!Number.isFinite(Number(state.balance))) state.balance = 5;
-  saveCreditsState(me.name, state);
   renderCreditsOverview();
-}
   listenMine();
   loadMotd();
   loadAbout();
@@ -283,7 +276,7 @@ $("bright").oninput = e => {
 $("sound").oninput = e => { $("sound-v").textContent = e.target.value + "%"; };
 
 /* ---------- themes ---------- */
-const THEMES = { grape: ["#3b1a63", "#7a4bb8", "#a3d95c"], ocean: ["#0b3c5d", "#1d7fb8", "#7be0d1"], sunset: ["#5a1a2e", "#d0553a", "#ffc857"], mint: ["#0f4a3c", "#2f9e7a", "#e9f77a"], rose: ["#4a1236", "#c2417f", "#ffd6e8"] };
+const THEMES = { grape: ["#3b1a63", "#7a4bb8", "#a3d95c"], ocean: ["#0b3c5d", "#1d7fb8", "#7be0d1"], sunset: ["#5a1a2e", "#d0553a", "#ffc857"], mint: ["#0f4a3c", "#2f9e7a", "#e9f77a"], rose: ["#4[...]
 function setTheme(n) {
   const [a, b, c] = THEMES[n] || THEMES.grape, r = document.documentElement.style;
   r.setProperty("--grape", a); r.setProperty("--grape2", b); r.setProperty("--leaf", c);
@@ -298,9 +291,10 @@ Object.entries(THEMES).forEach(([n, [a, b, c]]) => {
   $("sws").appendChild(el);
 });
 setTheme(localStorage.getItem("theme") || "grape");
-$("theme-buy-btn").onclick = () => buyTheme($("theme-buy-select").value);
-$("subscription-buy-btn").onclick = () => buySubscription($("subscription-buy-select").value);
-$("credit-earn-btn").onclick = () => awardFreeCreditIfActive();
+if ($("theme-buy-btn")) $("theme-buy-btn").onclick = () => buyTheme($("theme-buy-select").value);
+if ($("subscription-buy-btn")) $("subscription-buy-btn").onclick = () => buySubscription($("subscription-buy-select").value);
+if ($("credit-earn-btn")) $("credit-earn-btn").onclick = () => awardFreeCreditIfActive();
+
 /* ---------- pixel art ---------- */
 const ART = [
 "44444448484488484884488484444444","48888848884884848844844484888884","45444848448884484884484484844484","45444848448888488844488484844484",
@@ -397,7 +391,7 @@ async function watch() { // every 30s: kick out banned/deleted users, sync role 
     const d = await getUser(me.name);
     const bad = !d ? "no longer exists" : d.deletedAt ? "deleted" : banLeft(d) ? banText(d) : "";
     if (bad) { sessionStorage.setItem("kick", "Your account is " + bad + "."); return location.reload(); }
-    if ((d.role || "user") !== me.role) { me.role = d.role || "user"; $("nav-admin").classList.toggle("hide", !isMod() || me.role === "legal"); $("nav-legal").classList.toggle("hide", !isLegal()); $("cmd-in").classList.toggle("hide", !isDev()); }
+    if ((d.role || "user") !== me.role) { me.role = d.role || "user"; $("nav-admin").classList.toggle("hide", !isMod() || me.role === "legal"); $("nav-legal").classList.toggle("hide", !isLegal()); }
   } catch {}
 }
 
@@ -500,7 +494,7 @@ $("chat-form").addEventListener("submit", async e => {
   if (!x || me.role === "guest" || Date.now() - lastSend < 1500) return;
   const kid = me.age === "1";
   // kids can't post links, emails or phone numbers
-  const clean = kid ? x.replace(/https?:\/\/\S+|www\.\S+|\S+@\S+|(?:\d[\s.\-]?){7,}/gi, "[removed]") : x;
+  const clean = kid ? x.replace(/https?:\/\/\S+|www\.\S+|\S+@\S+|(?:\d[\s\.\-]?){7,}/gi, "[removed]") : x;
   lastSend = Date.now();
   try {
     const d = await getUser(me.name);
@@ -508,14 +502,14 @@ $("chat-form").addEventListener("submit", async e => {
     const hit = await botCheck(clean, d);
     if (hit) {
       $("chat-in").value = "";
-      await add("chat", { u: "Bot: " + hit.name, x: wrap(hit.action === "ban" ? `${me.name}, that's strike ${hit.x}. Temp banned for ${hit.hours}h.` : `${me.name}, please watch your language.`, CHAT_KEY), a: "\uD83E\uDD16", k: "0", r: "bot", t: Date.now() });
+      await add("chat", { u: "Bot: " + hit.name, x: wrap(hit.action === "ban" ? `${me.name}, that's strike ${hit.x}. Temp banned for ${hit.hours}h.` : `${me.name}, please watch your language.`, CHAT_KEY), a: "", k: kid ? "1" : "0", r: "bot", t: Date.now() });
       if (hit.action === "ban") { await patch(me.name, { banUntil: Date.now() + hit.hours * 36e5 }); return watch(); }
       pollChat();
       return;
     }
     $("chat-in").value = "";
     await fetch(`${ROOT}/chat${KEY}`, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fields: { u: { stringValue: me.name }, x: { stringValue: wrap(filt(clean), CHAT_KEY) }, a: { stringValue: me.avatar || "" }, k: { stringValue: kid ? "1" : "0" }, r: { stringValue: me.role }, t: { integerValue: String(Date.now()) } } }) });
+      body: JSON.stringify({ fields: { u: { stringValue: me.name }, x: { stringValue: wrap(filt(clean), CHAT_KEY) }, a: { stringValue: me.avatar || "" }, k: { stringValue: kid ? "1" : "0" }, r: { stringValue: "user" }, t: { integerValue: String(Date.now()) } } }) });
     pollChat();
   } catch { toast("Message didn't send. Try again."); }
 });
@@ -579,16 +573,14 @@ async function loadAdmin() {
   users = users.filter(u => !(u.deletedAt && !u.legalHold && u.purgeAt < now));
   const live = users.filter(u => !u.deletedAt), bin = users.filter(u => u.deletedAt);
   $("a-users").innerHTML = "<table><tr><th>User</th><th>Role</th><th>Status</th><th></th></tr>" + live.map(u =>
-    `<tr><td><a href="#" data-pick="${esc(u.id)}">${esc(u.id)}</a></td><td>${esc(u.role || "user")}</td><td>${banLeft(u) ? banText(u) : "active"}</td><td>${u.id !== me.name ? `<a href="#" data-dm="${esc(u.id)}">1-on-1</a>` : ""}</td></tr>`).join("") + "</table>";
+    `<tr><td><a href="#" data-pick="${esc(u.id)}">${esc(u.id)}</a></td><td>${esc(u.role || "user")}</td><td>${banLeft(u) ? banText(u) : "active"}</td><td>${u.id !== me.name ? `<a href="#" data-dm="${esc(u.id)}">DM</a>` : ""}</td></tr>`).join("") + "</table>";
   $("a-bin").innerHTML = bin.length ? "<table><tr><th>User</th><th>Days left</th><th></th></tr>" + bin.map(u => u.legalHold
     ? `<tr><td>${esc(u.id)}</td><td>on hold</td><td class="mute">Paused by Legal</td></tr>`
-    : `<tr><td>${esc(u.id)}</td><td>${Math.ceil((u.purgeAt - now) / 864e5)}</td><td><button class="btn" data-restore="${esc(u.id)}">Restore</button> <button class="btn red" data-perm="${esc(u.id)}">Perm delete</button>${u.extUsed ? "" : ` <button class="btn" data-ext="${esc(u.id)}">+7 days</button>`}</td></tr>`).join("") + "</table>" : '<p class="mute">The bin is empty.</p>';
+    : `<tr><td>${esc(u.id)}</td><td>${Math.ceil((u.purgeAt - now) / 864e5)}</td><td><button class="btn" data-restore="${esc(u.id)}">Restore</button> <button class="btn red" data-perm="${esc(u.id)}">Perm delete</button></td></tr>`).join("") + "</table>" : '<p class="mute">No deleted accounts.</p>';
 }
 $("admin").addEventListener("click", async e => {
   const t = e.target, msg = m => { $("a-msg").textContent = m; };
-
-  // Credit manager button inside Admin panel
-  if (t.id === "credit-admin-run" || t.closest("#credit-admin-run")) {
+  if (t.closest("#credit-admin-run")) {
     e.preventDefault();
     if (!me || me.role === "guest") {
       $("credit-admin-msg").textContent = "Guests cannot use this.";
@@ -599,20 +591,16 @@ $("admin").addEventListener("click", async e => {
       $("credit-admin-msg").textContent = "You do not have permission.";
       return;
     }
-
     const raw = `/credits ${$("credit-admin-action").value} ${$("credit-admin-user").value.trim()} ${$("credit-admin-amount").value} ${$("credit-admin-time").value || "now"}`;
     const parsed = runCreditCommand(raw);
-
     if (!parsed.ok) {
       $("credit-admin-msg").textContent = parsed.message;
       return;
     }
-
     const result = applyCreditChange(parsed.username, parsed.action, parsed.amount, parsed.delayMs);
     $("credit-admin-msg").textContent = result.message;
     return;
   }
-
   if (t.dataset.pick) { e.preventDefault(); $("a-user").value = t.dataset.pick; return; }
   if (t.dataset.dm) { e.preventDefault(); if (me.role === "owner") openDM(t.dataset.dm); else invite(t.dataset.dm); return; }
   if (!isMod()) return;
@@ -641,213 +629,20 @@ $("admin").addEventListener("click", async e => {
       else if (a === "ban") { if (!isMod()) return; const h = Number($("a-hours").value); if (!(h > 0)) return msg("Enter ban hours."); await patch(u.id, { banUntil: Date.now() + h * 36e5 }); }
       else if (a === "perm") { if (!isAdmin()) return msg("Admins and above only."); await patch(u.id, { banUntil: -1 }); }
       else if (a === "unban") { if (!isMod()) return; await patch(u.id, { banUntil: 0 }); }
-      else if (a === "*
-
-function buildWalletId(username) {
-  const base = String(username || "user").replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toLowerCase() || "user";
-  const a = String(Math.floor(Math.random() * 9000) + 1000);
-  const b = String(Math.floor(Math.random() * 9000) + 1000);
-  const c = String(Math.floor(Math.random() * 9000) + 1000);
-  return `${base}-${a}-${b}-${c}`;
-}
+      else if (a === "delete") { if (!isAdmin()) return msg("Admins and above only."); await patch(u.id, { deletedAt: Date.now(), purgeAt: Date.now() + 90 * 864e5 }); }
+      msg("Done.");
+    } else return;
+    loadAdmin();
+  } catch (x) { console.error(x); msg("That didn't work. Check your connection and rules."); }
+});
 
-function getCreditsState(username) {
-  const key = "credits_" + username;
-  const raw = JSON.parse(localStorage.getItem(key) || '{"balance":5,"walletId":"","items":[],"subscriptions":[],"theme":""}');
-  if (!raw.walletId) raw.walletId = buildWalletId(username);
-  if (!Number.isFinite(Number(raw.balance))) raw.balance = 5;
-  raw.items = Array.isArray(raw.items) ? raw.items : [];
-  raw.subscriptions = Array.isArray(raw.subscriptions) ? raw.subscriptions : [];
-  return raw;
-}
-
-function saveCreditsState(username, data) {
-  localStorage.setItem("credits_" + username, JSON.stringify(data));
-}
-
-function syncCreditsToFirestore(username, data) {
-  if (!window.F12Db) return Promise.resolve();
-  const fields = {
-    credits: { integerValue: String(Number(data.balance || 0)) },
-    walletId: { stringValue: data.walletId || buildWalletId(username) },
-    theme: { stringValue: data.theme || "" },
-    purchased: { arrayValue: { values: (data.items || []).map(v => ({ stringValue: JSON.stringify(v) })) } },
-    subscriptions: { arrayValue: { values: (data.subscriptions || []).map(v => ({ stringValue: String(v) })) } }
-  };
-  return fetch(`${DB}/${encodeURIComponent(username)}${KEY}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fields })
-  }).catch(() => {});
-}
-
-function parseCreditDelay(raw) {
-  const text = String(raw || "").trim().toLowerCase();
-  if (!text || text === "now") return 0;
-  const match = text.match(/^in\s+(\d+)\s*(s|sec|secs|second|seconds|m|min|mins|minute|minutes)$/i);
-  if (!match) return 0;
-  const amount = Number(match[1]);
-  const unit = match[2].toLowerCase();
-  return unit.startsWith("s") ? amount * 1000 : amount * 60000;
-}
-
-function runCreditCommand(raw) {
-  const text = String(raw || "").trim();
-  const match = text.match(/^\/?credits\s+(add|remove)\s+([A-Za-z0-9_.-]+)\s+(\d+)\s*(.*)$/i);
-  if (!match) return { ok: false, message: "Usage: /credits add user38 3 now" };
-
-  const [, action, username, amountRaw, delayText] = match;
-  const amount = Number(amountRaw);
-  const delayMs = parseCreditDelay(delayText);
-
-  if (!(amount > 0)) return { ok: false, message: "Amount must be greater than 0." };
-  return { ok: true, action: action.toLowerCase(), username: username.trim(), amount, delayMs };
-}
-
-function applyCreditChange(username, action, amount, delayMs = 0) {
-  const state = getCreditsState(username);
-
-  const apply = () => {
-    if (action === "add") state.balance = Number(state.balance || 0) + amount;
-    if (action === "remove") state.balance = Math.max(0, Number(state.balance || 0) - amount);
-
-    state.items = Array.isArray(state.items) ? state.items : [];
-    state.items.unshift({
-      name: action === "add" ? `Admin added ${amount}` : `Admin removed ${amount}`,
-      type: "credit",
-      amount,
-      createdAt: Date.now()
-    });
-    state.items = state.items.slice(0, 40);
-
-    saveCreditsState(username, state);
-    syncCreditsToFirestore(username, state);
-    return state;
-  };
-
-  if (delayMs > 0) {
-    setTimeout(() => {
-      apply();
-      toast(`Credits updated for ${username}.`);
-      if (typeof renderCredits === "function") renderCredits();
-    }, delayMs);
-    return {
-      ok: true,
-      message: `${action === "add" ? "Added" : "Removed"} ${amount} credit(s) for ${username} in ${Math.round(delayMs / 1000)}s.`
-    };
-  }
-
-  apply();
-  return {
-    ok: true,
-    message: `${action === "add" ? "Added" : "Removed"} ${amount} credit(s) for ${username}.`
-  };
-}
-
-function updateCreditAdminVisibility() {
-  const panel = document.getElementById("credit-manager-card");
-  if (!panel) return;
-  const canUse = !!me && !!me.role && ["mod", "admin", "headadmin", "legal", "dev", "owner"].includes(me.role);
-  panel.classList.toggle("hide", !canUse);
-}
-
-function renderCreditsOverview() {
-  const user = me && me.name ? me.name : (localStorage.getItem("lastUser") || "guest");
-  if (user === "guest") {
-    const bal = document.getElementById("credits-balance");
-    if (bal) bal.textContent = "0 credits";
-    const wallet = document.getElementById("credit-wallet-id");
-    if (wallet) wallet.textContent = "Wallet ID: guest";
-    return;
-  }
-
-  const state = getCreditsState(user);
-  const bal = document.getElementById("credits-balance");
-  if (bal) bal.textContent = `${Number(state.balance || 0)} credits`;
-
-  const wallet = document.getElementById("credit-wallet-id");
-  if (wallet) wallet.textContent = `Wallet ID: ${state.walletId || buildWalletId(user)}`;
-
-  const list = document.getElementById("credits-item-list");
-  if (list) {
-    if (!state.items.length) {
-      list.innerHTML = "<li>No items purchased yet.</li>";
-    } else {
-      list.innerHTML = state.items.map(item => `<li>${String(item.name || "Item")} (${String(item.type || "item")})</li>`).join("");
-    }
-  }
-}
-
-function buyTheme(themeId) {
-  const user = me && me.name ? me.name : localStorage.getItem("lastUser");
-  if (!user || user === "guest") return toast("Log in to buy a theme.");
-  const state = getCreditsState(user);
-  const theme = (window.GrapeGreenTokens && window.GrapeGreenTokens.creditConfig && window.GrapeGreenTokens.creditConfig.themes || []).find(t => t.id === themeId);
-  if (!theme) return toast("Theme not found.");
-  if (state.balance < theme.price) return toast(`You need ${theme.price} credits for ${theme.name}.`);
-
-  state.balance -= theme.price;
-  state.theme = themeId;
-  state.items.unshift({ name: theme.name, type: "theme", price: theme.price, createdAt: Date.now() });
-  state.items = state.items.slice(0, 40);
-
-  saveCreditsState(user, state);
-  syncCreditsToFirestore(user, state);
-  renderCreditsOverview();
-  toast(`${theme.name} purchased.`);
-}
-
-function buySubscription(subId) {
-  const user = me && me.name ? me.name : localStorage.getItem("lastUser");
-  if (!user || user === "guest") return toast("Log in to buy a subscription.");
-  const state = getCreditsState(user);
-  const sub = (window.GrapeGreenTokens && window.GrapeGreenTokens.creditConfig && window.GrapeGreenTokens.creditConfig.subscriptions || []).find(s => s.id === subId);
-  if (!sub) return toast("Subscription not found.");
-  if (state.balance < sub.price) return toast(`You need ${sub.price} credits for ${sub.name}.`);
-
-  state.balance -= sub.price;
-  state.subscriptions = Array.isArray(state.subscriptions) ? state.subscriptions : [];
-  state.subscriptions.push(sub.id);
-  state.items.unshift({ name: `${sub.name} (${sub.interval})`, type: "subscription", price: sub.price, createdAt: Date.now() });
-  state.items = state.items.slice(0, 40);
-
-  saveCreditsState(user, state);
-  syncCreditsToFirestore(user, state);
-  renderCreditsOverview();
-  toast(`${sub.name} activated.`);
-}
-
-function awardFreeCreditIfActive() {
-  const user = me && me.name ? me.name : localStorage.getItem("lastUser");
-  if (!user || user === "guest") return;
-  const state = getCreditsState(user);
-  const activeMinutes = (window.GrapeGreenTokens && window.GrapeGreenTokens.creditConfig && window.GrapeGreenTokens.creditConfig.activeMinutesToEarnOne) || 20;
-  const now = Date.now();
-  const awardEvery = activeMinutes * 60 * 1000;
-  if (now - Number(state.activeAwardAt || 0) >= awardEvery) {
-    state.balance = Number(state.balance || 0) + 1;
-    state.activeAwardAt = now;
-    state.items.unshift({ name: "20-minute active reward", type: "reward", amount: 1, createdAt: now });
-    state.items = state.items.slice(0, 40);
-
-    saveCreditsState(user, state);
-    syncCreditsToFirestore(user, state);
-    renderCreditsOverview();
-    toast("You earned 1 free credit for being active.");
-  }
-}
 /* ---------- safety helpers ---------- */
-const cleanText = t => String(t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/\bon[a-z]{3,}\s*=/gi, "").replace(/javascript\s*:/gi, "").trim(); // no onload=, onerror= etc. (output is HTML-escaped too)
+const cleanText = t => String(t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/\bon[a-z]{3,}\s*=/gi, "").replace(/javascript\s*:/gi, "").trim(); // no onload=, onerror= etc. ([...]
 const BAD = ["fuck", "shit", "bitch", "asshole", "bastard", "dick", "cunt", "slut", "whore", "piss"]; // add more words here
 const LEET = { a: "[a4@]", e: "[e3]", i: "[i1!]", o: "[o0]", s: "[s5$]", t: "[t7]" };
 const BAD_RX = new RegExp(BAD.map(w => "(?<![a-z])" + [...w].map(c => LEET[c] || c).join("[\\W_]*") + "(?![a-z])").join("|"), "gi");
 const filt = t => t.replace(BAD_RX, m => "*".repeat(m.length));
 
-const fv = v => typeof v === "number" ? { integerValue: String(v) } : typeof v === "boolean" ? { booleanValue: v } : { stringValue: String(v) };
-const post = (path, set, method) => fetch(`${ROOT}/${path}${KEY}`, { method, headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ fields: Object.fromEntries(Object.entries(set).map(([k, v]) => [k, fv(v)])) }) }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
-const add = (col, set) => post(col, set, "POST");
-const put = (path, set) => post(path, set, "PATCH");
 function buildWalletId(username) {
   const base = String(username || "user").replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toLowerCase() || "user";
   const a = String(Math.floor(Math.random() * 9000) + 1000);
@@ -1044,6 +839,13 @@ function updateCreditAdminVisibility() {
   const canUse = !!me && !!me.role && ["mod", "admin", "headadmin", "legal", "dev", "owner"].includes(me.role);
   panel.classList.toggle("hide", !canUse);
 }
+
+const fv = v => typeof v === "number" ? { integerValue: String(v) } : typeof v === "boolean" ? { booleanValue: v } : { stringValue: String(v) };
+const post = (path, set, method) => fetch(`${ROOT}/${path}${KEY}`, { method, headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ fields: Object.fromEntries(Object.entries(set).map(([k, v]) => [k, fv(v)])) }) }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+const add = (col, set) => post(col, set, "POST");
+const put = (path, set) => post(path, set, "PATCH");
+
 /* ---------- idle sign-out (60 min) and guest expiry (1 hour) ---------- */
 let lastAct = Date.now(), began = Date.now();
 ["mousemove", "keydown", "click", "touchstart", "scroll"].forEach(ev => addEventListener(ev, () => { lastAct = Date.now(); }, { passive: true }));
@@ -1052,6 +854,10 @@ setInterval(() => {
   if (Date.now() - lastAct > 36e5) signOut("You were signed out after 60 idle minutes.");
   else if (me.role === "guest" && Date.now() - began > 36e5) signOut("Guest sessions end after 1 hour.");
 }, 30000);
+setInterval(() => {
+  if (!me || me.role === "guest") return;
+  awardFreeCreditIfActive();
+}, 60000);
 
 /* ---------- avatars ---------- */
 const AVATARS = Array.from("🐶🐱🦊🐼🐸🦁🐯🐵🐧🦉🐙🦄🐢🐳🦋🐝🐲🦖🤖👽👻🎃🍇🍉🍕🍩⚽🎮🚀🌈");
@@ -1065,6 +871,15 @@ AVATARS.forEach(e => {
   };
   $("avs").appendChild(b);
 });
+
+// Keep user credits state fresh as soon as user logs in
+if (me && me.role !== "guest") {
+  const state = getCreditsState(me.name);
+  if (!state.walletId) state.walletId = buildWalletId(me.name);
+  if (!Number.isFinite(Number(state.balance))) state.balance = 5;
+  saveCreditsState(me.name, state);
+  renderCreditsOverview();
+}
 
 /* ---------- update log ---------- */
 const UP0 = [
@@ -1083,7 +898,7 @@ async function loadUpdates() {
   try { const r = await fetch(`${ROOT}/updates${KEY}&pageSize=100`);
     ((await r.json()).documents || []).map(parseDoc).forEach(o => { if (VOK.test(o.v || "")) m.set(o.v, { v: o.v, title: o.title || "", notes: o.notes || "" }); }); } catch {}
   ups = [...m.values()].sort((a, b) => vcmp(a.v, b.v));
-  $("upl").innerHTML = ups.map(e => `<div class="card" style="max-width:560px;margin-bottom:12px"><h3>${esc(e.v)}${isDev() ? ` · <a href="#" data-up="${esc(e.v)}">edit</a>` : ""}</h3><b>${esc(e.title)}</b><ul>${e.notes.split("\n").filter(Boolean).map(chLine).join("")}</ul></div>`).join("");
+  $("upl").innerHTML = ups.map(e => `<div class="card" style="max-width:560px;margin-bottom:12px"><h3>${esc(e.v)}${isDev() ? ` · <a href="#" data-up="${esc(e.v)}">edit</a>` : ""}</h3><b>${esc(e.title)}</b><ul>${(e.notes || "").split(/\n/).map(chLine).join("")}</ul></div>`).join("") || '<p class="mute">No updates yet.</p>';
 }
 $("upl").addEventListener("click", e => {
   const u = ups.find(x => x.v === e.target.dataset.up); if (!u) return;
@@ -1151,9 +966,9 @@ function ticketHTML(o) {
     body = `<p class="mute">Chat report</p><p><b>${esc(o.author)}</b> said: ${esc(o.text)}</p><p class="mute">Reported by ${esc(o.by)}</p>`;
   } else {
     const from = o.gmail ? esc(unwrap(o.gmail, CHAT_KEY) || "?") + " (guest)" : esc(o.by || "?");
-    body = `<p class="mute">Contact us, from ${from}</p><b>${esc(o.title)}</b><p>${esc(o.details)}</p>${okImg(o.shot) ? `<img src="${o.shot}" alt="screenshot">` : ""}<p class="mute" id="tk-viewer"></p><div id="tk-thread" style="max-height:200px;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px;margin:8px 0"></div>`;
+    body = `<p class="mute">Contact us, from ${from}</p><b>${esc(o.title)}</b><p>${esc(o.details)}</p>${okImg(o.shot) ? `<img src="${o.shot}" alt="screenshot">` : ""}<p class="mute" id="tk-viewer">No viewer yet.</p>`;
   }
-  let acts;
+  let acts; 
   if (!canAct) acts = o.status === "transferred" ? '<p class="mute">Transferred to Legal. Only Legal and the owner can respond now.</p>' : "";
   else {
     const mine = o.status === "accepted" && o.assignedTo === me.name;
@@ -1181,7 +996,7 @@ function openTicket(id) {
   });
   const mine = isMod() && o.status === "accepted" && o.assignedTo === me.name && o.by && o.by !== "guest";
   if (mine) {
-    const show = async () => { try { const d = await getUser(o.by); const el = $("ticket-body").querySelector("#tk-viewer"); if (el) el.textContent = d && d.curTab ? `Currently viewing: ${d.curTab}` : ""; } catch {} };
+    const show = async () => { try { const d = await getUser(o.by); const el = $("ticket-body").querySelector("#tk-viewer"); if (el) el.textContent = d && d.curTab ? `Currently viewing: ${d.curTab}` : "No user currently viewing."; } catch {} };
     show(); viewerTimer = setInterval(show, 15000);
   }
 }
@@ -1189,7 +1004,7 @@ $("ticket-body").addEventListener("click", async e => {
   const act = e.target.dataset.tk; if (!act || !curTicket) return;
   const o = curTicket, close = () => { $("ticket").classList.add("hide"); loadReports(isLegal() ? "lg-reports" : "a-reports"); };
   try {
-    if (act === "accept") { await patchDoc("reports/" + o.id, { status: "accepted", assignedTo: me.name }); if (o.by && o.by !== "guest") await add("notices", { to: o.by, type: "accepted", text: "Your ticket was accepted and is being worked on.", t: Date.now() }); close(); }
+    if (act === "accept") { await patchDoc("reports/" + o.id, { status: "accepted", assignedTo: me.name }); if (o.by && o.by !== "guest") await add("notices", { to: o.by, type: "accepted", text: "A moderator accepted your ticket.", t: Date.now() }); close(); }
     else if (act === "queue") { await patchDoc("reports/" + o.id, { status: "open", assignedTo: "" }); close(); }
     else if (act === "legal") { await patchDoc("reports/" + o.id, { status: "transferred", assignedTo: "" }); close(); }
     else if (act === "del") { await fetch(`${ROOT}/reports/${encodeURIComponent(o.id)}${KEY}`, { method: "DELETE" }); close(); }
@@ -1199,7 +1014,7 @@ $("ticket-body").addEventListener("click", async e => {
     else if (act === "reply") {
       const box = $("tk-reply"), raw = box.value.trim(); if (!raw) return;
       box.value = "";
-      if (raw.startsWith("/") && isDev()) { toast(await runCommand(raw)); return; } // runs locally for you only, never on the user's side
+      if (raw.startsWith("/") && isDev()) { toast(await runCommand(raw)); return; }
       const txt = cleanText(raw).slice(0, 500);
       await add("dm", { room: "ticket:" + o.id, u: me.name, x: wrap(txt, CHAT_KEY), t: Date.now() });
       if (o.by && o.by !== "guest") await add("notices", { to: o.by, type: "ticket", text: "Support replied to your ticket.", t: Date.now() });
@@ -1295,7 +1110,7 @@ async function loadPwReqs() {
     const rows = ((await r.json()).documents || []).map(parseDoc);
     $("pw-list").innerHTML = rows.length ? "<table><tr><th>For</th><th>By</th><th>Approvals</th><th></th></tr>" + rows.map(o => {
       const approvals = (o.approvals || "").split(",").filter(Boolean);
-      return `<tr><td>${esc(o.target)}</td><td>${esc(o.by)}</td><td>${isDev() ? "owner/dev approval" : approvals.length + "/3 admins"}</td><td>${o.by !== me.name ? `<button class="btn" data-appr="${esc(o.id)}">Approve</button>` : '<span class="mute">awaiting others</span>'} <button class="btn red" data-pwdel="${esc(o.id)}">Cancel</button></td></tr>`;
+      return `<tr><td>${esc(o.target)}</td><td>${esc(o.by)}</td><td>${isDev() ? "owner/dev approval" : approvals.length + "/3 admins"}</td><td>${o.by !== me.name ? `<button class="btn" data-appr="${esc(o.id)}">Approve</button>` : ""}${isAdmin() ? ` <button class="btn red" data-pwdel="${esc(o.id)}">Delete</button>` : ""}</td></tr>`;
     }).join("") + "</table>" : '<p class="mute">No pending requests.</p>';
   } catch { $("pw-list").textContent = "Couldn't load requests."; }
 }
@@ -1336,8 +1151,8 @@ $("pw-list").addEventListener("click", async e => {
     const o = parseDoc(await r.json());
     if (o.by === me.name) return;
     const target = await getUser(o.target);
-    if (rk(me.role) >= 6) await applyPwChange(o, target, id); // dev or owner: one approval is enough
-    else if (isAdmin()) { // admin or head admin: need 2 distinct such approvals
+    if (rk(me.role) >= 6) await applyPwChange(o, target, id);
+    else if (isAdmin()) {
       const approvals = (o.approvals || "").split(",").filter(Boolean);
       if (!approvals.includes(me.name)) approvals.push(me.name);
       if (approvals.length >= 2) await applyPwChange(o, target, id);
@@ -1398,13 +1213,13 @@ async function loadLegal() {
     $("lg-kids").innerHTML = kids.length ? "<table><tr><th>User</th></tr>" + kids.map(u => `<tr><td>${esc(u.id)}</td></tr>`).join("") + "</table>" : '<p class="mute">None.</p>';
     legalBin = all.filter(u => u.deletedAt);
     $("lg-bin").innerHTML = legalBin.length ? "<table><tr><th>User</th><th>Status</th><th></th></tr>" + legalBin.map(u =>
-      `<tr><td>${esc(u.id)}</td><td>${u.legalHold ? "on hold" : Math.ceil((u.purgeAt - Date.now()) / 864e5) + " days left"}</td><td><button class="btn" data-hold="${esc(u.id)}">${u.legalHold ? "Unpause" : "Pause"}</button> <button class="btn" data-lexport="${esc(u.id)}">Export JSON</button> <button class="btn red" data-lperm="${esc(u.id)}">Perm delete</button></td></tr>`).join("") + "</table>" : '<p class="mute">Nothing in the bin.</p>';
+      `<tr><td>${esc(u.id)}</td><td>${u.legalHold ? "on hold" : Math.ceil((u.purgeAt - Date.now()) / 864e5) + " days left"}</td><td><button class="btn" data-hold="${esc(u.id)}">${u.legalHold ? "Unhold" : "Hold"}</button> <button class="btn" data-lexport="${esc(u.id)}">Export</button> <button class="btn red" data-lperm="${esc(u.id)}">Perm delete</button></td></tr>`).join("") + "</table>" : '<p class="mute">No deleted records.</p>';
   } catch { $("lg-kids").textContent = "Couldn't load."; }
   try {
     const r = await fetch(`${ROOT}/reports${KEY}&orderBy=t%20desc&pageSize=50`);
     const rows = ((await r.json()).documents || []).map(parseDoc).filter(o => o.status === "transferred");
     $("lg-trans").innerHTML = rows.length ? "<table><tr><th>Type</th><th>From</th><th></th></tr>" + rows.map(o =>
-      `<tr><td>${esc(o.type)}</td><td>${esc(o.by || "?")}</td><td><button class="btn" data-ticket="${esc(o.id)}">Open</button> <button class="btn red" data-tkdel="${esc(o.id)}">Delete</button></td></tr>`).join("") + "</table>" : '<p class="mute">Nothing transferred.</p>';
+      `<tr><td>${esc(o.type)}</td><td>${esc(o.by || "?")}</td><td><button class="btn" data-ticket="${esc(o.id)}">Open</button> <button class="btn red" data-tkdel="${esc(o.id)}">Delete</button></td></tr>`).join("") + "</table>" : '<p class="mute">No transferred tickets.</p>';
   } catch { $("lg-trans").textContent = "Couldn't load."; }
 }
 document.body.addEventListener("click", async e => {
@@ -1416,7 +1231,7 @@ document.body.addEventListener("click", async e => {
   if (e.target.dataset.lexport && isLegal()) {
     e.preventDefault();
     const u = legalBin.find(x => x.id === e.target.dataset.lexport); if (!u) return;
-    const clean = { ...u }; delete clean.salt; delete clean.passwordHash; delete clean.pwHistory; // never export credential material
+    const clean = { ...u }; delete clean.salt; delete clean.passwordHash; delete clean.pwHistory;
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(clean, null, 2)], { type: "application/json" }));
     a.download = u.id + ".json"; a.click(); URL.revokeObjectURL(a.href);
@@ -1544,7 +1359,7 @@ $("bot-chat-form").addEventListener("submit", async e => {
     } else if (botTicket) {
       await add("dm", { room: "ticket:" + botTicket, u: by, x: wrap(x, CHAT_KEY), t: Date.now() });
     } else {
-      botSay(low.includes("password") ? "You can change your password from Settings." : low.includes("ban") ? "If a ban seems wrong, tell me more and I'll pass it to the team if needed." : "Got it — tell me more, or say \"human\" to talk to a team member.");
+      botSay(low.includes("password") ? "You can change your password from Settings." : low.includes("ban") ? "If a ban seems wrong, tell me more and I'll pass it to the team if needed." : "Got it — tell me a little more and I can help.");
     }
   } catch { botSay("Something went wrong sending that. Try again."); }
 });
@@ -1703,9 +1518,9 @@ function renderUsers() {
   const q = $("user-search").value.trim().toLowerCase();
   const rows = directory.filter(u => !q || u.id.toLowerCase().includes(q));
   $("user-list").innerHTML = rows.length ? rows.map(u => `<div class="card" style="max-width:560px;margin-bottom:10px">
-    <div style="display:flex;align-items:center;gap:10px"><div class="userav" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--grape2),var(--leaf));color:#fff;display:grid;place-items:center;font-size:18px;font-weight:800">${esc(u.avatar || u.id[0].toUpperCase())}</div><b>${esc(u.id)}</b></div>
+    <div style="display:flex;align-items:center;gap:10px"><div class="userav" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--grape2),var(--leaf));color:#fff;display:grid;place-items:center;font-weight:bold">${esc(u.avatar || u.id[0].toUpperCase())}</div><div><b>${esc(u.id)}</b></div></div>
     ${u.bio ? `<p style="margin:8px 0 0">${mdSafe(u.bio)}</p>` : ""}
-    ${(() => { try { const ls = JSON.parse(u.links || "[]"); return ls.length ? `<div style="margin-top:8px">${ls.map(l => `<a class="btn" style="display:inline-block;margin:2px 4px 0 0;text-decoration:none" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.label)}</a>`).join("")}</div>` : ""; } catch { return ""; } })()}
+    ${(() => { try { const ls = JSON.parse(u.links || "[]"); return ls.length ? `<div style="margin-top:8px">${ls.map(l => `<a class="btn" style="display:inline-block;margin:2px 4px 0 0;text-decoration:none" href="${esc(l.url)}" target="_blank">${esc(l.label)}</a>`).join("")}</div>` : ""; } catch { return ""; } })()}
   </div>`).join("") : '<p class="mute">No one found.</p>';
 }
 $("user-search").addEventListener("input", renderUsers);
@@ -1785,26 +1600,21 @@ $("copy").onclick = async () => {
   catch { $("copy").textContent = "Press Ctrl+C"; }
   setTimeout(() => $("copy").textContent = "Copy", 1500);
 };
-  /* Sync the "hello its me" span with the OwnerName variable and current owner user */
+
+/* Sync the "hello its me" span with the OwnerName variable and current owner user */
 (function () {
   function updateOwnerSpan() {
     const el = document.getElementById("OwnerName");
     if (!el) return;
-    // If the signed-in user is the owner, prefer the signed-in name (me.name).
-    // Otherwise fall back to the OwnerName variable, the span's "var" attr, or current text.
     const name = (typeof me !== "undefined" && me.role === "owner" && me.name)
       ? me.name
       : (typeof OwnerName !== "undefined" ? OwnerName : el.getAttribute("var") || el.textContent);
     el.textContent = name;
   }
 
-  // expose helper in case you want to call it from console
   window.updateOwnerSpan = updateOwnerSpan;
-
-  // run now
   updateOwnerSpan();
 
-  // ensure it's updated whenever the app's enter() function runs (user login / enter)
   if (typeof enter === "function") {
     const _enter = enter;
     enter = function (u, d) {
@@ -1814,9 +1624,9 @@ $("copy").onclick = async () => {
     };
   }
 
-  // also update once DOM is fully ready (harmless if already executed)
   document.addEventListener("DOMContentLoaded", updateOwnerSpan);
 })();
+
 (function () {
   function ensureOverlay() {
     if (!document.querySelector(".rift-static")) {
@@ -1858,18 +1668,15 @@ $("copy").onclick = async () => {
     };
   }
 })();
+
 /* Temporary side-tab support for the Rift — paste at the end of dashboard JS */
 (function () {
   const TEMP_TAB = "rift";
   const TEMP_LABEL = "Rift";
-
-  // find the nav and tabs array used by the app
   const nav = document.querySelector("nav.side");
-  // 'tabs' array is created earlier in the file; if not found, create a local one to keep same API
   window.tabs = window.tabs || [...document.querySelectorAll(".side-item")];
 
   function createTempSideTab() {
-    // if already present, return it
     let existing = document.querySelector(`.side-item[data-tab="${TEMP_TAB}"]`);
     if (existing) return existing;
 
@@ -1877,97 +1684,59 @@ $("copy").onclick = async () => {
     btn.className = "side-item";
     btn.dataset.tab = TEMP_TAB;
     btn.textContent = TEMP_LABEL;
-    btn.style.display = ""; // visible
+    btn.style.display = "";
     btn.addEventListener("click", () => {
       if (typeof switchTab === "function") switchTab(TEMP_TAB);
       else document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === TEMP_TAB));
     });
-
-    // Option: insert near the top (after dashboard) or at end — adjust insertion point if you like
     nav.appendChild(btn);
-
-    // update the tabs array used by the app so the existing switchTab tab-highlighting works
     window.tabs.push(btn);
-
     return btn;
   }
 
   function removeTempSideTab() {
     const btn = document.querySelector(`.side-item[data-tab="${TEMP_TAB}"]`);
     if (!btn) return;
-    // remove from DOM
     btn.remove();
-    // remove from tabs array
     const idx = window.tabs.findIndex(b => b.dataset && b.dataset.tab === TEMP_TAB);
     if (idx !== -1) window.tabs.splice(idx, 1);
   }
 
-  // Wrap/patch switchTab so opening the rift adds the temp tab first (so built-in tab-highlighting works),
-  // and leaving the rift removes it after switching.
   if (typeof switchTab === "function") {
     const _switch = switchTab;
     window.switchTab = function (id) {
       try {
-        if (id === TEMP_TAB) {
-          createTempSideTab();
-        }
-      } catch (e) { /* ignore */ }
-
+        if (id === TEMP_TAB) createTempSideTab();
+      } catch (e) {}
       const res = _switch(id);
-
       try {
-        if (id !== TEMP_TAB) {
-          // leaving rift -> remove temp tab
-          removeTempSideTab();
-        }
-      } catch (e) { /* ignore */ }
-
+        if (id !== TEMP_TAB) removeTempSideTab();
+      } catch (e) {}
       return res;
     };
-  } else {
-    // fallback: if switchTab doesn't exist for some reason, ensure clicking shortcut manually shows view
-    const openBtn = document.getElementById("open-rift");
-    if (openBtn) openBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      createTempSideTab();
-      document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === TEMP_TAB));
-    });
-    // and the close button should hide it
-    const closeBtn = document.getElementById("rift-close");
-    if (closeBtn) closeBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "tos"));
-      removeTempSideTab();
-    });
   }
-
-  // If user opened the Rift by other means (e.g. page load with rift active), create the tab now
-  if (document.getElementById(TEMP_TAB)?.classList.contains("active")) createTempSideTab();
-
 })();
-// ============================================================================
+
+// ============================================================================================
 // MODULAR GOOGLE AUTH INJECTION ENGINE FOR CLAUDE APP.JS ENVIRONMENT
-// ============================================================================
+// ============================================================================================
 const initGoogleAuthButtons = () => {
   const loginTarget = document.getElementById("google-login-container");
   const signupTarget = document.getElementById("google-signup-container");
-  
-  // Wait for index.html's module thread to expose the modular v12 engines
+
   if (!window.F12Methods || !window.F12Auth) {
     setTimeout(initGoogleAuthButtons, 50);
     return;
   }
 
-  // Destructure the official v12 modular methods passed from the HTML scope
   const { signInWithPopup, getDocs, collection, query, where } = window.F12Methods;
   const auth = window.F12Auth;
   const db = window.F12Db;
   const googleProvider = window.F12Provider;
 
-  const btnStyle = "display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 10px; background: white; color: #444; border: 1px solid #dadce0; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-family: inherit;";
+  const btnStyle = "display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 10px; background: white; color: #444; border: 1px solid #dadce0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-weight: 600; cursor: pointer;";
   const gLogo = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px; height:18px;">`;
 
-  // 1. Setup Login Button Flow
   if (loginTarget && !document.getElementById("google-login-btn")) {
     const loginBtn = document.createElement("button");
     loginBtn.type = "button";
@@ -1981,8 +1750,6 @@ const initGoogleAuthButtons = () => {
       try {
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
-        
-        // Find existing custom user profile linked to this unique Google ID field
         const snapshot = await getDocs(query(collection(db, "users"), where("googleUid", "==", user.uid)));
 
         if (snapshot.empty) {
@@ -1991,8 +1758,8 @@ const initGoogleAuthButtons = () => {
 
         const userDoc = snapshot.docs[0];
         const dbUser = userDoc.data();
-        const username = userDoc.id; // Extracts their actual account username string
-        
+        const username = userDoc.id;
+
         if (dbUser.deletedAt) return err("This account was deleted. Ask an admin to restore it.");
         if (typeof banLeft !== 'undefined' && banLeft(dbUser)) return err("This account is " + banText(dbUser) + ".");
 
@@ -2006,7 +1773,6 @@ const initGoogleAuthButtons = () => {
     };
   }
 
-  // 2. Setup Signup Button Flow
   if (signupTarget && !document.getElementById("google-signup-btn")) {
     const signupBtn = document.createElement("button");
     signupBtn.type = "button";
@@ -2022,14 +1788,12 @@ const initGoogleAuthButtons = () => {
         const googleUser = result.user;
         const em = googleUser.email;
 
-        // Ask for the birthday explicitly since Google blocks auto-reading it
         const dob = prompt("Confirm your Date of Birth (mm/dd/yyyy) for safety compliance:", "01/01/2010");
         if (!dob) return err("Sign up canceled. Date of Birth is required.");
 
         const age = tier(dob);
         if (!age) return err("Enter a valid birth date that isn't in the future.");
 
-        // Safe validation fallback to extract and clean their name strings safely
         const rawName = googleUser.displayName || "User";
         let u = rawName.replace(/[^A-Za-z0-9_.-]/g, "");
         if (u.length < 3) u = "User_" + Math.floor(Math.random() * 1000);
@@ -2058,7 +1822,6 @@ const initGoogleAuthButtons = () => {
   }
 };
 
-// Continuous layout check loop ensures the button hooks load even if components mount late
 const mountGoogleButtons = () => {
   if (document.getElementById("google-login-container") || document.getElementById("google-signup-container")) {
     initGoogleAuthButtons();
@@ -2067,7 +1830,6 @@ const mountGoogleButtons = () => {
   }
 };
 
-// Start initialization checklist safety sequence
 if (document.readyState === "loading") {
   window.addEventListener("DOMContentLoaded", mountGoogleButtons);
 } else {
@@ -2077,22 +1839,17 @@ if (document.readyState === "loading") {
 // GRAPEGREEN ASYNCHRONOUS AD ROTATION ENGINE
 // ==========================================
 (function() {
-    const ADSENSE_PUB_ID = 'ca-pub-XXXXXXXXXXXXXXXX'; // Replace with real Pub ID
-    const ROTATION_TIME = 45000; // 45 seconds
+    const ADSENSE_PUB_ID = 'ca-pub-XXXXXXXXXXXXXXXX';
+    const ROTATION_TIME = 45000;
 
-    // Helper function to safely cycle a target box layout container
     function refreshAdContainer(box) {
         const slotId = box.getAttribute('data-slot');
         if (!slotId) return;
 
-        // Visual flash indicating rotation is executing
         box.classList.add('rotating-now');
         setTimeout(() => box.classList.remove('rotating-now'), 1500);
-
-        // Wipe container to prepare for programmatic element insertion
         box.innerHTML = '';
 
-        // Construct AdSense structure elements
         const newIns = document.createElement('ins');
         newIns.className = 'adsbygoogle';
         newIns.style.display = 'block';
@@ -2104,29 +1861,18 @@ if (document.readyState === "loading") {
         const newScript = document.createElement('script');
         newScript.innerText = '(adsbygoogle = window.adsbygoogle || []).push({});';
 
-        // Mount components to DOM tree
         box.appendChild(newIns);
         box.appendChild(newScript);
     }
 
-    // Initialize individual staggered loop intervals
     document.querySelectorAll('.grape-ad-box').forEach((adBox, index) => {
-        // Run initial configuration render immediately
         refreshAdContainer(adBox);
-
-        // Generate an out-of-sync random delay (adds 1 to 6 seconds variance)
         const randomStaggerOffset = (index * 400) + (Math.random() * 3000);
-
-        // Queue individual asynchronous permanent loop chains
         setTimeout(() => {
-            // First out-of-sync reload
             refreshAdContainer(adBox);
-
-            // Establish the locked 45-second cycle for this block node
             setInterval(() => {
                 refreshAdContainer(adBox);
             }, ROTATION_TIME);
-
         }, randomStaggerOffset);
     });
 })();
