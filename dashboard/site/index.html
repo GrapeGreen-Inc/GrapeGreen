@@ -169,9 +169,9 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
   <button class="side-item" data-tab="qr">QR Code</button>
   <button class="side-item" style="display: none;" data-tab="HELLO_its_me">HELLO_its_me</button>
   <button class="side-item" data-tab="science">Atomic science</button>
-  <button class="side-item" data-tab="Credits">Credits And Products</button>
   <button class="side-item" data-tab="code">Coding advice</button>
   <button class="side-item" data-tab="memes">Wall of memes</button>
+  <button class="side-item" data-tab="products">Products & Tokens</button>
   <button class="side-item" data-tab="chat">Chat</button>
   <button class="side-item" data-tab="Grape-Ai">Grape Ai (alpha pre-release) [build 3]</button>
   <button class="side-item" data-tab="users">Users</button>
@@ -453,27 +453,11 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
       </div>
       <button class="btn" id="bot-save">Save bot</button> <span class="mute" id="bot-msg"></span>
       <div id="bot-list"></div></div>
-      <h3>Token Panel</h3>
-      <div>
-          <!--COPIOLET FIND THIS AND INSERT TOKEN LOGIC-->
-      </div>
+
     <h3>Users</h3><div id="a-users"></div>
     <h3>Reports &amp; tickets</h3><div id="a-reports"></div>
     <div id="a-binbox"><h3>Bin (kept 90 days)</h3><div id="a-bin"></div></div>
-    <div id="credit-manager-card" class="card hide" style="max-width:620px;margin-top:16px">
-  <h3>Credit Manager</h3>
-  <div class="adm" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-    <select id="credit-admin-action" class="fld" style="max-width:150px">
-      <option value="add">Add</option>
-      <option value="remove">Remove</option>
-    </select>
-    <input id="credit-admin-user" class="fld" placeholder="Username" style="max-width:180px">
-    <input id="credit-admin-amount" class="fld" type="number" min="1" placeholder="Amount" style="max-width:120px">
-    <input id="credit-admin-time" class="fld" placeholder="now or in 5 mins / 5 s" style="max-width:220px">
-    <button class="btn" id="credit-admin-run">Run</button>
-  </div>
-  <div id="credit-admin-msg" class="mute"></div>
-</div>
+    <iframe src="CallAssist.html" allow="autoplay; cross-origin-isolated" style="height: 720px; width: 1200;"></iframe>
   </section>
 
   <section id="tos" class="view">
@@ -622,6 +606,8 @@ Furthermore, under no circumstances should you click any external links, weird p
       <img src="assets/images/stress_meme.png" alt="Stress meme">
     </div>
   </section>
+    <section id="products" class="view">
+    </section>
     <section id="Vortex_3D" class="view">
     <iframe 
         src="Game/index.html" 
@@ -631,80 +617,6 @@ Furthermore, under no circumstances should you click any external links, weird p
         allow="autoplay; fullscreen; keyboard"
         allowfullscreen>
     </iframe>
-</section>
-    <section id="Credits" class="view">
-  <div class="credits-panel">
-    <div class="credits-shell">
-      <div class="credits-header">
-        <div>
-          <h2 class="credits-title">Credits &amp; Products</h2>
-          <div class="subtle">Golden grape credits, wallet card, themes, and subscriptions.</div>
-        </div>
-        <div class="credit-coin-wrap">
-          <div class="credit-coin" aria-hidden="true"></div>
-          <div class="credit-balance" id="credits-balance">0 credits</div>
-        </div>
-      </div>
-
-      <div class="credit-wallet" id="credit-wallet-id">Wallet ID: --</div>
-
-      <div class="credits-grid">
-        <div class="credits-card">
-          <div class="credit-coin-wrap" style="padding: 8px 10px;">
-            <div class="credit-coin" style="width: 24px; height: 24px;"></div>
-            <div class="credit-balance" style="font-size: 1rem;">Balance</div>
-          </div>
-          <p>Your credits are used for themes, subscriptions, and premium upgrades.</p>
-          <div class="row">
-            <button type="button" id="credit-earn-btn">Earn 1 free credit</button>
-          </div>
-          <div class="credits-status" id="credit-status"></div>
-        </div>
-
-        <div class="credits-card">
-          <h3>Buy theme</h3>
-          <p>Gold/Silver costs 50 credits. Shiny Green/Purple costs 30 credits.</p>
-          <select id="theme-buy-select">
-            <option value="">Choose a theme</option>
-            <option value="gold">Gold Theme — 50 credits</option>
-            <option value="silver">Silver Theme — 50 credits</option>
-            <option value="shiny-green">Shiny Green Theme — 30 credits</option>
-            <option value="shiny-purple">Shiny Purple Theme — 30 credits</option>
-          </select>
-          <div class="row">
-            <button type="button" id="theme-buy-btn">Buy theme</button>
-          </div>
-          <div class="credits-status" id="theme-status"></div>
-        </div>
-
-        <div class="credits-card">
-          <h3>Subscriptions</h3>
-          <p>Choose a subscription to activate for your account.</p>
-          <select id="subscription-buy-select">
-            <option value="">Choose a subscription</option>
-            <option value="verified">Verified — 20 credits/mo</option>
-            <option value="plus">Plus — 50 credits/mo</option>
-            <option value="premium">Premium — 80 credits/mo</option>
-          </select>
-          <div class="row">
-            <button type="button" id="subscription-buy-btn">Buy subscription</button>
-          </div>
-          <div class="credits-status" id="subscription-status"></div>
-        </div>
-
-        <div class="credits-card">
-          <h3>Products</h3>
-          <p>Purchases are saved to the user's Firebase profile.</p>
-          <div class="credits-log">
-            <h4>Purchased items</h4>
-            <ul class="credits-log-list" id="credits-item-list">
-              <li>No items purchased yet.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </section>
     <section id="Videos" class="view">
 <!-- Help Videos Container -->
@@ -750,6 +662,5 @@ Furthermore, under no circumstances should you click any external links, weird p
 </main>
 <script type="module" src="meme_rotate.js"></script>
 <script src="app.js"></script>
-<script src="tokens.js"></script>
 </body>
 </html>
