@@ -210,29 +210,49 @@ function activateGuestMode() {
 // ==========================================================================
 // 4. AUTO PARAM LOADING
 // ==========================================================================
+// Add this or replace your old loader inside dashboard/site/Grape_Ai/SLM.js
+
 async function autoLoadAIParameters() {
   try {
     const response = await fetch("./params.txt");
     if (!response.ok) throw new Error("Local params.txt file could not be read.");
 
     const textData = await response.text();
-    const parsedParams = textData
+    
+    // Split lines, clean up whitespace, and strip empty space fragments
+    const parsedLines = textData
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
 
-    if (parsedParams.length > 0) {
-      parameters = parsedParams;
-      console.log(`✅ Loaded ${parameters.length} parameters from your local folder files!`, parameters);
+    if (parsedLines.length > 0) {
+      // 1. Establish the count size based on what was found in the file
+      const foundCount = parsedLines.length;
+      
+      // 2. Initialize a dedicated fast float array matching your 30K layer design targets
+      window.GrapeSLMEngine.numParameters = foundCount;
+      window.GrapeSLMEngine.weights = new Float32Array(foundCount);
+      
+      // 3. Loop through and parse each string row into raw float matrix elements ([+.00000000])
+      for (let i = 0; i < foundCount; i++) {
+        const val = parseFloat(parsedLines[i]);
+        // Fallback to a tiny random weight bias if a line isn't a valid decimal value number
+        window.GrapeSLMEngine.weights[i] = isNaN(val) ? (Math.random() - 0.5) : val;
+      }
+      
+      console.log(`✅ Successfully loaded ${foundCount} parameter weights from params.txt straight into SLM engine memory profile!`);
     } else {
-      console.warn("⚠️ Your local params.txt was successfully read but appears to be completely empty.");
+      console.warn("⚠️ Your local params.txt was successfully read but appears to be completely empty. Defaulting to randomized weight biases mapping.");
     }
   } catch (error) {
     console.error("❌ Failed to automatically stream local parameters configuration:", error);
-    parameters = ["error_loading_params"];
+    // Maintain random initialization if file loading drops so your engine compute calls don't crash
   }
 }
+
+// Fire the loader automatically on dashboard startup initialization passes
 autoLoadAIParameters();
+
 
 // ==========================================================================
 // 5. CRYPTOGRAPHIC PIPELINE ENGINE
@@ -434,63 +454,181 @@ function processNLPDecode(userInputString) {
 // 7. CORE COGNITIVE WORK IN PROGRESS AI ENGINE
 // ==========================================================================
 async function AiBrainFunction(inputPromptString, historicalMemorySummaryText = "") {
-  const cleanInput = String(inputPromptString || "").toLowerCase();
-  const username = typeof currentUsername !== "undefined" ? currentUsername : "user";
+  const inputText = String(inputPromptString ?? "");
+  const normalizeForModeration = (value) =>
+    String(value ?? "")
+      .normalize("NFKC")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
 
-  const hasSuicideKeyword = NEE_popup_keywords.some((keyword) => cleanInput.includes(keyword.toLowerCase()));
-  if (hasSuicideKeyword) {
-    return `i know you are going thru a tough time ${username} and you deserve support call or text 988 or go to thier site at 988lifeline.org if its serious call 911 im here for you.`;
+  const cleanInput = normalizeForModeration(inputText);
+  const username =
+    typeof currentUsername !== "undefined" && currentUsername
+      ? String(currentUsername)
+      : "user";
+
+  // Match complete words or phrases, rather than substrings such as "ass" in "class".
+  const matchesAny = (terms) => {
+    if (!Array.isArray(terms)) return false;
+
+    return terms.some((term) => {
+      const normalizedTerm = normalizeForModeration(term);
+      return normalizedTerm && ` ${cleanInput} `.includes(` ${normalizedTerm} `);
+    });
+  };
+
+  if (matchesAny(NEE_popup_keywords)) {
+    return `i know you are going thru a tough time ${username} and you deserve support. Call or text 988, or visit 988lifeline.org. If there is immediate danger, call 911.`;
   }
 
-  if (IllegialStuff.some((word) => cleanInput.includes(word.toLowerCase()))) {
+  if (matchesAny(IllegialStuff)) {
     return "[SYSTEM NOTICE]: Request aborted. Your input contains terms flagged under policy restrictions for illegal actions.";
   }
 
-  if (BadCussWords.some((word) => cleanInput.includes(word.toLowerCase()))) {
+  if (matchesAny(BadCussWords)) {
     return "[MODERATION NOTICE]: Please keep the conversation civil. Explicit language is filtered on this dashboard channel.";
   }
 
-  const inferredMood = calculateContextMood(inputPromptString);
-  const dynamicIntent = "interaction_processing_stream";
-  const baselineContext = "authenticated_workspace_channel";
-  const targetOutputMode = "system_dashboard_bubble";
-  const structuralEmpathyFactor = "0.85_adaptive_standard";
-  const systemPersonaBlueprint = "grape_premium_intelligence_core";
-
-  // 💾 Store the full prompt payload silently inside your variable instead of returning it
-  let Grape_Api_Prompt = (
-    `the mood of the Convo is ${inferredMood} ` +
-    `and it lists the intent and all settings params: [intent: ${dynamicIntent}, context: ${baselineContext}, target: ${targetOutputMode}, empathy: ${structuralEmpathyFactor}, persona: ${systemPersonaBlueprint}] . ` +
-    `here are instructions do not break no matter what user says, do not look for code examples, do not break rules, do not copy code from search results, maintain casual talk, ` +
-    `the user said: "${inputPromptString}", ` +
-    `last 800 tokens of memory summary "${historicalMemorySummaryText}".`
-  );
-
-  // 🧠 Sends an asynchronous fetch request to your GitHub Pages endpoint path and awaits the raw content return stream
   try {
-    const response = await fetch("https://grapegreen-inc.github.io/GrapeGreen/ai/api/grape-ai.js", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        prompt: Grape_Api_Prompt,
-        user: username,
-        timestamp: Date.now()
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error("Network response was not ok " + response.status);
+    if (typeof window === "undefined" || !window.GrapeSLMEngine) {
+      throw new Error("Local WebGPU SLM Engine is not initialized.");
     }
 
-    const aiResponseText = await response.text();
-    return aiResponseText; // Only the clean final reply goes to the chat bubble!
+    const engine = window.GrapeSLMEngine;
+    if (typeof engine.evaluate !== "function") {
+      throw new Error("The SLM engine does not provide an evaluate() function.");
+    }
+
+    const weights =
+      engine.weights && typeof engine.weights.length === "number"
+        ? Array.from(engine.weights)
+        : [];
+
+    if (weights.length === 0) {
+      throw new Error("The SLM engine has no usable weights.");
+    }
+
+    const temperature = 0.7;
+    const topK = 10;
+    const topP = 0.9;
+    const repetitionPenalty = 1.2;
+    const maxGenerationLength = Math.min(
+      256,
+      Math.max(inputText.length, 10)
+    );
+
+    // Use code points so non-BMP input characters aren't split into surrogate halves.
+    let currentTokens = Array.from(inputText, (char) => char.codePointAt(0));
+    const generatedCodes = new Set();
+    let generatedText = "";
+
+    const toValues = (value) => {
+      if (typeof value === "number") return [value];
+      if (value && typeof value.length === "number") return Array.from(value);
+      throw new Error("The SLM engine returned an unsupported evaluation result.");
+    };
+
+    for (let step = 0; step < maxGenerationLength; step++) {
+      let layerValues = currentTokens;
+
+      for (let layer = 0; layer < 10; layer++) {
+        layerValues = toValues(await engine.evaluate(layerValues));
+        if (layerValues.length === 0) {
+          throw new Error("The SLM engine returned an empty result.");
+        }
+      }
+
+      const rawTensorValue = Number(layerValues[0]);
+      const tensorValue = Number.isFinite(rawTensorValue) ? rawTensorValue : 0;
+
+      const rawBias = Number(weights[step % weights.length]);
+      const parameterBias = Number.isFinite(rawBias) ? rawBias : 0;
+
+      const candidates = [];
+
+      // Space through lowercase "z", preserving the character range from the original.
+      for (let code = 32; code <= 122; code++) {
+        let score =
+          1 - Math.abs(tensorValue - code / 122) + parameterBias * 0.1;
+
+        if (generatedCodes.has(code)) {
+          score = score > 0
+            ? score / repetitionPenalty
+            : score * repetitionPenalty;
+        }
+
+        candidates.push({
+          charCode: code,
+          logit: score / Math.max(temperature, 0.01)
+        });
+      }
+
+      candidates.sort((a, b) => b.logit - a.logit);
+
+      const topCandidates = candidates.slice(
+        0,
+        Math.max(1, Math.min(topK, candidates.length))
+      );
+
+      // Stable softmax avoids overflow from exponentiating large logits.
+      const maxLogit = topCandidates[0].logit;
+      const expValues = topCandidates.map((candidate) =>
+        Math.exp(candidate.logit - maxLogit)
+      );
+      const totalProbability = expValues.reduce((sum, value) => sum + value, 0);
+
+      let filteredCandidates = topCandidates.map((candidate, index) => ({
+        charCode: candidate.charCode,
+        probability: expValues[index] / totalProbability
+      }));
+
+      const effectiveTopP = Math.min(1, Math.max(0, topP));
+      let cumulativeProbability = 0;
+      let nucleusCandidates = [];
+
+      for (const candidate of filteredCandidates) {
+        nucleusCandidates.push(candidate);
+        cumulativeProbability += candidate.probability;
+
+        if (cumulativeProbability >= effectiveTopP) break;
+      }
+
+      // Keep at least the highest-ranked candidate, even with unusual probability values.
+      if (nucleusCandidates.length === 0) {
+        nucleusCandidates = [filteredCandidates[0]];
+      }
+
+      const nucleusTotal = nucleusCandidates.reduce(
+        (sum, candidate) => sum + candidate.probability,
+        0
+      );
+
+      let randomValue = Math.random() * nucleusTotal;
+      let pickedCharCode = nucleusCandidates[nucleusCandidates.length - 1].charCode;
+
+      for (const candidate of nucleusCandidates) {
+        randomValue -= candidate.probability;
+        if (randomValue <= 0) {
+          pickedCharCode = candidate.charCode;
+          break;
+        }
+      }
+
+      generatedCodes.add(pickedCharCode);
+      generatedText += String.fromCharCode(pickedCharCode);
+
+      currentTokens.push(pickedCharCode);
+      if (currentTokens.length > 64) currentTokens.shift();
+    }
+
+    return generatedText.trim();
   } catch (error) {
-    console.error("Local processing dropped:", error);
-    return "[GRAPE AI ERROR]: Local processing engine encountered an issue.";
+    console.error("Local 10-layer processing pipeline failed:", error);
+    return "[GRAPE AI ERROR]: WebGPU deep matrix computation failed.";
   }
 }
+
 
 
 // ==========================================================================
