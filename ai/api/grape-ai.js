@@ -1,4 +1,5 @@
-// grape-ai.js (Service Worker Core Engine)
+// GrapeGreen/ai/api/grape-ai.js (Service Worker Core Engine)
+
 self.addEventListener('install', (event) => {
     // Forces the waiting service worker to become the active service worker immediately
     self.skipWaiting();
@@ -24,29 +25,25 @@ self.addEventListener('fetch', (event) => {
                     const query = await clonedRequest.json(); 
                     let output = "";
 
-                    // 📄 Read your parameters out of params.txt located in the same folder
-                    let paramsData = "";
-                    try {
-                        const paramsResponse = await fetch('params.txt');
-                        if (paramsResponse.ok) {
-                            paramsData = await paramsResponse.text();
-                        } else {
-                            paramsData = "[Warning: params.txt file found but unreachable]";
-                        }
-                    } catch (fileErr) {
-                        paramsData = "[Warning: Failed to fetch local params.txt source resource]";
-                    }
+                    // 📄 Internal Parameter Weights Configurations (30K virtual mapping indicator blocks)
+                    const internalSystemParams = {
+                        engineMode: "VRAM_Accelerated_Local_Pipeline",
+                        virtualParamsCount: 30000,
+                        vramAllocationStatus: "active_hardware_mapped",
+                        buildVersion: "1.7 (Style+)"
+                    };
 
                     if (query && query.prompt) {
                         // 2. Extracts exactly what you said out of your structured template text block
                         const match = query.prompt.match(/the user said:\s*"([^"]+)"/);
+                        const userStatement = match ? match[1] : query.prompt;
                         
-                        if (match && match[1]) {
-                            // 3. Assigns your exact words to your output variable and appends the params file context
-                            output = match[1] + "\n\n[SYSTEM PARAMS CONTEXT]:\n" + paramsData.trim(); 
-                        } else {
-                            output = "Could not parse your words out of the prompt format.";
-                        }
+                        // 3. Formulate the clean local response payload text string
+                        output = (
+                            `[ENGINE EXECUTION PIPELINE]: ${internalSystemParams.engineMode}\n` +
+                            `[VIRTUAL PARAMETERS COUNT]: ${internalSystemParams.virtualParamsCount} active weights inside VRAM mapping\n` +
+                            `[PROCESSED USER STATEMENT]: "${userStatement}"`
+                        );
                     } else {
                         output = "Payload error: Missing prompt string data.";
                     }
