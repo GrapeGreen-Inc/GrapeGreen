@@ -435,7 +435,12 @@ export async function receiveRequest(input) {
   if (blocked) return blocked;
 
   const mood = inferMood(query);
-  const plan = Object.hasOwn(TIER_LIMITS, request.plan) ? request.plan : "free";
+  const requestedPlan = String(request.plan ?? "free").toLowerCase();
+const plan = requestedPlan === "owner"
+  ? "max"
+  : Object.hasOwn(TIER_LIMITS, requestedPlan)
+    ? requestedPlan
+    : "free";
   const limits = TIER_LIMITS[plan];
   const generation = request.generation;
   const maxOutputTokens = Math.max(1, Math.min(
