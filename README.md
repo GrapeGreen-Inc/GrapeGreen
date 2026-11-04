@@ -67,9 +67,16 @@ GrapeGreen is built to be welcoming, engaging, and easy to explore. The communit
 
 ---
 
+## Grape Ai
+
+### Grape AI usage limits
+
+Grape AI has limits on how long it can reply, how much recent chat it can consider, and how long it spends thinking. Higher plans allow a bit more of each. These are maximums—not guaranteed response lengths or wait times—and results can vary by device and connection.
+
+---
+
 ## ERROR LIST
 
-- the [4568] error in the Grape Ai means the Ai is unfinished and not ready to respond.
 - the [404]] error is a fetch error
 - the [8262] error means you have exceeded message limit
 
