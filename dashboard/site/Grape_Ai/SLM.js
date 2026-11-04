@@ -85,6 +85,29 @@ const CRYPTO_KEY_3 = "GrapeKeyGamma11zUltimateGate";
 
 let activeUserSession = null;
 let activeUserPlan = "free";
+const chatMessagesById = new Map();
+
+function getChatMessages(chatId) {
+  if (!chatMessagesById.has(chatId)) {
+    chatMessagesById.set(chatId, []);
+  }
+  return chatMessagesById.get(chatId);
+}
+
+function renderActiveChatMessages() {
+  const container = safeGetElement("messages-container");
+  if (!container || !focusActiveChatId) return;
+
+  container.querySelectorAll(".message").forEach((bubble) => bubble.remove());
+
+  for (const message of getChatMessages(focusActiveChatId)) {
+    appendChatBubbleDOM(
+      message.text,
+      message.role === "user" ? "user-message" : "ai-message",
+      message.role === "user" ? "User" : "AI"
+    );
+  }
+}
 
 // ==========================================================================
 // 3. SAFE DOM & STATE HELPERS
@@ -199,6 +222,12 @@ function activateGuestMode() {
   }
 
   focusActiveChatId = globalWorkspaceChatList[0].id;
+
+  focusActiveChatId = chatItem.id;
+const activeChatTitle = safeGetElement("active-chat-title");
+if (activeChatTitle) activeChatTitle.innerText = chatItem.title;
+renderWorkspaceChatsList();
+renderActiveChatMessages();
 
   const activeChatTitle = safeGetElement("active-chat-title");
   if (activeChatTitle) activeChatTitle.innerText = globalWorkspaceChatList[0].title;
