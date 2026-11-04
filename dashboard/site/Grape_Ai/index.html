@@ -226,7 +226,6 @@
       </div>
     </div>
   </section>
-
   <section id="account-panel" class="settings-panel hidden" role="tabpanel" aria-labelledby="account-tab">
     <div class="account-settings-grid">
       <div class="account-setting-card">
@@ -249,7 +248,7 @@
     </div>
   </section>
 </div>
-
+      </div> <!--here-->
 <div class="account-setting-card">
   <h4>Change password</h4>
   <p>Update the password for your Grape AI account.</p>
@@ -306,5 +305,21 @@ if ('serviceWorker' in navigator) {
 }
 </script>
     <script type="module" src="SLM.js"></script>
+        <dialog id="chat-action-dialog" aria-labelledby="chat-dialog-title">
+  <form id="chat-action-form">
+    <h2 id="chat-dialog-title"></h2>
+    <p id="chat-dialog-message"></p>
+
+    <label id="chat-dialog-input-label" for="chat-dialog-input">
+      Chat name
+    </label>
+    <input id="chat-dialog-input" type="text" maxlength="80">
+
+    <div class="chat-dialog-actions">
+      <button id="chat-dialog-cancel" type="button">Cancel</button>
+      <button id="chat-dialog-confirm" type="submit">Confirm</button>
+    </div>
+  </form>
+</dialog>
   </body>
-</html>
+  </html>
