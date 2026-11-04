@@ -986,8 +986,8 @@ const activeChatTitle = safeGetElement("active-chat-title");
 if (activeChatTitle) activeChatTitle.innerText = baseTitleText;
 
 renderWorkspaceChatsList();
+renderChatMessages(uniqueId);
 return;
-}
 
 if (!activeUserSession) return;
 
