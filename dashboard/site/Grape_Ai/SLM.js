@@ -907,15 +907,74 @@ async function createNewChatWorkspaceNode() {
   if (activeChatTitle) activeChatTitle.innerText = baseTitleText;
   renderWorkspaceChatsList();
 }
+function openChatActionDialog({
+  title,
+  message,
+  confirmText = "Confirm",
+  inputValue = null
+}) {
+  const dialog = safeGetElement("chat-action-dialog");
+  const form = safeGetElement("chat-action-form");
+  const titleElement = safeGetElement("chat-dialog-title");
+  const messageElement = safeGetElement("chat-dialog-message");
+  const label = safeGetElement("chat-dialog-input-label");
+  const input = safeGetElement("chat-dialog-input");
+  const confirmButton = safeGetElement("chat-dialog-confirm");
+  const cancelButton = safeGetElement("chat-dialog-cancel");
 
-function triggerChatRenameAction(id) {
+  if (!dialog || !form || !titleElement || !messageElement ||
+      !label || !input || !confirmButton || !cancelButton) {
+    return Promise.reject(new Error("Chat dialog elements are missing from the page."));
+  }
+
+  titleElement.textContent = title;
+  messageElement.textContent = message;
+  confirmButton.textContent = confirmText;
+
+  const needsInput = inputValue !== null;
+  label.hidden = !needsInput;
+  input.hidden = !needsInput;
+  input.required = needsInput;
+  input.value = needsInput ? inputValue : "";
+
+  return new Promise((resolve) => {
+    const handleClose = () => {
+      const confirmed = dialog.returnValue === "confirm";
+      resolve(confirmed ? (needsInput ? input.value.trim() : true) : null);
+    };
+
+    dialog.addEventListener("close", handleClose, { once: true });
+    cancelButton.onclick = () => dialog.close("cancel");
+
+    form.onsubmit = (event) => {
+      event.preventDefault();
+
+      if (needsInput && !input.value.trim()) {
+        input.reportValidity();
+        return;
+      }
+
+      dialog.close("confirm");
+    };
+
+    dialog.showModal();
+    if (needsInput) input.focus();
+  });
+}
+async function triggerChatRenameAction(id) {
   const targetNode = globalWorkspaceChatList.find((item) => item.id === id);
   if (!targetNode) return;
 
-  const nextTitleInput = prompt("Enter new title for this chat thread:", targetNode.title);
-  if (!nextTitleInput || nextTitleInput.trim() === "") return;
+  const nextTitle = await openChatActionDialog({
+    title: "Rename chat",
+    message: "Enter a new name for this chat.",
+    confirmText: "Save",
+    inputValue: targetNode.title
+  });
 
-  targetNode.title = nextTitleInput.trim();
+  if (typeof nextTitle !== "string" || !nextTitle) return;
+
+  targetNode.title = nextTitle;
 
   if (isGuestSession(activeUserSession)) {
     saveGuestChats();
@@ -925,12 +984,21 @@ function triggerChatRenameAction(id) {
 
   if (focusActiveChatId === id) {
     const activeChatTitle = safeGetElement("active-chat-title");
-    if (activeChatTitle) activeChatTitle.innerText = targetNode.title;
+    if (activeChatTitle) activeChatTitle.textContent = targetNode.title;
   }
 }
 
-function triggerChatDeletionAction(id) {
-  if (!confirm("Are you sure you want to permanently delete this chat history thread?")) return;
+async function triggerChatDeletionAction(id) {
+  const targetNode = globalWorkspaceChatList.find((item) => item.id === id);
+  if (!targetNode) return;
+
+  const confirmed = await openChatActionDialog({
+    title: "Delete chat?",
+    message: `Delete "${targetNode.title}"? This action cannot be undone.`,
+    confirmText: "Delete"
+  });
+
+  if (confirmed !== true) return;
 
   globalWorkspaceChatList = globalWorkspaceChatList.filter((item) => item.id !== id);
 
@@ -941,8 +1009,9 @@ function triggerChatDeletionAction(id) {
   if (focusActiveChatId === id) {
     focusActiveChatId = null;
     const activeChatTitle = safeGetElement("active-chat-title");
-    if (activeChatTitle) activeChatTitle.innerText = "New Chat";
+    if (activeChatTitle) activeChatTitle.textContent = "New Chat";
   }
+
   renderWorkspaceChatsList();
 }
 
