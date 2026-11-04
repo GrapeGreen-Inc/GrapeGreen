@@ -77,7 +77,7 @@ let currentMood = "neutral";
 // FEATURE FLAG CONTROLLER:
 // 0 = Block responses with WIP warning message
 // 1 = Allow active internal NLP and simulation logic outputs
-let READY = 0;
+let READY = 1;
 
 const CRYPTO_KEY_1 = "GrapeKeyAlpha99xTrueShield";
 const CRYPTO_KEY_2 = "GrapeKeyBeta44yVanguardNode";
@@ -992,24 +992,26 @@ async function transmitChatMessagePayload() {
   appendChatBubbleDOM(currentQuery, "user-message", "User");
   chatInputBox.value = "";
 
-  const simulatedCompressedMemorySummary = "[System memory status stable. Active session logs running.]";
-  const finalCompiledBrainInputPrompt = await AiBrainFunction(
-    currentQuery,
-    simulatedCompressedMemorySummary
-  );
+  const simulatedCompressedMemorySummary =
+    "[System memory status stable. Active session logs running.]";
 
-  setTimeout(() => {
-    if (READY === 1) {
-      const nlpTokenResults = processNLPDecode(currentQuery);
-      const detectedUserMood = calculateContextMood(currentQuery);
-      currentResponse = `Processed text layers securely. Current timestamp verification check is [${fetchCurrentTimestampString()}]. Input clean text analyzed: "${nlpDecodedOutput}". Estimated communication flow intensity: ${nlpTokenResults.length}. Assigned mood profile: ${detectedUserMood}. Prompt trace: "${finalCompiledBrainInputPrompt}".`;
-      appendChatBubbleDOM(currentResponse, "ai-message", "AI");
-      history.push({ q: currentQuery, r: currentResponse, mood: detectedUserMood });
-    } else {
-      currentResponse = "I'm sorry but this is a work in progress at the time I do not know how to respond";
-      appendChatBubbleDOM(currentResponse, "ai-message", "AI");
-    }
-  }, 750);
+  try {
+    currentResponse = await AiBrainFunction(
+      currentQuery,
+      simulatedCompressedMemorySummary
+    );
+
+    appendChatBubbleDOM(currentResponse, "ai-message", "AI");
+    history.push({
+      q: currentQuery,
+      r: currentResponse,
+      mood: calculateContextMood(currentQuery)
+    });
+  } catch (error) {
+    console.error("Could not get an AI response:", error);
+    currentResponse = "[GRAPE AI ERROR]: The response could not be completed.";
+    appendChatBubbleDOM(currentResponse, "ai-message", "AI");
+  }
 }
 
 function appendChatBubbleDOM(text, styleClass, identityLabel) {
@@ -1020,13 +1022,18 @@ function appendChatBubbleDOM(text, styleClass, identityLabel) {
   const bubbleElement = document.createElement("div");
   bubbleElement.className = `message ${styleClass}`;
 
-  bubbleElement.innerHTML = `
-    <div class="message-avatar">${identityLabel === "AI" ? "AI" : "User"}</div>
-    <div class="message-text">
-      <p>${String(text || "")}</p>
-    </div>
-  `;
+  const avatar = document.createElement("div");
+  avatar.className = "message-avatar";
+  avatar.textContent = identityLabel === "AI" ? "AI" : "User";
 
+  const messageText = document.createElement("div");
+  messageText.className = "message-text";
+
+  const paragraph = document.createElement("p");
+  paragraph.textContent = String(text ?? "");
+
+  messageText.appendChild(paragraph);
+  bubbleElement.append(avatar, messageText);
   messagesScrollFrame.appendChild(bubbleElement);
   scrollAreaFrame.scrollTop = scrollAreaFrame.scrollHeight;
 }
