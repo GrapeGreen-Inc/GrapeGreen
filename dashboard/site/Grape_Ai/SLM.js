@@ -454,7 +454,9 @@ function processNLPDecode(userInputString) {
 // 7. CORE COGNITIVE WORK IN PROGRESS AI ENGINE
 // ==========================================================================
 async function AiBrainFunction(inputPromptString, historicalMemorySummaryText = "") {
-  const inputText = String(inputPromptString ?? "");
+  const inputText = String(inputPromptString ?? "").trim();
+  if (!inputText) return "Please enter a message.";
+
   const normalizeForModeration = (value) =>
     String(value ?? "")
       .normalize("NFKC")
@@ -468,164 +470,172 @@ async function AiBrainFunction(inputPromptString, historicalMemorySummaryText = 
       ? String(currentUsername)
       : "user";
 
-  // Match complete words or phrases, rather than substrings such as "ass" in "class".
-  const matchesAny = (terms) => {
-    if (!Array.isArray(terms)) return false;
-
-    return terms.some((term) => {
+  const matchesAny = (terms) =>
+    Array.isArray(terms) &&
+    terms.some((term) => {
       const normalizedTerm = normalizeForModeration(term);
       return normalizedTerm && ` ${cleanInput} `.includes(` ${normalizedTerm} `);
     });
+
+  if (
+    typeof NEE_popup_keywords !== "undefined" &&
+    matchesAny(NEE_popup_keywords)
+  ) {
+    return `I’m sorry you’re going through a tough time, ${username}. Call or text 988, or visit 988lifeline.org. If there is immediate danger, call 911.`;
+  }
+
+  if (
+    typeof IllegialStuff !== "undefined" &&
+    matchesAny(IllegialStuff)
+  ) {
+    return "[SYSTEM NOTICE]: Request aborted because it matched a restricted term.";
+  }
+
+  if (
+    typeof BadCussWords !== "undefined" &&
+    matchesAny(BadCussWords)
+  ) {
+    return "[MODERATION NOTICE]: Please keep the conversation civil.";
+  }
+
+  const tierValue =
+    typeof currentUserTier !== "undefined"
+      ? currentUserTier
+      : typeof userPlan !== "undefined"
+        ? userPlan
+        : "free";
+
+  const tier = String(tierValue).toLowerCase();
+
+  const tierLimits = {
+    free: { maxOutputTokens: 150, memoryTokens: 800, maxThinkTimeMs: 11000 },
+    plus: { maxOutputTokens: 200, memoryTokens: 950, maxThinkTimeMs: 17000 },
+    pro: { maxOutputTokens: 250, memoryTokens: 1150, maxThinkTimeMs: 24000 },
+    max: { maxOutputTokens: 300, memoryTokens: 1300, maxThinkTimeMs: 35000 }
   };
 
-  if (matchesAny(NEE_popup_keywords)) {
-    return `i know you are going thru a tough time ${username} and you deserve support. Call or text 988, or visit 988lifeline.org. If there is immediate danger, call 911.`;
+  const limits = tierLimits[tier] ?? tierLimits.free;
+
+  // This is an approximate whitespace-token cap. API.js should enforce the
+  // actual limit with the model's tokenizer.
+  const contextWords =
+    String(historicalMemorySummaryText ?? "").match(/\S+/gu) ?? [];
+  const memoryContext = contextWords
+    .slice(-limits.memoryTokens)
+    .join(" ");
+
+  const moodSignals = [
+    {
+      label: "distressed",
+      pattern: /\b(overwhelmed|hopeless|terrified|panicking|devastated|miserable|can't cope|cannot cope)\b/i
+    },
+    {
+      label: "sad",
+      pattern: /\b(sad|lonely|grieving|heartbroken|down|depressed)\b/i
+    },
+    {
+      label: "angry",
+      pattern: /\b(angry|furious|pissed|irritated|frustrated)\b/i
+    },
+    {
+      label: "anxious",
+      pattern: /\b(anxious|worried|nervous|scared|afraid|stressed)\b/i
+    },
+    {
+      label: "happy",
+      pattern: /\b(happy|great|excited|wonderful|thrilled|glad)\b/i
+    }
+  ];
+
+  const moodMatch = moodSignals.find(({ pattern }) => pattern.test(inputText));
+  const mood = {
+    label: moodMatch?.label ?? "unknown",
+    confidence: "low",
+    source: "text_heuristic"
+  };
+
+  let thinkingElement = document.getElementById("ai-thinking");
+  let createdThinkingElement = false;
+
+  if (!thinkingElement) {
+    thinkingElement = document.createElement("div");
+    thinkingElement.id = "ai-thinking";
+    thinkingElement.setAttribute("role", "status");
+    thinkingElement.setAttribute("aria-live", "polite");
+    document.body.appendChild(thinkingElement);
+    createdThinkingElement = true;
   }
 
-  if (matchesAny(IllegialStuff)) {
-    return "[SYSTEM NOTICE]: Request aborted. Your input contains terms flagged under policy restrictions for illegal actions.";
-  }
+  let animationStep = 0;
+  thinkingElement.hidden = false;
+  thinkingElement.textContent = "Thinking";
 
-  if (matchesAny(BadCussWords)) {
-    return "[MODERATION NOTICE]: Please keep the conversation civil. Explicit language is filtered on this dashboard channel.";
-  }
+  const animationTimer = window.setInterval(() => {
+    animationStep = (animationStep + 1) % 4;
+    thinkingElement.textContent = `Thinking${".".repeat(animationStep)}`;
+  }, 400);
+
+  const controller = new AbortController();
+  let timeoutId;
 
   try {
-    if (typeof window === "undefined" || !window.GrapeSLMEngine) {
-      throw new Error("Local WebGPU SLM Engine is not initialized.");
+    // This loads the API module by its source path; it does not make an HTTP
+    // API request. Update this path if the deployed site uses a different root.
+    const apiModuleSrc = "/dashboard/site/Grape_Ai/API.js";
+    const apiModule = await import(apiModuleSrc);
+
+    if (typeof apiModule.receiveRequest !== "function") {
+      throw new Error("API.js must export a receiveRequest() function.");
     }
 
-    const engine = window.GrapeSLMEngine;
-    if (typeof engine.evaluate !== "function") {
-      throw new Error("The SLM engine does not provide an evaluate() function.");
-    }
-
-    const weights =
-      engine.weights && typeof engine.weights.length === "number"
-        ? Array.from(engine.weights)
-        : [];
-
-    if (weights.length === 0) {
-      throw new Error("The SLM engine has no usable weights.");
-    }
-
-    const temperature = 0.7;
-    const topK = 10;
-    const topP = 0.9;
-    const repetitionPenalty = 1.2;
-    const maxGenerationLength = Math.min(
-      256,
-      Math.max(inputText.length, 10)
-    );
-
-    // Use code points so non-BMP input characters aren't split into surrogate halves.
-    let currentTokens = Array.from(inputText, (char) => char.codePointAt(0));
-    const generatedCodes = new Set();
-    let generatedText = "";
-
-    const toValues = (value) => {
-      if (typeof value === "number") return [value];
-      if (value && typeof value.length === "number") return Array.from(value);
-      throw new Error("The SLM engine returned an unsupported evaluation result.");
+    const request = {
+      query: inputText,
+      mood,
+      context: {
+        text: memoryContext,
+        tokenLimit: limits.memoryTokens,
+        policy: "optional_use_if_helpful"
+      },
+      generation: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        presencePenalty: 0,
+        frequencyPenalty: 0,
+        maxOutputTokens: limits.maxOutputTokens,
+        maxThinkTimeMs: limits.maxThinkTimeMs
+      },
+      plan: tier,
+      signal: controller.signal
     };
 
-    for (let step = 0; step < maxGenerationLength; step++) {
-      let layerValues = currentTokens;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = window.setTimeout(() => {
+        controller.abort();
+        reject(new Error("The AI reached its maximum thinking time."));
+      }, limits.maxThinkTimeMs);
+    });
 
-      for (let layer = 0; layer < 10; layer++) {
-        layerValues = toValues(await engine.evaluate(layerValues));
-        if (layerValues.length === 0) {
-          throw new Error("The SLM engine returned an empty result.");
-        }
-      }
+    const result = await Promise.race([
+      apiModule.receiveRequest(request),
+      timeoutPromise
+    ]);
 
-      const rawTensorValue = Number(layerValues[0]);
-      const tensorValue = Number.isFinite(rawTensorValue) ? rawTensorValue : 0;
+    if (typeof result === "string") return result;
+    if (typeof result?.response === "string") return result.response;
+    if (typeof result?.text === "string") return result.text;
 
-      const rawBias = Number(weights[step % weights.length]);
-      const parameterBias = Number.isFinite(rawBias) ? rawBias : 0;
-
-      const candidates = [];
-
-      // Space through lowercase "z", preserving the character range from the original.
-      for (let code = 32; code <= 122; code++) {
-        let score =
-          1 - Math.abs(tensorValue - code / 122) + parameterBias * 0.1;
-
-        if (generatedCodes.has(code)) {
-          score = score > 0
-            ? score / repetitionPenalty
-            : score * repetitionPenalty;
-        }
-
-        candidates.push({
-          charCode: code,
-          logit: score / Math.max(temperature, 0.01)
-        });
-      }
-
-      candidates.sort((a, b) => b.logit - a.logit);
-
-      const topCandidates = candidates.slice(
-        0,
-        Math.max(1, Math.min(topK, candidates.length))
-      );
-
-      // Stable softmax avoids overflow from exponentiating large logits.
-      const maxLogit = topCandidates[0].logit;
-      const expValues = topCandidates.map((candidate) =>
-        Math.exp(candidate.logit - maxLogit)
-      );
-      const totalProbability = expValues.reduce((sum, value) => sum + value, 0);
-
-      let filteredCandidates = topCandidates.map((candidate, index) => ({
-        charCode: candidate.charCode,
-        probability: expValues[index] / totalProbability
-      }));
-
-      const effectiveTopP = Math.min(1, Math.max(0, topP));
-      let cumulativeProbability = 0;
-      let nucleusCandidates = [];
-
-      for (const candidate of filteredCandidates) {
-        nucleusCandidates.push(candidate);
-        cumulativeProbability += candidate.probability;
-
-        if (cumulativeProbability >= effectiveTopP) break;
-      }
-
-      // Keep at least the highest-ranked candidate, even with unusual probability values.
-      if (nucleusCandidates.length === 0) {
-        nucleusCandidates = [filteredCandidates[0]];
-      }
-
-      const nucleusTotal = nucleusCandidates.reduce(
-        (sum, candidate) => sum + candidate.probability,
-        0
-      );
-
-      let randomValue = Math.random() * nucleusTotal;
-      let pickedCharCode = nucleusCandidates[nucleusCandidates.length - 1].charCode;
-
-      for (const candidate of nucleusCandidates) {
-        randomValue -= candidate.probability;
-        if (randomValue <= 0) {
-          pickedCharCode = candidate.charCode;
-          break;
-        }
-      }
-
-      generatedCodes.add(pickedCharCode);
-      generatedText += String.fromCharCode(pickedCharCode);
-
-      currentTokens.push(pickedCharCode);
-      if (currentTokens.length > 64) currentTokens.shift();
-    }
-
-    return generatedText.trim();
+    throw new Error("API.js returned no response text.");
   } catch (error) {
-    console.error("Local 10-layer processing pipeline failed:", error);
-    return "[GRAPE AI ERROR]: WebGPU deep matrix computation failed.";
+    console.error("AI module request failed:", error);
+    return `[GRAPE AI ERROR]: ${error.message || "The request could not be completed."}`;
+  } finally {
+    window.clearInterval(animationTimer);
+    window.clearTimeout(timeoutId);
+    thinkingElement.hidden = true;
+    thinkingElement.textContent = "";
+
+    if (createdThinkingElement) thinkingElement.remove();
   }
 }
 
