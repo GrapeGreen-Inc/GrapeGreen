@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GrapeGreen Mini Transformer Trainer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #120e24;
+      --panel: #1c1736;
+      --panel-2: #0d0a1a;
+      --line: #3c2e6b;
+      --purple: #563bb3;
+      --purple-2: #6a4fe3;
+      --green: #a4eb34;
+      --text: #f1ecff;
+      --muted: #c9bddf;
+      --error: #ff9a9a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, sans-serif;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    h1, h2 { color: var(--green); }
+    h2 { margin-top: 28px; }
+
+    p { color: var(--muted); line-height: 1.6; }
+
+    label {
+      display: block;
+      margin: 16px 0 8px;
+      font-weight: 700;
+    }
+
+    textarea, input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .grid label { margin-top: 0; }
+
+    button {
+      margin: 12px 8px 0 0;
+      padding: 10px 16px;
+      background: var(--purple);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button:hover { background: var(--purple-2); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .stats {
+      margin: 18px 0;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .error { color: var(--error); }
+
+    #log {
+      min-height: 110px;
+      max-height: 240px;
+      overflow: auto;
+      padding: 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: 13px/1.5 monospace;
+      white-space: pre-wrap;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>GrapeGreen Mini Transformer Trainer</h1>
+
+    <p>
+      This is a very small decoder-only transformer trained in-browser. It learns
+      from the examples you paste here. It is intended as a small experiment and
+      not a complete general-purpose model.
+    </p>
+
+    <h2>Training data</h2>
+
+    <label for="code-data">
+      Code snippets — format: language:["purpose";"snippet"]
+    </label>
+    <textarea id="code-data" spellcheck="false" placeholder='python:["sort a list";"items.sort()"]
+javascript:["say hello";"console.log(\"Hello!\")"]'></textarea>
+
+    <label for="training-data">
+      Prompt/response pairs — one JSON object per line
+    </label>
+    <textarea id="training-data" spellcheck="false" placeholder='{"prompt":"Say hello.","response":"Hello! How can I help?"}
+{"prompt":"What is a grape?","response":"A grape is a small fruit that grows in clusters."}'></textarea>
+
+    <label for="wiki-data">
+      Wikipedia-style articles — separate each article with a line containing -----
+    </label>
+    <textarea id="wiki-data" spellcheck="false" placeholder="The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris.
+-----
+The moon is Earth&#x27;s only natural satellite."></textarea>
+
+    <div class="grid">
+      <label for="epochs">
+        Epochs
+        <input id="epochs" type="number" min="1" max="30" step="1" value="5">
+      </label>
+
+      <label for="learning-rate">
+        Learning rate
+        <input id="learning-rate" type="number" min="0.00000001" max="0.01" step="0.00000001" value="0.00000001">
+      </label>
+
+      <label for="validation-fraction">
+        Validation fraction
+        <input id="validation-fraction" type="number" min="0.1" max="0.4" step="0.05" value="0.2">
+      </label>
+    </div>
+
+    <button id="train-button" type="button">Train from scratch</button>
+    <button id="export-button" type="button" disabled>Export model JSON</button>
+    <button id="export-readable-button" type="button" disabled>Export signed weights TXT</button>
+
+    <div class="stats" id="stats">Waiting for TensorFlow.js…</div>
+
+    <label for="prompt">Prompt</label>
+    <input id="prompt" type="text" placeholder="Ask something similar to your examples">
+
+    <label for="positive-constraints">Positive constraints</label>
+    <textarea id="positive-constraints" placeholder="One required phrase per line"></textarea>
+
+    <label for="negative-constraints">Negative constraints</label>
+    <textarea id="negative-constraints" placeholder="One phrase to avoid per line"></textarea>
+
+    <h2>Generation settings</h2>
+    <div class="grid">
+      <label for="temperature">
+        Temperature
+        <input id="temperature" type="number" min="0.05" max="2" step="0.05" value="0.8">
+      </label>
+
+      <label for="top-k">
+        Top-K
+        <input id="top-k" type="number" min="0" max="256" step="1" value="40">
+      </label>
+
+      <label for="top-p">
+        Top-P
+        <input id="top-p" type="number" min="0.01" max="1" step="0.01" value="0.9">
+      </label>
+
+      <label for="repetition-penalty">
+        Repetition penalty
+        <input id="repetition-penalty" type="number" min="1" max="2" step="0.05" value="1.1">
+      </label>
+
+      <label for="frequency-penalty">
+        Frequency penalty
+        <input id="frequency-penalty" type="number" min="0" max="2" step="0.05" value="0">
+      </label>
+
+      <label for="presence-penalty">
+        Presence penalty
+        <input id="presence-penalty" type="number" min="0" max="2" step="0.05" value="0">
+      </label>
+
+      <label for="max-new-tokens">
+        Max new tokens
+        <input id="max-new-tokens" type="number" min="1" max="100" step="1" value="40">
+      </label>
+    </div>
+
+    <button id="generate-button" type="button" disabled>Generate response</button>
+
+    <label for="output">Generated response</label>
+    <textarea id="output" readonly placeholder="Generated response appears here..."></textarea>
+
+    <h2>Training log</h2>
+    <div id="log" role="status">Loading TensorFlow.js…</div>
+
+    <p class="note">
+      This is a very small browser-side transformer. It should not explode
+      numerically if the learning rate is set low enough and the model is
+      validated before export.
+    </p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <script>
+    "use strict";
+
+    const DIMENSION = 32;
+    const HEADS = 4;
+    const LAYERS = 2;
+    const FF_DIM = 64;
+    const MAX_CONTEXT = 96;
+    const MAX_EXAMPLES = 2000;
+    const MAX_BYTES = 10000000;
+    const MAX_FIELD_BYTES = 2000000;
+    const MAX_VOCAB = 463;
+
+    const SPECIAL_BOS = 0;
+    const SPECIAL_EOS = 1;
+    const SPECIAL_UNK = 2;
+    const SPECIAL_USER = 3;
+    const SPECIAL_ASSISTANT = 4;
+    const BYTE_OFFSET = 5;
+
+    let model = null;
+    let optimizer = null;
+    let isTraining = false;
+    let allowedGenerationTokens = null;
+
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    const byId = (id) => document.getElementById(id);
+
+    function log(message, isError = false) {
+      const box = byId("log");
+      box.textContent += `\n${new Date().toLocaleTimeString()} ${message}`;
+      box.scrollTop = box.scrollHeight;
+
+      if (isError) {
+        const stats = byId("stats");
+        stats.textContent = message;
+        stats.classList.add("error");
+      }
+    }
+
+    function yieldToBrowser() {
+      return new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
+    function numericSetting(id, fallback, min, max) {
+      const value = Number(byId(id).value);
+      if (!Number.isFinite(value)) return fallback;
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function getLearningRate() {
+      const value = Number(byId("learning-rate").value);
+      if (!Number.isFinite(value) || value <= 0) {
+        throw new Error("Learning rate must be a positive finite number.");
+      }
+      return Math.min(0.01, Math.max(1e-8, value));
+    }
+
+    function hashText(text) {
+      let hash = 2166136261;
+      for (let i = 0; i < text.length; i++) {
+        hash = Math.imul(hash ^ text.charCodeAt(i), 16777619);
+      }
+      return (hash >>> 0).toString(16);
+    }
+
+    function decodeCodeValue(value) {
+      return value
+        .replace(/\\\\/g, "\\")
+        .replace(/\\"/g, '"')
+        .replace(/\\n/g, "\n");
+    }
+
+    function countParameters(activeModel) {
+      return activeModel.variables.reduce((sum, variable) => sum + variable.size, 0);
+    }
+
+    function assertFiniteModel(activeModel = model) {
+      if (!activeModel) {
+        throw new Error("No model is available to validate.");
+      }
+
+      for (const [name, variable] of Object.entries(activeModel.parameters)) {
+        const values = variable.dataSync();
+
+        for (let i = 0; i < values.length; i++) {
+          if (!Number.isFinite(values[i])) {
+            throw new Error(`Parameter ${name} became NaN or Infinity. Stop this run and retrain a fresh model.`);
+          }
+        }
+      }
+    }
+
+    function formatWeight(value) {
+      if (!Number.isFinite(value)) {
+        throw new Error("Cannot format NaN or Infinity.");
+      }
+      return `${value < 0 ? "-" : "+"}${Math.abs(value).toFixed(8)}`;
+    }
+
+    function downloadText(filename, text, mimeType) {
+      const blob = new Blob([text], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function buildExportData() {
+      assertFiniteModel();
+
+      const parameters = {};
+      for (const [name, variable] of Object.entries(model.parameters)) {
+        parameters[name] = {
+          shape: Array.from(variable.shape),
+          values: Array.from(variable.dataSync(), Number)
+        };
+      }
+
+      return {
+        format: "grapegreen-mini-transformer",
+        version: 1,
+        architecture: {
+          dimension: DIMENSION,
+          heads: HEADS,
+          layers: LAYERS,
+          feedForwardDimension: FF_DIM,
+          maxContext: MAX_CONTEXT,
+          vocabularySize: model.vocabularySize
+        },
+        tokenizer: model.tokenizer,
+        allowedGenerationTokens: allowedGenerationTokens
+          ? Array.from(allowedGenerationTokens).sort((a, b) => a - b)
+          : [],
+        parameters
+      };
+    }
+
+    function exportTrainedModel() {
+      try {
+        const data = buildExportData();
+        downloadText("grapegreen-model.json", JSON.stringify(data), "application/json");
+        log("Exported finite numeric model weights to grapegreen-model.json.");
+      } catch (error) {
+        console.error(error);
+        log(`Model export failed: ${error.message}`, true);
+        alert(`Model export failed: ${error.message}`);
+      }
+    }
+
+    function exportReadableWeights() {
+      try {
+        assertFiniteModel();
+
+        const lines = [
+          "# GrapeGreen Mini Transformer readable parameter dump",
+          "# Values are signed decimal strings; not the actual model file",
+          `# Parameter count: ${countParameters(model)}`,
+          ""
+        ];
+
+        for (const [name, variable] of Object.entries(model.parameters)) {
+          lines.push(`# ${name} shape=${JSON.stringify(variable.shape)}`);
+          const values = variable.dataSync();
+          for (const value of values) {
+            lines.push(formatWeight(value));
+          }
+          lines.push("");
+        }
+
+        downloadText("grapegreen-weights-signed.txt", lines.join("\n"), "text/plain");
+        log("Exported signed eight-decimal readable weights TXT.");
+      } catch (error) {
+        console.error(error);
+        log(`Readable weight export failed: ${error.message}`, true);
+        alert(`Readable weight export failed: ${error.message}`);
+      }
+    }
+
+    function collectTrainingExamples() {
+      const examples = [];
+      let totalBytes = 0;
+
+      const pairLines = byId("training-data").value
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      for (let index = 0; index < pairLines.length; index++) {
+        let item;
+
+        try {
+          item = JSON.parse(pairLines[index]);
+        } catch {
+          throw new Error(`Prompt/response line ${index + 1} is not valid JSON.`);
+        }
+
+        if (
+          !item ||
+          typeof item.prompt !== "string" ||
+          typeof item.response !== "string" ||
+          !item.prompt.trim() ||
+          !item.response.trim()
+        ) {
+          throw new Error(`Line ${index + 1} needs non-empty string "prompt" and "response" fields.`);
+        }
+
+        examples.push({ prompt: item.prompt.trim(), response: item.response.trim(), kind: "pair" });
+      }
+
+      const codeText = byId("code-data").value.trim();
+      const codePattern = /([A-Za-z0-9_+#.-]+)\s*:\s*\[\s*"((?:\\.|[^"\\])*)"\s*;\s*"((?:\\.|[^"\\])*)"\s*\]/gs;
+
+      let match;
+      let codeMatches = 0;
+
+      while ((match = codePattern.exec(codeText)) !== null) {
+        const language = match[1];
+        const purpose = decodeCodeValue(match[2]).trim();
+        const snippet = decodeCodeValue(match[3]).trim();
+
+        if (!purpose || !snippet) {
+          throw new Error(`The ${language} code entry needs both a purpose and a snippet.`);
+        }
+
+        examples.push({
+          prompt: `Write ${language} code for this purpose: ${purpose}`,
+          response: snippet,
+          kind: "code"
+        });
+
+        codeMatches++;
+      }
+
+      if (codeText && codeMatches === 0 && codeText.trim() !== "") {
+        throw new Error("Could not parse code entries. Use format like python:[\"purpose\";\"snippet\"].");
+      }
+
+      const wikiText = byId("wiki-data").value.trim();
+      const articleBlocks = wikiText
+        .split(/^\s*-----\s*$/m)
+        .map((article) => article.trim())
+        .filter(Boolean);
+
+      for (const article of articleBlocks) {
+        examples.push({ prompt: "", response: article, kind: "article" });
+      }
+
+      if (examples.length < 2) {
+        throw new Error("Add at least two examples across prompt/response, code, and article blocks.");
+      }
+
+      if (examples.length > MAX_EXAMPLES) {
+        throw new Error(`This demo allows at most ${MAX_EXAMPLES} examples.`);
+      }
+
+      for (const example of examples) {
+        const byteTotal = encoder.encode(example.prompt || "").length + encoder.encode(example.response).length;
+        if (byteTotal > MAX_FIELD_BYTES) {
+          throw new Error(`One prompt or response exceeds ${MAX_FIELD_BYTES} bytes.`);
+        }
+        totalBytes += byteTotal;
+      }
+
+      if (totalBytes > MAX_BYTES) {
+        throw new Error(`Combined training data exceeds ${MAX_BYTES} bytes.`);
+      }
+
+      return examples;
+    }
+
+    function splitDataset(examples, validationFraction) {
+      const validationCount = examples.length >= 5
+        ? Math.min(
+            examples.length - 2,
+            Math.max(1, Math.floor(examples.length * validationFraction))
+          )
+        : 0;
+
+      const ranked = examples
+        .map((example, index) => ({
+          index,
+          hash: hashText(`${example.kind}|${example.prompt}|${example.response}|${index}`)
+        }))
+        .sort((a, b) => a.hash.localeCompare(b.hash) || a.index - b.index);
+
+      const validationSet = new Set(
+        ranked.slice(0, validationCount).map((item) => item.index)
+      );
+
+      return {
+        train: examples.filter((_, index) => !validationSet.has(index)),
+        validation: examples.filter((_, index) => validationSet.has(index))
+      };
+    }
+
+    function randomVariable(shape, stddev, name) {
+      const initial = tf.randomNormal(shape, 0, stddev);
+      const variable = tf.variable(initial, true, name);
+      initial.dispose();
+      return variable;
+    }
+
+    function createModel(vocabularySize) {
+      const prefix = `mini_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const parameters = {};
+
+      function addRandom(name, shape, stddev = 0.06) {
+        parameters[name] = randomVariable(shape, stddev, `${prefix}_${name}`);
+      }
+
+      function addZeros(name, shape) {
+        const initial = tf.zeros(shape);
+        parameters[name] = tf.variable(initial, true, `${prefix}_${name}`);
+        initial.dispose();
+      }
+
+      function addOnes(name, shape) {
+        const initial = tf.ones(shape);
+        parameters[name] = tf.variable(initial, true, `${prefix}_${name}`);
+        initial.dispose();
+      }
+
+      addRandom("tokenEmbedding", [vocabularySize, DIMENSION], 0.06);
+      addRandom("positionEmbedding", [MAX_CONTEXT, DIMENSION], 0.04);
+
+      addRandom("languageModelWeight", [DIMENSION, vocabularySize], 0.06);
+      addZeros("languageModelBias", [vocabularySize]);
+
+      for (let layer = 0; layer < LAYERS; layer++) {
+        const key = `layer${layer}`;
+
+        addRandom(`${key}_query`, [DIMENSION, DIMENSION], 0.06);
+        addRandom(`${key}_key`, [DIMENSION, DIMENSION], 0.06);
+        addRandom(`${key}_value`, [DIMENSION, DIMENSION], 0.06);
+        addRandom(`${key}_attentionOutput`, [DIMENSION, DIMENSION], 0.06);
+
+        addOnes(`${key}_norm1Scale`, [DIMENSION]);
+        addZeros(`${key}_norm1Bias`, [DIMENSION]);
+
+        addRandom(`${key}_ff1`, [DIMENSION, FF_DIM], 0.06);
+        addZeros(`${key}_ff1Bias`, [FF_DIM]);
+
+        addRandom(`${key}_ff2`, [FF_DIM, DIMENSION], 0.06);
+        addZeros(`${key}_ff2Bias`, [DIMENSION]);
+
+        addOnes(`${key}_norm2Scale`, [DIMENSION]);
+        addZeros(`${key}_norm2Bias`, [DIMENSION]);
+      }
+
+      return {
+        vocabularySize,
+        parameters,
+        variables: Object.values(parameters)
+      };
+    }
+
+    function disposeCurrentModel() {
+      if (optimizer) {
+        optimizer.dispose();
+        optimizer = null;
+      }
+
+      if (model) {
+        model.variables.forEach((variable) => variable.dispose());
+        model = null;
+      }
+    }
+
+    function trainTokenizer(examples) {
+      const sequences = examples.flatMap((example) => [
+        Array.from(encoder.encode(example.prompt || ""), (byte) => byte + BYTE_OFFSET),
+        Array.from(encoder.encode(example.response), (byte) => byte + BYTE_OFFSET)
+      ]);
+
+      const pieces = Array.from({ length: BYTE_OFFSET + 256 }, (_, id) =>
+        id < BYTE_OFFSET ? [] : [id - BYTE_OFFSET]
+      );
+
+      const merges = [];
+      while (pieces.length < MAX_VOCAB) {
+        const pairCounts = new Map();
+
+        for (const sequence of sequences) {
+          for (let i = 0; i + 1 < sequence.length; i++) {
+            const key = `${sequence[i]},${sequence[i + 1]}`;
+            pairCounts.set(key, (pairCounts.get(key) || 0) + 1);
+          }
+        }
+
+        let bestPair = null;
+        let bestCount = 1;
+
+        for (const [pair, count] of pairCounts) {
+          if (count > bestCount) {
+            bestCount = count;
+            bestPair = pair;
+          }
+        }
+
+        if (!bestPair) break;
+
+        const [left, right] = bestPair.split(",").map(Number);
+        const newId = pieces.length;
+        pieces.push([...pieces[left], ...pieces[right]]);
+        merges.push([left, right, newId]);
+
+        for (let s = 0; s < sequences.length; s++) {
+          const sequence = sequences[s];
+          const next = [];
+
+          for (let i = 0; i < sequence.length; i++) {
+            if (i + 1 < sequence.length && sequence[i] === left && sequence[i + 1] === right) {
+              next.push(newId);
+              i++;
+            } else {
+              next.push(sequence[i]);
+            }
+          }
+
+          sequences[s] = next;
+        }
+      }
+
+      return { pieces, merges };
+    }
+
+    function encodeText(text, tokenizer) {
+      let tokens = Array.from(encoder.encode(text), (byte) => byte + BYTE_OFFSET);
+
+      for (const [left, right, newId] of tokenizer.merges) {
+        const next = [];
+        for (let i = 0; i < tokens.length; i++) {
+          if (
+            i + 1 < tokens.length &&
+            tokens[i] === left &&
+            tokens[i + 1] === right
+          ) {
+            next.push(newId);
+            i++;
+          } else {
+            next.push(tokens[i]);
+          }
+        }
+        tokens = next;
+      }
+
+      return tokens;
+    }
+
+    function decodeTokenIds(ids, tokenizer) {
+      const bytes = [];
+      for (const id of ids) {
+        if (id < BYTE_OFFSET) continue;
+        const piece = tokenizer.pieces[id];
+        if (!Array.isArray(piece)) continue;
+        bytes.push(...piece);
+      }
+      return decoder.decode(new Uint8Array(bytes));
+    }
+
+    function layerNorm(input, scale, bias) {
+      const moments = tf.moments(input, [-1], true);
+      return input
+        .sub(moments.mean)
+        .mul(tf.rsqrt(moments.variance.add(1e-5)))
+        .mul(scale)
+        .add(bias);
+    }
+
+    function forward(inputIds) {
+      return tf.tidy(() => {
+        const seqLen = inputIds.shape[0];
+        const headDim = DIMENSION / HEADS;
+        const p = model.parameters;
+
+        let x = tf.gather(p.tokenEmbedding, inputIds);
+        x = x.add(p.positionEmbedding.slice([0, 0], [seqLen, DIMENSION]));
+
+        const maskValues = new Float32Array(seqLen * seqLen);
+        for (let q = 0; q < seqLen; q++) {
+          for (let k = 0; k < seqLen; k++) {
+            maskValues[q * seqLen + k] = q >= k ? 0 : -1e9;
+          }
+        }
+        const causalMask = tf.tensor2d(maskValues, [seqLen, seqLen]).expandDims(0);
+
+        for (let layer = 0; layer < LAYERS; layer++) {
+          const key = `layer${layer}`;
+
+          const query = x
+            .matMul(p[`${key}_query`])
+            .reshape([seqLen, HEADS, headDim])
+            .transpose([1, 0, 2]);
+
+          const keys = x
+            .matMul(p[`${key}_key`])
+            .reshape([seqLen, HEADS, headDim])
+            .transpose([1, 0, 2]);
+
+          const values = x
+            .matMul(p[`${key}_value`])
+            .reshape([seqLen, HEADS, headDim])
+            .transpose([1, 0, 2]);
+
+          const scores = query
+            .matMul(keys.transpose([0, 2, 1]))
+            .div(Math.sqrt(headDim));
+
+          const attention = tf.softmax(scores.add(causalMask), -1);
+
+          const attended = attention
+            .matMul(values)
+            .transpose([1, 0, 2])
+            .reshape([seqLen, DIMENSION])
+            .matMul(p[`${key}_attentionOutput`]);
+
+          const afterAttention = layerNorm(
+            x.add(attended),
+            p[`${key}_norm1Scale`],
+            p[`${key}_norm1Bias`]
+          );
+
+          const feedForward = tf.relu(
+            afterAttention
+              .matMul(p[`${key}_ff1`])
+              .add(p[`${key}_ff1Bias`])
+          )
+            .matMul(p[`${key}_ff2`])
+            .add(p[`${key}_ff2Bias`]);
+
+          x = layerNorm(
+            afterAttention.add(feedForward),
+            p[`${key}_norm2Scale`],
+            p[`${key}_norm2Bias`]
+          );
+        }
+
+        return x.matMul(p.languageModelWeight).add(p.languageModelBias);
+      });
+    }
+
+    function prepareExamples(example, tokenizer) {
+      if (example.kind === "article") {
+        const tokenIds = encodeText(example.response, tokenizer);
+        const prepared = [];
+
+        for (let start = 0; start < tokenIds.length; start += MAX_CONTEXT - 1) {
+          const chunk = tokenIds.slice(start, start + (MAX_CONTEXT - 1));
+          if (!chunk.length) continue;
+
+          const sequence = [SPECIAL_BOS, ...chunk, SPECIAL_EOS];
+          const inputs = sequence.slice(0, -1);
+          const targets = sequence.slice(1);
+
+          prepared.push({ inputs, targets, mask: targets.map(() => 1) });
+        }
+
+        return prepared;
+      }
+
+      let promptIds = encodeText(example.prompt || "", tokenizer);
+      let responseIds = encodeText(example.response, tokenizer);
+
+      const textBudget = MAX_CONTEXT - 4;
+      const responseCap = Math.min(responseIds.length, Math.max(1, Math.floor(textBudget / 2)));
+      responseIds = responseIds.slice(0, responseCap);
+
+      const promptCap = textBudget - responseIds.length;
+      promptIds = promptIds.slice(-Math.max(0, promptCap));
+
+      const assistantPosition = 2 + promptIds.length;
+      const sequence = [
+        SPECIAL_BOS,
+        SPECIAL_USER,
+        ...promptIds,
+        SPECIAL_ASSISTANT,
+        ...responseIds,
+        SPECIAL_EOS
+      ];
+
+      const inputs = sequence.slice(0, -1);
+      const targets = sequence.slice(1);
+      const mask = targets.map((_, index) => index + 1 > assistantPosition ? 1 : 0);
+
+      return [{ inputs, targets, mask }];
+    }
+
+    function trainOneExample(example) {
+  const result = tf.variableGrads(() => tf.tidy(() => {
+    const inputTensor = tf.tensor1d(example.inputs, "int32");
+    const targetTensor = tf.tensor1d(example.targets, "int32");
+    const maskTensor = tf.tensor1d(example.mask, "float32");
+
+    const logits = forward(inputTensor);
+
+// Catch a bad forward pass before it gets mistaken for an optimizer problem.
+for (const value of logits.dataSync()) {
+  if (!Number.isFinite(value)) {
+    throw new Error("Forward pass produced NaN or Infinity logits.");
+  }
+}
+
+// Keep extreme logits from overflowing in the loss calculation.
+const safeLogits = tf.clipByValue(logits, -30, 30);
+const oneHot = tf.oneHot(targetTensor, model.vocabularySize);
+
+// Stable cross-entropy: log(sum(exp(logits))) - target logit.
+const tokenLosses = tf.logSumExp(safeLogits, -1)
+  .sub(safeLogits.mul(oneHot).sum(-1));
+
+const maskedLosses = tokenLosses.mul(maskTensor);
+const loss = maskedLosses.sum().div(maskTensor.sum().maximum(1));
+
+    return maskedLosses
+      .sum()
+      .div(maskTensor.sum().maximum(1));
+  }), model.variables);
+
+  const gradients = Object.values(result.grads);
+  const clippedGradients = [];
+
+  try {
+    const loss = result.value.dataSync()[0];
+    if (!Number.isFinite(loss)) {
+      throw new Error("Loss became NaN or Infinity before the optimizer update.");
+    }
+
+    for (let i = 0; i < gradients.length; i++) {
+      const values = gradients[i].dataSync();
+
+      for (let j = 0; j < values.length; j++) {
+        if (!Number.isFinite(values[j])) {
+          throw new Error(`Gradient ${i} became NaN or Infinity before the update.`);
+        }
+      }
+
+      // Clip each gradient element to prevent extreme optimizer updates.
+      clippedGradients.push(tf.clipByValue(gradients[i], -1, 1));
+    }
+
+    const gradientsByName = {};
+    let index = 0;
+
+    for (const name of Object.keys(result.grads)) {
+      gradientsByName[name] = clippedGradients[index++];
+    }
+
+    optimizer.applyGradients(gradientsByName);
+    assertFiniteModel();
+
+    return loss;
+  } finally {
+    result.value.dispose();
+    gradients.forEach((gradient) => gradient.dispose());
+    clippedGradients.forEach((gradient) => gradient.dispose());
+  }
+}
+    function lossForExample(example) {
+      return tf.tidy(() => {
+        const inputTensor = tf.tensor1d(example.inputs, "int32");
+        const targetTensor = tf.tensor1d(example.targets, "int32");
+        const maskTensor = tf.tensor1d(example.mask, "float32");
+
+       const logits = forward(inputTensor);
+
+// Catch a bad forward pass before it gets mistaken for an optimizer problem.
+for (const value of logits.dataSync()) {
+  if (!Number.isFinite(value)) {
+    throw new Error("Forward pass produced NaN or Infinity logits.");
+  }
+}
+
+// Keep extreme logits from overflowing in the loss calculation.
+const safeLogits = tf.clipByValue(logits, -30, 30);
+const oneHot = tf.oneHot(targetTensor, model.vocabularySize);
+
+// Stable cross-entropy: log(sum(exp(logits))) - target logit.
+const tokenLosses = tf.logSumExp(safeLogits, -1)
+  .sub(safeLogits.mul(oneHot).sum(-1));
+
+const maskedLosses = tokenLosses.mul(maskTensor);
+const loss = maskedLosses.sum().div(maskTensor.sum().maximum(1));
+        return maskedLosses
+          .sum()
+          .div(maskTensor.sum().maximum(1))
+          .dataSync()[0];
+      });
+    }
+
+    async function trainModel() {
+      if (isTraining) return;
+
+      byId("stats").classList.remove("error");
+      byId("stats").textContent = "Training…";
+      byId("log").textContent = "Preparing dataset…";
+      byId("train-button").disabled = true;
+      byId("generate-button").disabled = true;
+      byId("export-button").disabled = true;
+      byId("export-readable-button").disabled = true;
+      isTraining = true;
+
+      try {
+        await tf.ready();
+
+        const examples = collectTrainingExamples();
+        const split = splitDataset(
+          examples,
+          numericSetting("validation-fraction", 0.2, 0.1, 0.4)
+        );
+
+        const tokenizer = trainTokenizer(split.train);
+
+        allowedGenerationTokens = new Set([SPECIAL_EOS]);
+        for (const example of split.train) {
+          for (const token of encodeText(example.response, tokenizer)) {
+            allowedGenerationTokens.add(token);
+          }
+        }
+
+        disposeCurrentModel();
+        model = createModel(tokenizer.pieces.length);
+        model.tokenizer = tokenizer;
+
+        optimizer = tf.train.adam(getLearningRate());
+
+        const trainingSet = split.train.flatMap((example) => prepareExamples(example, tokenizer));
+        const validationSet = split.validation.flatMap((example) => prepareExamples(example, tokenizer));
+
+        if (!trainingSet.length) {
+          throw new Error("Training set is empty.");
+        }
+
+        const epochs = Math.floor(numericSetting("epochs", 5, 1, 30));
+        const parameterCount = countParameters(model);
+
+        log(`TensorFlow.js backend: ${tf.getBackend()}.`);
+        log(`Training sequences: ${trainingSet.length}.`);
+        log(`Validation sequences: ${validationSet.length}.`);
+        log(`BPE vocabulary: ${tokenizer.pieces.length} tokens.`);
+        log(`Trainable parameters: ${parameterCount.toLocaleString()}.`);
+
+        for (let epoch = 0; epoch < epochs; epoch++) {
+          const shuffled = trainingSet.slice();
+
+for (let i = shuffled.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1));
+  [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+}
+
+let trainLoss = 0;
+
+for (let i = 0; i < shuffled.length; i++) {
+  trainLoss += trainOneExample(shuffled[i]);
+
+  if ((i + 1) % 5 === 0 || i === shuffled.length - 1) {
+    byId("stats").textContent =
+      `Epoch ${epoch + 1}/${epochs} · example ${i + 1}/${shuffled.length}`;
+    await yieldToBrowser();
+  }
+
+  if ((i + 1) % 25 === 0) {
+    assertFiniteModel();
+  }
+}
+
+const averageTrainLoss = trainLoss / shuffled.length;
+log(
+  `Epoch ${epoch + 1}/${epochs} — train loss: ${averageTrainLoss.toFixed(4)}`
+);
+
+let validationLoss = 0;
+
+for (let i = 0; i < validationSet.length; i++) {
+  validationLoss += lossForExample(validationSet[i]);
+
+  if ((i + 1) % 5 === 0 || i === validationSet.length - 1) {
+    await yieldToBrowser();
+  }
+}
+
+const averageValidationLoss = validationSet.length
+  ? (validationLoss / validationSet.length).toFixed(4)
+  : "n/a";
+
+log(
+  `Epoch ${epoch + 1}/${epochs} — validation loss: ${averageValidationLoss}`
+);
+
+assertFiniteModel();
+await yieldToBrowser();
+}
+
+assertFiniteModel();
+
+byId("stats").textContent =
+  `Training complete · ${parameterCount.toLocaleString()} params · ` +
+  `${trainingSet.length} training sequences · ` +
+  `${validationSet.length} validation sequences`;
+
+byId("generate-button").disabled = false;
+byId("export-button").disabled = false;
+byId("export-readable-button").disabled = false;
+      } catch (error) {
+        console.error(error);
+        log(`Training failed: ${error.message}`, true);
+        alert(`Training failed: ${error.message}`);
+        disposeCurrentModel();
+        allowedGenerationTokens = null;
+      } finally {
+        isTraining = false;
+        byId("train-button").disabled = false;
+      }
+    }
+
+    function readConstraintList(id) {
+      return byId(id).value
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+    }
+
+    function containsAnyPhrase(text, phrases) {
+      const lower = text.toLocaleLowerCase();
+      return phrases.some((phrase) => lower.includes(phrase.toLocaleLowerCase()));
+    }
+
+    function getGenerationSettings() {
+      return {
+        temperature: numericSetting("temperature", 0.8, 0.05, 2),
+        topK: Math.floor(numericSetting("top-k", 40, 0, MAX_VOCAB)),
+        topP: numericSetting("top-p", 0.9, 0.01, 1),
+        repetitionPenalty: numericSetting("repetition-penalty", 1.1, 1, 2),
+        frequencyPenalty: numericSetting("frequency-penalty", 0, 0, 2),
+        presencePenalty: numericSetting("presence-penalty", 0, 0, 2),
+        maxNewTokens: Math.floor(numericSetting("max-new-tokens", 40, 1, 100))
+      };
+    }
+
+    function getNextTokenLogits(contextIds) {
+      const inputTensor = tf.tensor1d(contextIds, "int32");
+      let output;
+
+      try {
+        output = tf.tidy(() => {
+          const logits = forward(inputTensor);
+          const lastPosition = logits.shape[0] - 1;
+          return logits
+            .slice([lastPosition, 0], [1, model.vocabularySize])
+            .reshape([model.vocabularySize]);
+        });
+        return Array.from(output.dataSync());
+      } finally {
+        inputTensor.dispose();
+        if (output) output.dispose();
+      }
+    }
+
+    function sampleNextToken(contextIds, generatedIds, settings) {
+      const logits = getNextTokenLogits(contextIds);
+      const recent = generatedIds.slice(-64);
+      const counts = new Map();
+
+      for (const id of recent) {
+        counts.set(id, (counts.get(id) || 0) + 1);
+      }
+
+      const candidates = [];
+      for (let token = 0; token < logits.length; token++) {
+        if (
+          token === SPECIAL_BOS ||
+          token === SPECIAL_USER ||
+          token === SPECIAL_ASSISTANT ||
+          token === SPECIAL_UNK ||
+          (allowedGenerationTokens && !allowedGenerationTokens.has(token))
+        ) {
+          continue;
+        }
+
+        let score = Number.isFinite(logits[token]) ? logits[token] : -1e9;
+        const count = counts.get(token) || 0;
+
+        if (count > 0 && token !== SPECIAL_EOS) {
+          score = score >= 0
+            ? score / settings.repetitionPenalty
+            : score * settings.repetitionPenalty;
+          score -= settings.presencePenalty;
+          score -= settings.frequencyPenalty * count;
+        }
+
+        candidates.push({
+          token,
+          score: score / settings.temperature
+        });
+      }
+
+      if (!candidates.length) return SPECIAL_EOS;
+
+      candidates.sort((a, b) => b.score - a.score);
+
+      const topK = settings.topK > 0 ? candidates.slice(0, settings.topK) : candidates;
+      const maxScore = topK[0].score;
+      const weighted = topK.map((candidate) => ({
+        token: candidate.token,
+        weight: Math.exp(candidate.score - maxScore)
+      }));
+
+      const totalWeight = weighted.reduce((sum, candidate) => sum + candidate.weight, 0);
+      if (!Number.isFinite(totalWeight) || totalWeight <= 0) {
+        return topK[0].token;
+      }
+
+      const nucleus = [];
+      let cumulative = 0;
+
+      for (const candidate of weighted) {
+        nucleus.push(candidate);
+        cumulative += candidate.weight / totalWeight;
+        if (cumulative >= settings.topP) break;
+      }
+
+      const nucleusWeight = nucleus.reduce((sum, candidate) => sum + candidate.weight, 0);
+      let draw = Math.random() * nucleusWeight;
+
+      for (const candidate of nucleus) {
+        draw -= candidate.weight;
+        if (draw <= 0) return candidate.token;
+      }
+
+      return nucleus[nucleus.length - 1].token;
+    }
+
+    function generateResponse() {
+      if (!model || isTraining) return;
+
+      try {
+        const prompt = byId("prompt").value.trim();
+        const positiveConstraints = readConstraintList("positive-constraints");
+        const negativeConstraints = readConstraintList("negative-constraints");
+        const settings = getGenerationSettings();
+
+        const promptIds = encodeText(prompt, model.tokenizer).slice(-(MAX_CONTEXT - 3));
+        const contextIds = [
+          SPECIAL_BOS,
+          SPECIAL_USER,
+          ...promptIds,
+          SPECIAL_ASSISTANT
+        ];
+
+        const generatedIds = [];
+        for (let i = 0; i < settings.maxNewTokens; i++) {
+          const nextToken = sampleNextToken(contextIds, generatedIds, settings);
+          if (nextToken === SPECIAL_EOS) break;
+
+          generatedIds.push(nextToken);
+          contextIds.push(nextToken);
+
+          if (contextIds.length > MAX_CONTEXT) {
+            contextIds = contextIds.slice(-MAX_CONTEXT);
+          }
+        }
+
+        let output = decodeTokenIds(generatedIds, model.tokenizer).trim();
+
+        for (const phrase of positiveConstraints) {
+          if (!output.toLowerCase().includes(phrase.toLowerCase())) {
+            output += (output && !/\s$/.test(output) ? " " : "") + phrase;
+          }
+        }
+
+        if (containsAnyPhrase(prompt + output, negativeConstraints)) {
+          byId("output").value = "";
+          alert("The negative constraints conflict with the prompt or response.");
+          return;
+        }
+
+        byId("output").value = output;
+      } catch (error) {
+        console.error(error);
+        log(`Generation failed: ${error.message}`, true);
+        alert(`Generation failed: ${error.message}`);
+      }
+    }
+
+    byId("train-button").addEventListener("click", trainModel);
+    byId("generate-button").addEventListener("click", generateResponse);
+    byId("export-button").addEventListener("click", exportTrainedModel);
+    byId("export-readable-button").addEventListener("click", exportReadableWeights);
+
+    if (!window.tf) {
+      byId("stats").textContent = "TensorFlow.js did not load. Check your internet connection and reload.";
+      byId("stats").classList.add("error");
+      byId("log").textContent = "TensorFlow.js failed to load.\nCheck internet access and reload the page.";
+    } else {
+      tf.ready()
+        .then(() => {
+          const backend = tf.getBackend();
+          byId("stats").textContent = `Ready · TensorFlow.js backend: ${backend}`;
+          byId("log").textContent = `Ready. TensorFlow.js backend: ${backend}.`;
+        })
+        .catch((error) => {
+          console.error(error);
+          byId("stats").textContent = `TensorFlow.js initialization failed: ${error.message}`;
+          byId("stats").classList.add("error");
+          byId("log").textContent = `Initialization failed: ${error.message}`;
+        });
+    }
+  </script>
+</body>
+</html>
