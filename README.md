@@ -71,7 +71,18 @@ GrapeGreen is built to be welcoming, engaging, and easy to explore. The communit
 
 ### Grape AI usage limits
 
-Grape AI has limits on how long it can reply, how much recent chat it can consider, and how long it spends thinking. Higher plans allow a bit more of each. These are maximums—not guaranteed response lengths or wait times—and results can vary by device and connection.
+Grape AI has limits on how long it can reply, how much recent chat it can consider, and how long it spends thinking. Higher plans allow a bit more of each. These are maximums—not guaranteed response lengths or wait times—and results can vary by device and connection
+
+### Grape AI usage limits
+
+| Plan | Max reply length | Chat context remembered | Thinking time limit |
+|---|---:|---:|---:|
+| Free | 150 tokens | 800 tokens | 11 seconds |
+| Plus | 200 tokens | 950 tokens | 17 seconds |
+| Pro | 250 tokens | 1,150 tokens | 24 seconds |
+| Max | 300 tokens | 1,300 tokens | 35 seconds |
+
+Tokens are small bits of text, so the counts don’t exactly equal words. These are maximums, not guaranteed reply lengths or wait times.
 
 ---
 
