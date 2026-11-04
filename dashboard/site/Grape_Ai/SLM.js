@@ -1048,6 +1048,7 @@ const activeChatTitle = safeGetElement("active-chat-title");
 if (activeChatTitle) activeChatTitle.innerText = "New Chat";
 }
 renderWorkspaceChatsList();
+renderChatMessages(uniqueId);
 }
 
 // ==========================================================================
