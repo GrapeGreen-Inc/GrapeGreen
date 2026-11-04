@@ -762,6 +762,87 @@ alertContainer.style.display = "block";
 let globalWorkspaceChatList = [];
 let focusActiveChatId = null;
 
+// Some logical inconsistency in how memory is handled between rendering and building the AI's prompt context is still present. Though as of right now this should be able to work.
+function chatMessagesStorageKey(chatId) {
+  const owner = isGuestSession(activeUserSession)
+    ? "guest"
+    : String(activeUserSession || "guest");
+
+  return `grape_ai_chat_messages_v1:${encodeURIComponent(owner)}:${encodeURIComponent(chatId)}`;
+}
+
+function loadChatMessages(chatId) {
+  if (!chatId) return [];
+
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(chatMessagesStorageKey(chatId)) || "[]"
+    );
+
+    if (!Array.isArray(stored)) return [];
+
+    return stored
+      .filter(message =>
+        message &&
+        ["user", "assistant"].includes(message.role) &&
+        typeof message.text === "string"
+      )
+      .slice(-40);
+  } catch (error) {
+    console.warn("Chat history could not be loaded.", error);
+    return [];
+  }
+}
+
+function saveChatMessages(chatId, messages) {
+  if (!chatId) return;
+
+  try {
+    localStorage.setItem(
+      chatMessagesStorageKey(chatId),
+      JSON.stringify(messages.slice(-40))
+    );
+  } catch (error) {
+    console.warn("Chat history could not be saved.", error);
+  }
+}
+
+function renderChatMessages(chatId) {
+  const container = safeGetElement("messages-container");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const messages = loadChatMessages(chatId);
+
+  if (!messages.length) {
+    appendChatBubbleDOM(
+      "Hello! Start a new conversation here. Your recent messages will be remembered in this chat on this browser.",
+      "ai-message",
+      "AI"
+    );
+    return;
+  }
+
+  messages.forEach(message => {
+    appendChatBubbleDOM(
+      message.text,
+      message.role === "user" ? "user-message" : "ai-message",
+      message.role === "user" ? "User" : "AI"
+    );
+  });
+}
+
+function buildChatMemory(messages) {
+  return messages
+    .slice(-12)
+    .map(message =>
+      `${message.role === "user" ? "User" : "Grape AI"}: ${message.text}`
+    )
+    .join("\n");
+}
+
 async function syncUserChatsDashboard() {
 if (isGuestSession(activeUserSession)) {
 globalWorkspaceChatList = loadGuestChats();
