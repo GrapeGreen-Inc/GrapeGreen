@@ -186,6 +186,43 @@ body {
   flex-direction: column;
   gap: 6px;
 }
+#chat-action-dialog {
+  width: min(420px, calc(100% - 32px));
+  padding: 24px;
+  color: inherit;
+  background: #1c1736;
+  border: 1px solid #563bb3;
+  border-radius: 12px;
+}
+
+#chat-action-dialog::backdrop {
+  background: rgb(0 0 0 / 65%);
+}
+
+#chat-action-dialog form {
+  display: grid;
+  gap: 14px;
+}
+
+#chat-action-dialog h2,
+#chat-action-dialog p {
+  margin: 0;
+}
+
+#chat-dialog-input {
+  width: 100%;
+  padding: 10px;
+  color: inherit;
+  background: #0d0a1a;
+  border: 1px solid #563bb3;
+  border-radius: 6px;
+}
+
+.chat-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
 
 .input-wrapper label {
   font-size: 11px;
