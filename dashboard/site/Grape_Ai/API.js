@@ -1,338 +1,510 @@
 /**
- * SLM.js - Small Language Model Architecture with real 30,000 allocated parameters
- * Pipeline Flow: Plaintext -> NLP -> FILTER -> SLM
- * Persistence: Cloud Firestore (grape-ai-grapegreen)
- * Security Policy: Read-only parameters/users matrix, read-write diagnostics history
+ * GrapeGreen browser SLM API
+ * Loads the exported grapegreen-model.json TensorFlow.js transformer and runs
+ * real next-token inference. This module is browser-side; it does not expose a
+ * server API and does not upload prompts or mutate weights in Firestore.
  */
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+const MODEL_URL = new URL("./grapegreen-model.json", import.meta.url);
+const TFJS_URL = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/+esm";
 
-// --- Firebase Configuration ---
-const firebaseConfig = {
-  apiKey: "AIzaSyC1U_R5oyruWiEFYVIjGS8bezsXizbGFos",
-  authDomain: "grape-ai-grapegreen.firebaseapp.com",
-  databaseURL: "https://grape-ai-grapegreen-default-rtdb.firebaseio.com",
-  projectId: "grape-ai-grapegreen",
-  storageBucket: "grape-ai-grapegreen.firebasestorage.app",
-  messagingSenderId: "795782941580",
-  appId: "1:795782941580:web:e149993e9714e0c430e4a9",
-  measurementId: "G-N5QJYR2J33"
-};
+const SPECIAL = Object.freeze({
+  BOS: 0,
+  EOS: 1,
+  UNK: 2,
+  USER: 3,
+  ASSISTANT: 4,
+  BYTE_OFFSET: 5
+});
 
-// Initialize Firebase Core Services
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app);
+const TIER_LIMITS = Object.freeze({
+  free: { maxOutputTokens: 150, memoryTokens: 800, maxThinkTimeMs: 11000 },
+  plus: { maxOutputTokens: 200, memoryTokens: 950, maxThinkTimeMs: 17000 },
+  pro: { maxOutputTokens: 250, memoryTokens: 1150, maxThinkTimeMs: 24000 },
+  max: { maxOutputTokens: 300, memoryTokens: 1300, maxThinkTimeMs: 35000 }
+});
 
-// --- Internal State & Configuration ---
-// 0 = off, 1 = training, 2 = prod
-let internalMode = 1; 
-
-const ownerName = "MattyGrapeGreenOwner";
-let currentUsername = "user";
-let ready = false;
-
-const history = [];
-
-/**
- * 30,000 Parameter Genuine Storage Matrix Layer
- * This array structurally contains exactly 30,000 floating point weights.
- */
-const PARAM_COUNT = 30000;
-let parameters = new Array(PARAM_COUNT);
-
-const hyperparameters = {
-  temperature: 0.7,
-  topK: 40,
-  topP: 0.95,
-  maxOutputTokens: 2048,
-  candidateCount: 1,
-  presencePenalty: 0.0,
-  frequencyPenalty: 0.0
-};
-
-let Grape_Api_Prompt = ""; 
-
-const parameterSettings = ["mood", "intent", "context", "target", "empathy", "persona"];
-const moods = ["happy", "sad", "angry", "scared", "flirty", "neutral", "disguised", "anxious"];
-
-// Tiers adjusted - Explicitly excluded owner tier per specifications
-const tiers = ["free", "plus", "pro", "max"];
-
-// Safety Configuration Lists
-const BadCussWords = ["pussy", "nigger", "nigga", "fuck", "dick", "cock", "bitch", "ass", "asshole", "shit", "crap", "whore"];
-const IllegialStuff = ["hack", "murder", "rape", "theft"];
-const NEE_popup_keywords = [
-  "suiside",
-  "suicide",
-  "kill myself",
-  "end my life",
-  "self harm",
-  "cutting myself",
-  "want to die"
+const NEE_POPUP_KEYWORDS = [
+  "suicide", "suiside", "kill myself", "end my life", "self harm",
+  "cutting myself", "want to die"
+];
+const ILLEGAL_TERMS = ["hack", "murder", "rape", "theft"];
+const PROFANITY_TERMS = [
+  "pussy", "nigger", "nigga", "fuck", "dick", "cock", "bitch",
+  "ass", "asshole", "shit", "crap", "whore"
 ];
 
-let NEE_response = `i know you are going thru a tough time ${currentUsername} and you deserve support call or text 988 or go to thier site at 988lifeline.org if its serious call 911 im here for you.`;
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+let tfPromise;
+let modelPromise;
+let modelState = null;
+let mode = 2; // 0 = offline; 1 = training/dev; 2 = inference
 
-// Track running state metadata
-let currentQuery = "";
-let currentResponse = "";
-let nlpDecodedOutput = "";
-let currentMood = "neutral";
-
-// Persistent reference location matrix dataset identifier in Cloud Firestore
-const matrixDocRef = doc(db, "Parameters", "shared_30k_matrix_state");
-
-/**
- * Formats a floating number to your precise string spec: [±0.00000000]
- */
-function formatParamString(value) {
-  const sign = value >= 0 ? "+" : "-";
-  return `[${sign}${Math.abs(value).toFixed(8)}]`;
+function getTensorFlow() {
+  if (!tfPromise) {
+    tfPromise = import(TFJS_URL).then(async (tf) => {
+      await tf.ready();
+      return tf;
+    });
+  }
+  return tfPromise;
 }
 
-/**
- * Local Machine Memory Inbound Matrix Synchronization Handler
- */
-export async function loadWeightsMatrix() {
+function validateAndCreateModel(tf, data) {
+  const architecture = data?.architecture;
+  if (
+    data?.format !== "grapegreen-mini-transformer" ||
+    data?.version !== 1 ||
+    !architecture ||
+    !data?.tokenizer ||
+    !Array.isArray(data.tokenizer.pieces) ||
+    !Array.isArray(data.tokenizer.merges) ||
+    !data.parameters ||
+    !Number.isInteger(architecture.vocabularySize) ||
+    data.tokenizer.pieces.length !== architecture.vocabularySize
+  ) {
+    throw new Error("grapegreen-model.json is not a supported model export.");
+  }
+
+  const tensors = {};
   try {
-    const docSnap = await getDoc(matrixDocRef);
-    
-    if (docSnap.exists()) {
-      const remoteData = docSnap.data();
-      if (remoteData.weights && remoteData.weights.length === PARAM_COUNT) {
-        parameters = remoteData.weights;
-        ready = true;
-        return "Synchronized 30,000 parameter weights from cloud state storage container.";
+    for (const [name, entry] of Object.entries(data.parameters)) {
+      if (!Array.isArray(entry?.shape) || !Array.isArray(entry?.values)) {
+        throw new Error(`Invalid parameter entry: ${name}`);
+      }
+      const expectedSize = entry.shape.reduce((product, dimension) => {
+        if (!Number.isInteger(dimension) || dimension < 1) {
+          throw new Error(`Invalid shape for parameter ${name}.`);
+        }
+        return product * dimension;
+      }, 1);
+      if (expectedSize !== entry.values.length) {
+        throw new Error(`Parameter ${name} has a shape/value count mismatch.`);
+      }
+      if (!entry.values.every((value) => Number.isFinite(value))) {
+        throw new Error(`Parameter ${name} contains a non-finite value.`);
+      }
+      tensors[name] = tf.tensor(entry.values, entry.shape, "float32");
+    }
+
+    const required = [
+      "tokenEmbedding", "positionEmbedding", "languageModelWeight",
+      "languageModelBias"
+    ];
+    for (let layer = 0; layer < architecture.layers; layer++) {
+      const key = `layer${layer}`;
+      required.push(
+        `${key}_query`, `${key}_key`, `${key}_value`,
+        `${key}_attentionOutput`, `${key}_norm1Scale`, `${key}_norm1Bias`,
+        `${key}_ff1`, `${key}_ff1Bias`, `${key}_ff2`, `${key}_ff2Bias`,
+        `${key}_norm2Scale`, `${key}_norm2Bias`
+      );
+    }
+    for (const name of required) {
+      if (!tensors[name]) throw new Error(`Model is missing parameter ${name}.`);
+    }
+
+    const allowed = Array.isArray(data.allowedGenerationTokens) &&
+      data.allowedGenerationTokens.length
+      ? new Set(data.allowedGenerationTokens.filter((id) =>
+          Number.isInteger(id) && id >= 0 && id < architecture.vocabularySize
+        ))
+      : null;
+
+    return {
+      tf,
+      architecture,
+      tokenizer: data.tokenizer,
+      parameters: tensors,
+      allowedGenerationTokens: allowed
+    };
+  } catch (error) {
+    Object.values(tensors).forEach((tensor) => tensor.dispose());
+    throw error;
+  }
+}
+
+export async function loadModel() {
+  if (modelState) return modelState;
+  if (!modelPromise) {
+    modelPromise = (async () => {
+      const [tf, response] = await Promise.all([
+        getTensorFlow(),
+        fetch(MODEL_URL)
+      ]);
+      if (!response.ok) {
+        throw new Error(`Could not load grapegreen-model.json (HTTP ${response.status}).`);
+      }
+      const data = await response.json();
+      modelState = validateAndCreateModel(tf, data);
+      return modelState;
+    })().catch((error) => {
+      modelPromise = null;
+      throw error;
+    });
+  }
+  return modelPromise;
+}
+
+// Compatibility with the old terminal shell import. This now loads the actual
+// transformer export; it does not initialize random placeholder weights.
+export async function loadWeightsMatrix() {
+  await loadModel();
+  return "Loaded grapegreen-model.json transformer weights.";
+}
+
+export function setMode(nextMode) {
+  if (![0, 1, 2].includes(Number(nextMode))) {
+    throw new Error("Mode must be 0 (offline), 1 (development), or 2 (inference).");
+  }
+  mode = Number(nextMode);
+}
+
+export function getMode() {
+  return mode;
+}
+
+// The exported file is an inference checkpoint, not a trainable optimizer
+// checkpoint. Do not pretend that random weight mutation is model training.
+export async function submitTerminalFeedback() {
+  return "Feedback is unavailable: grapegreen-model.json is an inference-only export.";
+}
+
+function normalizeForModeration(value) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function matchesWholeTerm(cleanText, terms) {
+  return terms.some((term) => {
+    const normalizedTerm = normalizeForModeration(term);
+    return normalizedTerm && ` ${cleanText} `.includes(` ${normalizedTerm} `);
+  });
+}
+
+function inferMood(text) {
+  const signals = [
+    ["distressed", /\b(overwhelmed|hopeless|terrified|panicking|devastated|miserable|can't cope|cannot cope)\b/i],
+    ["sad", /\b(sad|lonely|grieving|heartbroken|down|depressed|crying)\b/i],
+    ["angry", /\b(angry|furious|pissed|irritated|frustrated)\b/i],
+    ["anxious", /\b(anxious|worried|nervous|scared|afraid|stressed)\b/i],
+    ["happy", /\b(happy|great|excited|wonderful|thrilled|glad)\b/i]
+  ];
+  return signals.find(([, pattern]) => pattern.test(text))?.[0] ?? "neutral";
+}
+
+function resolveRequest(input) {
+  if (typeof input === "string" || input == null) {
+    return { query: String(input ?? ""), context: "", plan: "free", generation: {} };
+  }
+  return {
+    query: String(input.query ?? input.prompt ?? ""),
+    context: String(input.context?.text ?? input.context ?? ""),
+    plan: String(input.plan ?? "free").toLowerCase(),
+    generation: input.generation ?? {},
+    signal: input.signal
+  };
+}
+
+function tokenizerEncode(text, tokenizer) {
+  let tokens = Array.from(encoder.encode(text), (byte) => byte + SPECIAL.BYTE_OFFSET);
+  for (const merge of tokenizer.merges) {
+    const [left, right, newId] = merge;
+    const next = [];
+    for (let i = 0; i < tokens.length; i++) {
+      if (i + 1 < tokens.length && tokens[i] === left && tokens[i + 1] === right) {
+        next.push(newId);
+        i++;
+      } else {
+        next.push(tokens[i]);
       }
     }
-    
-    // Fallback initialize standard dumb baseline grid if no cloud configuration exists
-    for (let i = 0; i < PARAM_COUNT; i++) {
-      parameters[i] = (Math.random() * 0.1) - 0.05;
-    }
-    await saveWeightsMatrix();
-    ready = true;
-    return "No remote configuration found. Initialized and saved fresh 30,000 parameter matrix.";
-  } catch (err) {
-    // Force local array fill execution loop to ensure local runtime playability remains resilient
-    for (let i = 0; i < PARAM_COUNT; i++) {
-      parameters[i] = (Math.random() * 0.1) - 0.05;
-    }
-    ready = true;
-    throw new Error(`Sync fault exception: ${err.message}. Local fallback applied.`);
+    tokens = next;
   }
+  return tokens;
 }
 
-/**
- * Outbound Model Weights Cloud Save Commit Engine Logic 
- */
-async function saveWeightsMatrix() {
+function tokenizerDecode(ids, tokenizer) {
+  const bytes = [];
+  for (const id of ids) {
+    if (id < SPECIAL.BYTE_OFFSET) continue;
+    const piece = tokenizer.pieces[id];
+    if (!Array.isArray(piece)) continue;
+    bytes.push(...piece);
+  }
+  return decoder.decode(new Uint8Array(bytes));
+}
+
+function truncateToTokens(text, tokenizer, maxTokens) {
+  if (!text || maxTokens <= 0) return "";
+  const ids = tokenizerEncode(text, tokenizer);
+  return tokenizerDecode(ids.slice(-maxTokens), tokenizer);
+}
+
+function layerNorm(tf, input, scale, bias) {
+  const moments = tf.moments(input, [-1], true);
+  return input
+    .sub(moments.mean)
+    .mul(tf.rsqrt(moments.variance.add(1e-5)))
+    .mul(scale)
+    .add(bias);
+}
+
+function forward(state, inputIds) {
+  const { tf, architecture, parameters: p } = state;
+  return tf.tidy(() => {
+    const seqLen = inputIds.shape[0];
+    const dimension = architecture.dimension;
+    const heads = architecture.heads;
+    const headDim = dimension / heads;
+    if (!Number.isInteger(headDim)) throw new Error("Invalid model head dimensions.");
+
+    let x = tf.gather(p.tokenEmbedding, inputIds);
+    x = x.add(p.positionEmbedding.slice([0, 0], [seqLen, dimension]));
+
+    const maskValues = new Float32Array(seqLen * seqLen);
+    for (let q = 0; q < seqLen; q++) {
+      for (let k = q + 1; k < seqLen; k++) maskValues[q * seqLen + k] = -1e9;
+    }
+    const causalMask = tf.tensor2d(maskValues, [seqLen, seqLen]).expandDims(0);
+
+    for (let layer = 0; layer < architecture.layers; layer++) {
+      const key = `layer${layer}`;
+      const query = x.matMul(p[`${key}_query`])
+        .reshape([seqLen, heads, headDim]).transpose([1, 0, 2]);
+      const keys = x.matMul(p[`${key}_key`])
+        .reshape([seqLen, heads, headDim]).transpose([1, 0, 2]);
+      const values = x.matMul(p[`${key}_value`])
+        .reshape([seqLen, heads, headDim]).transpose([1, 0, 2]);
+      const scores = query.matMul(keys.transpose([0, 2, 1])).div(Math.sqrt(headDim));
+      const attention = tf.softmax(scores.add(causalMask), -1);
+      const attended = attention.matMul(values)
+        .transpose([1, 0, 2]).reshape([seqLen, dimension])
+        .matMul(p[`${key}_attentionOutput`]);
+
+      const afterAttention = layerNorm(
+        tf, x.add(attended), p[`${key}_norm1Scale`], p[`${key}_norm1Bias`]
+      );
+      const feedForward = tf.relu(
+        afterAttention.matMul(p[`${key}_ff1`]).add(p[`${key}_ff1Bias`])
+      ).matMul(p[`${key}_ff2`]).add(p[`${key}_ff2Bias`]);
+      x = layerNorm(
+        tf, afterAttention.add(feedForward),
+        p[`${key}_norm2Scale`], p[`${key}_norm2Bias`]
+      );
+    }
+
+    return x.matMul(p.languageModelWeight).add(p.languageModelBias);
+  });
+}
+
+function nextTokenLogits(state, contextIds) {
+  const tf = state.tf;
+  const input = tf.tensor1d(contextIds, "int32");
+  let output;
   try {
-    await setDoc(matrixDocRef, {
-      weights: parameters,
-      lastUpdated: Date.now(),
-      updatedBy: currentUsername
-    });
-  } catch (err) {
-    console.error(`Database write failure state warning: ${err.message}`);
-  }
-}
-
-/**
- * Stage 1: NLP Processing Layer
- */
-function processNLP(input) {
-  currentQuery = input;
-  let normalized = input.toLowerCase().trim();
-  currentMood = "neutral";
-  nlpDecodedOutput = `[NLP_DECODED: query="${normalized}" inferred_mood="${currentMood}"]`;
-  return normalized;
-}
-
-/**
- * Stage 2: FILTER Layer
- */
-function processFILTER(nlpOutput) {
-  // Check critical mental health/emergency triggers
-  for (let keyword of NEE_popup_keywords) {
-    if (nlpOutput.includes(keyword)) {
-      return { Action: "BLOCK_CRITICAL", response: NEE_response };
+    output = forward(state, input);
+    const lastPosition = output.shape[0] - 1;
+    const last = output.slice(
+      [lastPosition, 0], [1, state.architecture.vocabularySize]
+    ).reshape([state.architecture.vocabularySize]);
+    try {
+      return Array.from(last.dataSync());
+    } finally {
+      last.dispose();
     }
+  } finally {
+    input.dispose();
+    if (output) output.dispose();
   }
+}
 
-  // Check general illegal actions and explicit profanity rules
-  for (let word of IllegialStuff) {
-    if (nlpOutput.includes(word)) {
-      return { Action: "BLOCK_POLICY", response: "Request contains policy violations regarding restricted activities." };
+function sampleToken(state, contextIds, generatedIds, settings) {
+  const logits = nextTokenLogits(state, contextIds);
+  const counts = new Map();
+  for (const id of generatedIds.slice(-64)) counts.set(id, (counts.get(id) ?? 0) + 1);
+
+  const allowed = state.allowedGenerationTokens;
+  const candidates = [];
+  for (let token = 0; token < logits.length; token++) {
+    if (
+      token === SPECIAL.BOS || token === SPECIAL.USER ||
+      token === SPECIAL.ASSISTANT || token === SPECIAL.UNK ||
+      (allowed && !allowed.has(token))
+    ) continue;
+
+    let score = Number.isFinite(logits[token]) ? logits[token] : -1e9;
+    const count = counts.get(token) ?? 0;
+    if (count && token !== SPECIAL.EOS) {
+      score = score >= 0
+        ? score / settings.repetitionPenalty
+        : score * settings.repetitionPenalty;
+      score -= settings.presencePenalty + settings.frequencyPenalty * count;
     }
+    candidates.push({ token, score: score / settings.temperature });
+  }
+  if (!candidates.length) return SPECIAL.EOS;
+
+  candidates.sort((a, b) => b.score - a.score);
+  const top = settings.topK > 0 ? candidates.slice(0, settings.topK) : candidates;
+  const maxScore = top[0].score;
+  const weights = top.map(({ score }) => Math.exp(score - maxScore));
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const nucleus = [];
+  let cumulative = 0;
+  for (let i = 0; i < top.length; i++) {
+    const probability = weights[i] / total;
+    nucleus.push({ token: top[i].token, weight: probability });
+    cumulative += probability;
+    if (cumulative >= settings.topP) break;
   }
 
-  return { Action: "ALLOW", cleanOutput: nlpOutput };
+  let draw = Math.random() * nucleus.reduce((sum, item) => sum + item.weight, 0);
+  for (const item of nucleus) {
+    draw -= item.weight;
+    if (draw <= 0) return item.token;
+  }
+  return nucleus[nucleus.length - 1].token;
+}
+
+function yieldToBrowser() {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function showThinking() {
+  if (typeof document === "undefined") return () => {};
+  let element = document.getElementById("ai-thinking");
+  let created = false;
+  if (!element) {
+    element = document.createElement("div");
+    element.id = "ai-thinking";
+    element.setAttribute("role", "status");
+    element.setAttribute("aria-live", "polite");
+    document.body.appendChild(element);
+    created = true;
+  }
+  element.hidden = false;
+  let step = 0;
+  element.textContent = "Thinking";
+  const timer = setInterval(() => {
+    step = (step + 1) % 4;
+    element.textContent = `Thinking${".".repeat(step)}`;
+  }, 400);
+  return () => {
+    clearInterval(timer);
+    element.hidden = true;
+    element.textContent = "";
+    if (created) element.remove();
+  };
+}
+
+function moderationReply(text, username) {
+  const clean = normalizeForModeration(text);
+  if (matchesWholeTerm(clean, NEE_POPUP_KEYWORDS)) {
+    return `I’m sorry you’re going through a tough time, ${username}. Call or text 988, or visit 988lifeline.org. If there is immediate danger, call 911.`;
+  }
+  if (matchesWholeTerm(clean, ILLEGAL_TERMS)) {
+    return "[SYSTEM NOTICE]: Request aborted because it matched a restricted term.";
+  }
+  if (matchesWholeTerm(clean, PROFANITY_TERMS)) {
+    return "[MODERATION NOTICE]: Please keep the conversation civil.";
+  }
+  return null;
 }
 
 /**
- * Stage 3: SLM Processing Engine (Real 30k Parameter Computation)
+ * Main inference entry point. Accepts a plain query string or a request object:
+ * { query, context: { text }, plan, generation, signal }.
+ *
+ * `plan` is a browser-provided hint, not trusted authorization. Enforce paid
+ * plans on a trusted backend before exposing paid limits in a public product.
  */
-async function processSLM(filterPayload) {
-  if (internalMode === 0) {
-    return "System Offline (internalMode = 0)";
-  }
+export async function receiveRequest(input) {
+  if (mode === 0) return "System offline.";
 
-  if (filterPayload.Action === "BLOCK_CRITICAL" || filterPayload.Action === "BLOCK_POLICY") {
-    return filterPayload.response;
-  }
+  const request = resolveRequest(input);
+  const query = request.query.trim();
+  if (!query) return "Please enter a message.";
 
-  let textToProcess = filterPayload.cleanOutput;
+  const username = String(globalThis.currentUsername ?? "user");
+  const blocked = moderationReply(query, username);
+  if (blocked) return blocked;
 
-  // Compute actual mathematical dot product inference heuristics over all 30k parameters
-  let matrixSum = 0;
-  for (let i = 0; i < PARAM_COUNT; i++) {
-    matrixSum += parameters[i];
-  }
-  let avgWeight = matrixSum / PARAM_COUNT;
+  const mood = inferMood(query);
+  const plan = Object.hasOwn(TIER_LIMITS, request.plan) ? request.plan : "free";
+  const limits = TIER_LIMITS[plan];
+  const generation = request.generation;
+  const maxOutputTokens = Math.max(1, Math.min(
+    limits.maxOutputTokens,
+    Number.isFinite(Number(generation.maxOutputTokens))
+      ? Math.floor(Number(generation.maxOutputTokens))
+      : limits.maxOutputTokens
+  ));
+  const maxThinkTimeMs = Math.max(1, Math.min(
+    limits.maxThinkTimeMs,
+    Number.isFinite(Number(generation.maxThinkTimeMs))
+      ? Number(generation.maxThinkTimeMs)
+      : limits.maxThinkTimeMs
+  ));
+  const settings = {
+    temperature: Math.min(2, Math.max(0.05, Number(generation.temperature) || 0.7)),
+    topK: Math.max(0, Math.floor(Number(generation.topK) || 40)),
+    topP: Math.min(1, Math.max(0.01, Number(generation.topP) || 0.95)),
+    repetitionPenalty: Math.min(2, Math.max(1, Number(generation.repetitionPenalty) || 1.1)),
+    presencePenalty: Math.max(0, Number(generation.presencePenalty) || 0),
+    frequencyPenalty: Math.max(0, Number(generation.frequencyPenalty) || 0)
+  };
 
-  // Sample a preview slice of the actual parameters to inspect array states visually
-  let slicePreview = [
-    formatParamString(parameters[0]),
-    formatParamString(parameters[1]),
-    formatParamString(parameters[2]),
-    "...",
-    formatParamString(parameters[PARAM_COUNT - 1])
-  ].join(", ");
-
-  // --- MODE 2: PRODUCTION ENVIRONMENT ---
-  if (internalMode === 2) {
-    let externalData = "";
-    if (textToProcess.includes("wiki")) externalData += "[Fetch Wiki API Active] ";
-    if (textToProcess.includes("ddg")) externalData += "[Fetch DDG Search Active] ";
-    if (textToProcess.includes("fandom")) externalData += "[Fetch Fandom API Active] ";
-
-    return `[PROD RESPONSE] 30k Param Array Activated. Avg Weight State: ${formatParamString(avgWeight)}. Inference Payload: "Processed response sequence token for '${textToProcess}'." ${externalData}`;
-  }
-
-  // --- MODE 1: REINFORCEMENT TRAINING ENVIRONMENT ---
-  if (internalMode === 1) {
-    let winPredictionState = avgWeight >= 0.0;
-    let predictionToken = winPredictionState ? "Predicting Win Condition" : "Predicting Loss Condition";
-    
-    return `[TRAINING PREDICTION] Real Parameters: 30,000 allocated floats. Matrix Preview: [${slicePreview}]. Array State: ${predictionToken}. Awaiting terminal validation feedback.`;
-  }
-
-  return "Unknown System Matrix State Block";
-}
-
-/**
- * Terminal Interface Training Interaction Engine
- * This cycles and updates EVERY single one of the 30,000 parameters directly and pushes updates to Firestore
- */
-export async function submitTerminalFeedback(status) {
-  if (internalMode !== 1) {
-    return "Feedback rejected: Model is not currently running inside a learning cycle (Mode 1).";
-  }
-
-  // Define optimization learning rate steps
-  let adjustmentRate = 0.00005; 
-  
-  if (status === "win") {
-    for (let i = 0; i < PARAM_COUNT; i++) {
-      parameters[i] = Math.min(1.0, parameters[i] + (Math.random() * adjustmentRate));
-    }
-    await saveWeightsMatrix();
-    return `Terminal feedback registered: [WIN]. Mutation sequence successful across all 30,000 real weight instances and committed to Cloud Firestore.`;
-  } else if (status === "loss") {
-    for (let i = 0; i < PARAM_COUNT; i++) {
-      parameters[i] = Math.max(-1.0, parameters[i] - (Math.random() * adjustmentRate));
-    }
-    await saveWeightsMatrix();
-    return `Terminal feedback registered: [LOSS]. Mutation sequence successful across all 30,000 real weight instances and committed to Cloud Firestore.`;
-  }
-  
-  return "Invalid terminal training status token provided. Use 'win' or 'loss'.";
-}
-
-/**
- * Core Request Receiver Function
- */
-export async function receiveRequest(userInput) {
-  if (!ready) return "System busy, syncing remote parameter states.";
-  
-  let nlpOutput = processNLP(userInput);
-  let filterPayload = processFILTER(nlpOutput);
-  currentResponse = await processSLM(filterPayload);
-  
-  // Write operation tracking metrics targeting diagnostic history collection array
+  const stopThinking = showThinking();
+  const deadline = Date.now() + maxThinkTimeMs;
   try {
-    const historyDocRef = doc(db, "ai_users_history", `log_${Date.now()}`);
-    await setDoc(historyDocRef, {
-      query: currentQuery,
-      nlpLog: nlpDecodedOutput,
-      response: currentResponse,
-      moodState: currentMood,
-      timestamp: Date.now()
-    });
-  } catch (err) {
-    console.warn(`History tracking save restricted: ${err.message}`);
+    const state = await loadModel();
+    if (request.signal?.aborted) throw new Error("Request was cancelled.");
+    if (Date.now() >= deadline) throw new Error("Maximum thinking time reached while loading the model.");
+
+    const memory = truncateToTokens(request.context, state.tokenizer, limits.memoryTokens);
+    const prompt = [
+      `User mood: ${mood}.`,
+      memory ? `Recent conversation context (use only if helpful):\n${memory}` : "",
+      `User: ${query}`
+    ].filter(Boolean).join("\n\n");
+
+    const promptIds = tokenizerEncode(prompt, state.tokenizer);
+    const maxContext = state.architecture.maxContext;
+    const contextIds = [
+      SPECIAL.BOS,
+      SPECIAL.USER,
+      ...promptIds.slice(-(maxContext - 3)),
+      SPECIAL.ASSISTANT
+    ];
+    const generated = [];
+
+    for (let step = 0; step < maxOutputTokens; step++) {
+      if (request.signal?.aborted) throw new Error("Request was cancelled.");
+      if (Date.now() >= deadline) break;
+
+      const token = sampleToken(state, contextIds, generated, settings);
+      if (token === SPECIAL.EOS) break;
+      generated.push(token);
+      contextIds.push(token);
+      if (contextIds.length > maxContext) contextIds.shift();
+      await yieldToBrowser();
+    }
+
+    const answer = tokenizerDecode(generated, state.tokenizer).trim();
+    return answer || "I couldn't generate a response for that prompt.";
+  } catch (error) {
+    console.error("GrapeGreen model inference failed:", error);
+    return `[GRAPE AI ERROR]: ${error.message || "Model inference failed."}`;
+  } finally {
+    stopThinking();
   }
-
-  history.push({
-    query: currentQuery,
-    nlpLog: nlpDecodedOutput,
-    response: currentResponse,
-    moodState: currentMood,
-    timestamp: Date.now()
-  });
-  
-  Grape_Api_Prompt = JSON.stringify({
-    metadata: { owner: ownerName, client: currentUsername, parameterArrayCount: PARAM_COUNT },
-    pipeline: { plaintext: currentQuery, decodedNlp: nlpDecodedOutput, status: filterPayload.Action },
-    payload: { response: currentResponse }
-  });
-
-  return currentResponse;
 }
 
-// Global state controller modifier exports
-export function setMode(mode) { internalMode = mode; }
-export function getMode() { return internalMode; }
-
-// --- AUTOMATED TESTING ENVIRONMENT RUNNER ---
-// Checks if this file is executed as the main script inside your Node environment terminal window
-if (process.argv[1] && process.argv[1].endsWith('API.js')) {
-  (async () => {
-    console.log("======================================================");
-    console.log("  Executing Built-in SLM.js 30k Automated Training Loop");
-    console.log("======================================================");
-    
-    // 1. Force state parameters initialization
-    internalMode = 1;
-    
-    // 2. Synchronize weight array matrices
-    console.log("-> Initializing Firestore Sync...");
-    const syncStatus = await loadWeightsMatrix();
-    console.log(`[Firestore Status]: ${syncStatus}`);
-    
-    // 3. Fire an active prompt test token down the architecture
-    const promptToken = "wiki test baseline tracking text";
-    console.log(`\n-> Injecting Prompt Token: "${promptToken}"`);
-    const initialResult = await receiveRequest(promptToken);
-    console.log(initialResult);
-    
-    // 4. Simulate a reward feedback cycle across all 30k indices
-    console.log("\n-> Testing Reinforcement Correction Mutation (/win)...");
-    const feedbackStatus = await submitTerminalFeedback("win");
-    console.log(feedbackStatus);
-    
-    // 5. Fire a follow-up verification check
-    console.log("\n-> Verification inference pass post-mutation:");
-    const postResult = await receiveRequest(promptToken);
-    console.log(postResult);
-    console.log("======================================================");
-    process.exit(0);
-  })().catch(err => {
-    console.error(`Runtime session crashed: ${err.message}`);
-    process.exit(1);
-  });
-}
+// Preserve the prior default mode and make the inference API available to
+// callers that import this file as an ES module.
+export default receiveRequest;
