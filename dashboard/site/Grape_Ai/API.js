@@ -4,7 +4,7 @@
  * real next-token inference. This module is browser-side; it does not expose a
  * server API and does not upload prompts or mutate weights in Firestore.
  */
-
+const WebGuide = ["To Access The Web You May Do Only If You Require It To Answear The user the following commands: WikiSearch(article); replace the article word inside with whatever information you need to access, for current date say CurDate(); if you want to know time say CurTime(); and if you want to check duckduckgo say DDGsearch(query) replace query with what you want to search, and for doing math do MathCalculate(expression) can multiplycation that is * or division that is / or subtraction that is - or addation that is + then enter the following 2 numbers to do math, for news search do NewsSearch(article, date); for article that means what you wnat to search, for date that means the CurDate();"]
 const MODEL_URL = new URL("./grapegreen-model.json", import.meta.url);
 const TFJS_URL = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/+esm";
 
