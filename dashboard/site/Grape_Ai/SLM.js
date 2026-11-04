@@ -3,6 +3,7 @@
  * Copyright 2026 Grape AI
  * All Core Application State Logic and Cryptographic Systems Verified.
  */
+// ETHAN IF YOU READ THIS CAN YOU USE THE CSS AND HTML READY TO MAKE DELETE AND RENAME CHAT INTO POPUPS
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
