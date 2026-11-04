@@ -1112,46 +1112,34 @@ async function transmitChatMessagePayload() {
   if (!chatInputBox) return;
 
   const baseMessageText = chatInputBox.value.trim();
-
   if (!baseMessageText || !focusActiveChatId) return;
 
   const chatId = focusActiveChatId;
-
   currentQuery = baseMessageText;
   chatInputBox.value = "";
 
   const chatMessages = loadChatMessages(chatId);
-
   chatMessages.push({
     role: "user",
     text: currentQuery,
     createdAt: Date.now()
   });
-
   saveChatMessages(chatId, chatMessages);
 
   if (sendButton) sendButton.disabled = true;
-
-  if (focusActiveChatId === chatId) {
-    renderChatMessages(chatId);
-  }
+  if (focusActiveChatId === chatId) renderChatMessages(chatId);
 
   const memorySummary = buildChatMemory(chatMessages.slice(0, -1));
 
   try {
-    currentResponse = await AiBrainFunction(
-      currentQuery,
-      memorySummary
-    );
+    currentResponse = await AiBrainFunction(currentQuery, memorySummary);
 
     const updatedMessages = loadChatMessages(chatId);
-
     updatedMessages.push({
       role: "assistant",
       text: currentResponse,
       createdAt: Date.now()
     });
-
     saveChatMessages(chatId, updatedMessages);
 
     history.push({
@@ -1160,30 +1148,47 @@ async function transmitChatMessagePayload() {
       mood: calculateContextMood(currentQuery)
     });
 
-    if (focusActiveChatId === chatId) {
-      renderChatMessages(chatId);
-    }
+    if (focusActiveChatId === chatId) renderChatMessages(chatId);
   } catch (error) {
     console.error("Could not get an AI response:", error);
-
     currentResponse = "[GRAPE AI ERROR]: The response could not be completed.";
 
     const updatedMessages = loadChatMessages(chatId);
-
     updatedMessages.push({
       role: "assistant",
       text: currentResponse,
       createdAt: Date.now()
     });
-
     saveChatMessages(chatId, updatedMessages);
 
-    if (focusActiveChatId === chatId) {
-      renderChatMessages(chatId);
-    }
+    if (focusActiveChatId === chatId) renderChatMessages(chatId);
   } finally {
     if (sendButton) sendButton.disabled = false;
   }
+}
+
+function appendChatBubbleDOM(text, styleClass, identityLabel) {
+  const messagesScrollFrame = safeGetElement("messages-container");
+  const scrollAreaFrame = safeGetElement("messages-scroll-area");
+  if (!messagesScrollFrame || !scrollAreaFrame) return;
+
+  const bubbleElement = document.createElement("div");
+  bubbleElement.className = `message ${styleClass}`;
+
+  const avatar = document.createElement("div");
+  avatar.className = "message-avatar";
+  avatar.textContent = identityLabel === "AI" ? "AI" : "User";
+
+  const messageText = document.createElement("div");
+  messageText.className = "message-text";
+
+  const paragraph = document.createElement("p");
+  paragraph.textContent = String(text ?? "");
+
+  messageText.appendChild(paragraph);
+  bubbleElement.append(avatar, messageText);
+  messagesScrollFrame.appendChild(bubbleElement);
+  scrollAreaFrame.scrollTop = scrollAreaFrame.scrollHeight;
 }
 
 
