@@ -960,7 +960,9 @@ if (activeChatTitle) activeChatTitle.innerText = baseTitleText;
 renderWorkspaceChatsList();
 renderChatMessages(uniqueId);
 return;
+}
 
+if (!activeUserSession) return;
 if (!activeUserSession) return;
 
 const uniqueId = "chat_" + Date.now();
