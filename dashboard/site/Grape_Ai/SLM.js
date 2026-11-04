@@ -1034,21 +1034,36 @@ if (activeChatTitle) activeChatTitle.innerText = targetNode.title;
 }
 
 function triggerChatDeletionAction(id) {
-if (!confirm("Are you sure you want to permanently delete this chat history thread?")) return;
+  if (!confirm("Are you sure you want to delete this chat history?")) return;
 
-globalWorkspaceChatList = globalWorkspaceChatList.filter((item) => item.id !== id);
+  globalWorkspaceChatList = globalWorkspaceChatList.filter(
+    item => item.id !== id
+  );
 
-if (isGuestSession(activeUserSession)) {
-saveGuestChats();
-}
+  try {
+    localStorage.removeItem(chatMessagesStorageKey(id));
+  } catch (error) {
+    console.warn("Deleted chat history could not be cleared.", error);
+  }
 
-if (focusActiveChatId === id) {
-focusActiveChatId = null;
-const activeChatTitle = safeGetElement("active-chat-title");
-if (activeChatTitle) activeChatTitle.innerText = "New Chat";
-}
-renderWorkspaceChatsList();
-renderChatMessages(uniqueId);
+  if (isGuestSession(activeUserSession)) {
+    saveGuestChats();
+  }
+
+  if (focusActiveChatId === id) {
+    focusActiveChatId = globalWorkspaceChatList[0]?.id || null;
+
+    const activeChatTitle = safeGetElement("active-chat-title");
+
+    if (activeChatTitle) {
+      activeChatTitle.innerText =
+        globalWorkspaceChatList[0]?.title || "New Chat";
+    }
+
+    renderChatMessages(focusActiveChatId);
+  }
+
+  renderWorkspaceChatsList();
 }
 
 // ==========================================================================
