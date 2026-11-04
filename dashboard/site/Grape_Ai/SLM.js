@@ -934,10 +934,13 @@ const itemRow = document.createElement("div");
 itemRow.className = `chat-list-item ${isFocused ? "active" : ""}`;
 
 itemRow.addEventListener("click", () => {
-focusActiveChatId = chatItem.id;
-const activeChatTitle = safeGetElement("active-chat-title");
-if (activeChatTitle) activeChatTitle.innerText = chatItem.title;
-renderWorkspaceChatsList();
+  focusActiveChatId = chatItem.id;
+  const activeChatTitle = safeGetElement("active-chat-title");
+  if (activeChatTitle) {
+    activeChatTitle.innerText = chatItem.title;
+  }
+  renderWorkspaceChatsList();
+  renderChatMessages(chatItem.id);
 });
 
 itemRow.innerHTML = `
