@@ -475,7 +475,7 @@ const plan = requestedPlan === "owner"
     const prompt = [
       `User mood: ${mood}.`,
       memory ? `Recent conversation context (use only if helpful):\n${memory}` : "",
-      `for web ${webguide}`
+      `for web ${webguide}`,
       `User: ${query}`
     ].filter(Boolean).join("\n\n");
 
