@@ -1,0 +1,16 @@
+                <dialog id="chat-action-dialog" aria-labelledby="chat-dialog-title">
+  <form id="chat-action-form">
+    <h2 id="chat-dialog-title"></h2>
+    <p id="chat-dialog-message"></p>
+
+    <label id="chat-dialog-input-label" for="chat-dialog-input">
+      Chat name
+    </label>
+    <input id="chat-dialog-input" type="text" maxlength="80">
+
+    <div class="chat-dialog-actions">
+      <button id="chat-dialog-cancel" type="button">Cancel</button>
+      <button id="chat-dialog-confirm" type="submit">Confirm</button>
+    </div>
+  </form>
+</dialog>
