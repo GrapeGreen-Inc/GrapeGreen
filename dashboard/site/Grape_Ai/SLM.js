@@ -1117,8 +1117,85 @@ return currentResponse;
 // 11. CHAT IO & BUBBLES
 // ==========================================================================
 async function transmitChatMessagePayload() {
-const chatInputBox = safeGetElement("message-input");
-if (!chatInputBox) return;
+  const chatInputBox = safeGetElement("message-input");
+  const sendButton = safeGetElement("send-btn");
+
+  if (!chatInputBox) return;
+
+  const baseMessageText = chatInputBox.value.trim();
+
+  if (!baseMessageText || !focusActiveChatId) return;
+
+  const chatId = focusActiveChatId;
+
+  currentQuery = baseMessageText;
+  chatInputBox.value = "";
+
+  const chatMessages = loadChatMessages(chatId);
+
+  chatMessages.push({
+    role: "user",
+    text: currentQuery,
+    createdAt: Date.now()
+  });
+
+  saveChatMessages(chatId, chatMessages);
+
+  if (sendButton) sendButton.disabled = true;
+
+  if (focusActiveChatId === chatId) {
+    renderChatMessages(chatId);
+  }
+
+  const memorySummary = buildChatMemory(chatMessages.slice(0, -1));
+
+  try {
+    currentResponse = await AiBrainFunction(
+      currentQuery,
+      memorySummary
+    );
+
+    const updatedMessages = loadChatMessages(chatId);
+
+    updatedMessages.push({
+      role: "assistant",
+      text: currentResponse,
+      createdAt: Date.now()
+    });
+
+    saveChatMessages(chatId, updatedMessages);
+
+    history.push({
+      q: currentQuery,
+      r: currentResponse,
+      mood: calculateContextMood(currentQuery)
+    });
+
+    if (focusActiveChatId === chatId) {
+      renderChatMessages(chatId);
+    }
+  } catch (error) {
+    console.error("Could not get an AI response:", error);
+
+    currentResponse = "[GRAPE AI ERROR]: The response could not be completed.";
+
+    const updatedMessages = loadChatMessages(chatId);
+
+    updatedMessages.push({
+      role: "assistant",
+      text: currentResponse,
+      createdAt: Date.now()
+    });
+
+    saveChatMessages(chatId, updatedMessages);
+
+    if (focusActiveChatId === chatId) {
+      renderChatMessages(chatId);
+    }
+  } finally {
+    if (sendButton) sendButton.disabled = false;
+  }
+}
 
 const baseMessageText = chatInputBox.value.trim();
 if (!baseMessageText) return;
