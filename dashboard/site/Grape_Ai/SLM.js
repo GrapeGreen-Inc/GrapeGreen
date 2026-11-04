@@ -581,8 +581,8 @@ async function AiBrainFunction(inputPromptString, historicalMemorySummaryText = 
   try {
     // This loads the API module by its source path; it does not make an HTTP
     // API request. Update this path if the deployed site uses a different root.
-    const apiModuleSrc = "/dashboard/site/Grape_Ai/API.js";
-    const apiModule = await import(apiModuleSrc);
+    const apiModuleUrl = new URL("./API.js", import.meta.url);
+const apiModule = await import(apiModuleUrl.href);
 
     if (typeof apiModule.receiveRequest !== "function") {
       throw new Error("API.js must export a receiveRequest() function.");
