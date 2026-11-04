@@ -499,30 +499,30 @@ return "[MODERATION NOTICE]: Please keep the conversation civil.";
 }
 
 const tierValue =
-    typeof currentUserTier !== "undefined"
-      ? currentUserTier
-      : typeof userPlan !== "undefined"
-        ? userPlan
-        : "free";
+typeof currentUserTier !== "undefined"
+? currentUserTier
+: typeof userPlan !== "undefined"
+? userPlan
+: "free";
 
 
-  const tierLimits = {
-    free: { maxOutputTokens: 150, memoryTokens: 800, maxThinkTimeMs: 11000 },
-    plus: { maxOutputTokens: 200, memoryTokens: 950, maxThinkTimeMs: 17000 },
-    pro: { maxOutputTokens: 250, memoryTokens: 1150, maxThinkTimeMs: 24000 },
-    max: { maxOutputTokens: 300, memoryTokens: 1300, maxThinkTimeMs: 35000 }
-  };
-  typeof currentUserTier !== "undefined"
-    ? currentUserTier
-    : typeof userPlan !== "undefined"
-      ? userPlan
-      : activeUserPlan;
+const tierLimits = {
+free: { maxOutputTokens: 150, memoryTokens: 800, maxThinkTimeMs: 11000 },
+plus: { maxOutputTokens: 200, memoryTokens: 950, maxThinkTimeMs: 17000 },
+pro: { maxOutputTokens: 250, memoryTokens: 1150, maxThinkTimeMs: 24000 },
+max: { maxOutputTokens: 300, memoryTokens: 1300, maxThinkTimeMs: 35000 }
+};
+typeof currentUserTier !== "undefined"
+? currentUserTier
+: typeof userPlan !== "undefined"
+? userPlan
+: activeUserPlan;
 
 const requestedTier = String(tierValue || "free").toLowerCase();
 const tier = requestedTier === "owner" ? "max" : requestedTier;
 
 
-  const limits = tierLimits[tier] ?? tierLimits.free;
+const limits = tierLimits[tier] ?? tierLimits.free;
 
 
 // This is an approximate whitespace-token cap. API.js should enforce the
@@ -764,135 +764,163 @@ let focusActiveChatId = null;
 
 // Some logical inconsistency in how memory is handled between rendering and building the AI's prompt context is still present. Though as of right now this should be able to work.
 function chatMessagesStorageKey(chatId) {
-  const owner = isGuestSession(activeUserSession)
-    ? "guest"
-    : String(activeUserSession || "guest");
+const owner = isGuestSession(activeUserSession)
+? "guest"
+: String(activeUserSession || "guest");
 
-  return `grape_ai_chat_messages_v1:${encodeURIComponent(owner)}:${encodeURIComponent(chatId)}`;
+return `grape_ai_chat_messages_v1:${encodeURIComponent(owner)}:${encodeURIComponent(chatId)}`;
 }
 
 function loadChatMessages(chatId) {
-  if (!chatId) return [];
+if (!chatId) return [];
 
-  try {
-    const stored = JSON.parse(
-      localStorage.getItem(chatMessagesStorageKey(chatId)) || "[]"
-    );
+try {
+const stored = JSON.parse(
+localStorage.getItem(chatMessagesStorageKey(chatId)) || "[]"
+);
 
-    if (!Array.isArray(stored)) return [];
+if (!Array.isArray(stored)) return [];
 
-    return stored
-      .filter(message =>
-        message &&
-        ["user", "assistant"].includes(message.role) &&
-        typeof message.text === "string"
-      )
-      .slice(-40);
-  } catch (error) {
-    console.warn("Chat history could not be loaded.", error);
-    return [];
-  }
+return stored
+.filter(message =>
+message &&
+["user", "assistant"].includes(message.role) &&
+typeof message.text === "string"
+)
+.slice(-40);
+} catch (error) {
+console.warn("Chat history could not be loaded.", error);
+return [];
+}
 }
 
 function saveChatMessages(chatId, messages) {
-  if (!chatId) return;
+if (!chatId) return;
 
-  try {
-    localStorage.setItem(
-      chatMessagesStorageKey(chatId),
-      JSON.stringify(messages.slice(-40))
-    );
-  } catch (error) {
-    console.warn("Chat history could not be saved.", error);
-  }
+try {
+localStorage.setItem(
+chatMessagesStorageKey(chatId),
+JSON.stringify(messages.slice(-40))
+);
+} catch (error) {
+console.warn("Chat history could not be saved.", error);
+}
 }
 
 function renderChatMessages(chatId) {
-  const container = safeGetElement("messages-container");
+const container = safeGetElement("messages-container");
 
-  if (!container) return;
+if (!container) return;
 
-  container.innerHTML = "";
+container.innerHTML = "";
 
-  const messages = loadChatMessages(chatId);
+const messages = loadChatMessages(chatId);
 
-  if (!messages.length) {
-    appendChatBubbleDOM(
-      "Hello! Start a new conversation here. Your recent messages will be remembered in this chat on this browser.",
-      "ai-message",
-      "AI"
-    );
-    return;
-  }
+if (!messages.length) {
+appendChatBubbleDOM(
+"Hello! Start a new conversation here. Your recent messages will be remembered in this chat on this browser.",
+"ai-message",
+"AI"
+);
+return;
+}
 
-  messages.forEach(message => {
-    appendChatBubbleDOM(
-      message.text,
-      message.role === "user" ? "user-message" : "ai-message",
-      message.role === "user" ? "User" : "AI"
-    );
-  });
+messages.forEach(message => {
+appendChatBubbleDOM(
+message.text,
+message.role === "user" ? "user-message" : "ai-message",
+message.role === "user" ? "User" : "AI"
+);
+});
 }
 
 function buildChatMemory(messages) {
-  return messages
-    .slice(-12)
-    .map(message =>
-      `${message.role === "user" ? "User" : "Grape AI"}: ${message.text}`
-    )
-    .join("\n");
+return messages
+.slice(-12)
+.map(message =>
+`${message.role === "user" ? "User" : "Grape AI"}: ${message.text}`
+)
+.join("\n");
 }
 
 async function syncUserChatsDashboard() {
-  const containerSlot = safeGetElement("chats-list");
-  if (!containerSlot) return;
+const containerSlot = safeGetElement("chats-list");
+if (!containerSlot) return;
 
-  if (isGuestSession(activeUserSession)) {
-    globalWorkspaceChatList = loadGuestChats();
-  } else {
-    try {
-      const queryReference = query(
-        collection(db, "ai_users_history"),
-        where("chatOwner", "==", activeUserSession)
-      );
+if (isGuestSession(activeUserSession)) {
+globalWorkspaceChatList = loadGuestChats();
+} else {
+try {
+const queryReference = query(
+collection(db, "ai_users_history"),
+where("chatOwner", "==", activeUserSession)
+);
 
-      const historySnapshot = await getDocs(queryReference);
+const historySnapshot = await getDocs(queryReference);
 
-      globalWorkspaceChatList = [];
+globalWorkspaceChatList = [];
 
-      historySnapshot.forEach(chatNode => {
-        const chatNodeData = chatNode.data();
+historySnapshot.forEach(chatNode => {
+const chatNodeData = chatNode.data();
 
-        globalWorkspaceChatList.push({
-          id: chatNode.id,
-          title: decodeSecurePipeline(chatNodeData.encryptedTitle) || "Untitled Chat"
-        });
-      });
-    } catch (error) {
-      console.warn("Cloud chat list unavailable. Using local chat storage.", error);
+globalWorkspaceChatList.push({
+id: chatNode.id,
+title: decodeSecurePipeline(chatNodeData.encryptedTitle) || "Untitled Chat"
+});
+});
+} catch (error) {
+console.warn("Cloud chat list unavailable. Using local chat storage.", error);
 
-      globalWorkspaceChatList = [
-        { id: "local_default_1", title: "Main Project Hub" }
-      ];
-    }
-  }
+globalWorkspaceChatList = [
+{ id: "local_default_1", title: "Main Project Hub" }
+];
+}
+}
 
-  if (!globalWorkspaceChatList.length) {
-    globalWorkspaceChatList = [
-      { id: "local_default_1", title: "Main Project Hub" }
-    ];
-  }
+if (!globalWorkspaceChatList.length) {
+globalWorkspaceChatList = [
+{ id: "local_default_1", title: "Main Project Hub" }
+];
+}
 
-  focusActiveChatId = globalWorkspaceChatList[0].id;
+focusActiveChatId = globalWorkspaceChatList[0].id;
 
-  const activeChatTitle = safeGetElement("active-chat-title");
+const activeChatTitle = safeGetElement("active-chat-title");
 
-  if (activeChatTitle) {
-    activeChatTitle.innerText = globalWorkspaceChatList[0].title;
-  }
+if (activeChatTitle) {
+activeChatTitle.innerText = globalWorkspaceChatList[0].title;
+}
 
-  renderWorkspaceChatsList();
-  renderChatMessages(focusActiveChatId);
+renderWorkspaceChatsList();
+renderChatMessages(focusActiveChatId);
+}
+
+const containerSlot = safeGetElement("chats-list");
+if (!containerSlot) return;
+containerSlot.innerHTML = "";
+
+try {
+const queryReference = query(
+collection(db, "ai_users_history"),
+where("chatOwner", "==", activeUserSession)
+);
+const historySnapshot = await getDocs(queryReference);
+globalWorkspaceChatList = [];
+
+historySnapshot.forEach((chatNode) => {
+const chatNodeData = chatNode.data();
+globalWorkspaceChatList.push({
+id: chatNode.id,
+title: decodeSecurePipeline(chatNodeData.encryptedTitle) || "Encrypted Chat Node"
+});
+});
+
+renderWorkspaceChatsList();
+} catch (error) {
+console.warn("Firestore access restrictions. Initializing local workspace memory framework layer.", error);
+globalWorkspaceChatList = [{ id: "local_default_1", title: "Main Project Hub" }];
+renderWorkspaceChatsList();
+}
 }
 
 function renderWorkspaceChatsList() {
@@ -906,23 +934,23 @@ const itemRow = document.createElement("div");
 itemRow.className = `chat-list-item ${isFocused ? "active" : ""}`;
 
 itemRow.addEventListener("click", () => {
-  focusActiveChatId = chatItem.id;
-  const activeChatTitle = safeGetElement("active-chat-title");
-  if (activeChatTitle) {
-    activeChatTitle.innerText = chatItem.title;
-  }
-  renderWorkspaceChatsList();
-  renderChatMessages(chatItem.id);
+focusActiveChatId = chatItem.id;
+const activeChatTitle = safeGetElement("active-chat-title");
+if (activeChatTitle) {
+activeChatTitle.innerText = chatItem.title;
+}
+renderWorkspaceChatsList();
+renderChatMessages(chatItem.id);
 });
 
 itemRow.innerHTML = `
-     <span class="chat-icon">💬</span>
-     <span class="chat-item-title">${chatItem.title}</span>
-     <div class="chat-item-actions">
-       <button type="button" class="rename-btn" data-id="${chatItem.id}">✏️</button>
-       <button type="button" class="delete-btn" data-id="${chatItem.id}">🗑️</button>
-     </div>
-   `;
+    <span class="chat-icon">💬</span>
+    <span class="chat-item-title">${chatItem.title}</span>
+    <div class="chat-item-actions">
+      <button type="button" class="rename-btn" data-id="${chatItem.id}">✏️</button>
+      <button type="button" class="delete-btn" data-id="${chatItem.id}">🗑️</button>
+    </div>
+  `;
 
 const renameButton = itemRow.querySelector(".rename-btn");
 const deleteButton = itemRow.querySelector(".delete-btn");
@@ -960,9 +988,7 @@ if (activeChatTitle) activeChatTitle.innerText = baseTitleText;
 renderWorkspaceChatsList();
 renderChatMessages(uniqueId);
 return;
-}
 
-if (!activeUserSession) return;
 if (!activeUserSession) return;
 
 const uniqueId = "chat_" + Date.now();
@@ -1008,18 +1034,30 @@ if (activeChatTitle) activeChatTitle.innerText = targetNode.title;
 }
 
 function triggerChatDeletionAction(id) {
+if (!confirm("Are you sure you want to permanently delete this chat history thread?")) return;
   if (!confirm("Are you sure you want to delete this chat history?")) return;
 
+globalWorkspaceChatList = globalWorkspaceChatList.filter((item) => item.id !== id);
   globalWorkspaceChatList = globalWorkspaceChatList.filter(
     item => item.id !== id
   );
 
+if (isGuestSession(activeUserSession)) {
+saveGuestChats();
+}
   try {
     localStorage.removeItem(chatMessagesStorageKey(id));
   } catch (error) {
     console.warn("Deleted chat history could not be cleared.", error);
   }
 
+if (focusActiveChatId === id) {
+focusActiveChatId = null;
+const activeChatTitle = safeGetElement("active-chat-title");
+if (activeChatTitle) activeChatTitle.innerText = "New Chat";
+}
+renderWorkspaceChatsList();
+renderChatMessages(uniqueId);
   if (isGuestSession(activeUserSession)) {
     saveGuestChats();
   }
@@ -1106,92 +1144,114 @@ return currentResponse;
 // 11. CHAT IO & BUBBLES
 // ==========================================================================
 async function transmitChatMessagePayload() {
-  const chatInputBox = safeGetElement("message-input");
-  const sendButton = safeGetElement("send-btn");
+const chatInputBox = safeGetElement("message-input");
+const sendButton = safeGetElement("send-btn");
 
-  if (!chatInputBox) return;
+if (!chatInputBox) return;
 
-  const baseMessageText = chatInputBox.value.trim();
-  if (!baseMessageText || !focusActiveChatId) return;
+const baseMessageText = chatInputBox.value.trim();
 
-  const chatId = focusActiveChatId;
-  currentQuery = baseMessageText;
-  chatInputBox.value = "";
+if (!baseMessageText || !focusActiveChatId) return;
 
-  const chatMessages = loadChatMessages(chatId);
-  chatMessages.push({
-    role: "user",
-    text: currentQuery,
-    createdAt: Date.now()
-  });
-  saveChatMessages(chatId, chatMessages);
+const chatId = focusActiveChatId;
 
-  if (sendButton) sendButton.disabled = true;
-  if (focusActiveChatId === chatId) renderChatMessages(chatId);
+currentQuery = baseMessageText;
+chatInputBox.value = "";
 
-  const memorySummary = buildChatMemory(chatMessages.slice(0, -1));
+const chatMessages = loadChatMessages(chatId);
 
-  try {
-    currentResponse = await AiBrainFunction(currentQuery, memorySummary);
+chatMessages.push({
+role: "user",
+text: currentQuery,
+createdAt: Date.now()
+});
 
-    const updatedMessages = loadChatMessages(chatId);
-    updatedMessages.push({
-      role: "assistant",
-      text: currentResponse,
-      createdAt: Date.now()
-    });
-    saveChatMessages(chatId, updatedMessages);
+saveChatMessages(chatId, chatMessages);
 
-    history.push({
-      q: currentQuery,
-      r: currentResponse,
-      mood: calculateContextMood(currentQuery)
-    });
+if (sendButton) sendButton.disabled = true;
 
-    if (focusActiveChatId === chatId) renderChatMessages(chatId);
-  } catch (error) {
-    console.error("Could not get an AI response:", error);
-    currentResponse = "[GRAPE AI ERROR]: The response could not be completed.";
-
-    const updatedMessages = loadChatMessages(chatId);
-    updatedMessages.push({
-      role: "assistant",
-      text: currentResponse,
-      createdAt: Date.now()
-    });
-    saveChatMessages(chatId, updatedMessages);
-
-    if (focusActiveChatId === chatId) renderChatMessages(chatId);
-  } finally {
-    if (sendButton) sendButton.disabled = false;
-  }
+if (focusActiveChatId === chatId) {
+renderChatMessages(chatId);
 }
 
-function appendChatBubbleDOM(text, styleClass, identityLabel) {
-  const messagesScrollFrame = safeGetElement("messages-container");
-  const scrollAreaFrame = safeGetElement("messages-scroll-area");
-  if (!messagesScrollFrame || !scrollAreaFrame) return;
+const memorySummary = buildChatMemory(chatMessages.slice(0, -1));
 
-  const bubbleElement = document.createElement("div");
-  bubbleElement.className = `message ${styleClass}`;
+try {
+currentResponse = await AiBrainFunction(
+currentQuery,
+memorySummary
+);
 
-  const avatar = document.createElement("div");
-  avatar.className = "message-avatar";
-  avatar.textContent = identityLabel === "AI" ? "AI" : "User";
+const updatedMessages = loadChatMessages(chatId);
 
-  const messageText = document.createElement("div");
-  messageText.className = "message-text";
+updatedMessages.push({
+role: "assistant",
+text: currentResponse,
+createdAt: Date.now()
+});
 
-  const paragraph = document.createElement("p");
-  paragraph.textContent = String(text ?? "");
+saveChatMessages(chatId, updatedMessages);
 
-  messageText.appendChild(paragraph);
-  bubbleElement.append(avatar, messageText);
-  messagesScrollFrame.appendChild(bubbleElement);
-  scrollAreaFrame.scrollTop = scrollAreaFrame.scrollHeight;
+history.push({
+q: currentQuery,
+r: currentResponse,
+mood: calculateContextMood(currentQuery)
+});
+
+if (focusActiveChatId === chatId) {
+renderChatMessages(chatId);
+}
+} catch (error) {
+console.error("Could not get an AI response:", error);
+
+currentResponse = "[GRAPE AI ERROR]: The response could not be completed.";
+
+const updatedMessages = loadChatMessages(chatId);
+
+updatedMessages.push({
+role: "assistant",
+text: currentResponse,
+createdAt: Date.now()
+});
+
+saveChatMessages(chatId, updatedMessages);
+
+if (focusActiveChatId === chatId) {
+renderChatMessages(chatId);
+}
+} finally {
+if (sendButton) sendButton.disabled = false;
+}
 }
 
+const baseMessageText = chatInputBox.value.trim();
+if (!baseMessageText) return;
 
+currentQuery = baseMessageText;
+appendChatBubbleDOM(currentQuery, "user-message", "User");
+chatInputBox.value = "";
+
+const simulatedCompressedMemorySummary =
+"[System memory status stable. Active session logs running.]";
+
+try {
+currentResponse = await AiBrainFunction(
+currentQuery,
+simulatedCompressedMemorySummary
+);
+
+appendChatBubbleDOM(currentResponse, "ai-message", "AI");
+history.push({
+q: currentQuery,
+r: currentResponse,
+mood: calculateContextMood(currentQuery)
+});
+} catch (error) {
+console.error("Could not get an AI response:", error);
+currentResponse = "[GRAPE AI ERROR]: The response could not be completed.";
+appendChatBubbleDOM(currentResponse, "ai-message", "AI");
+}
+}
 
 function appendChatBubbleDOM(text, styleClass, identityLabel) {
 const messagesScrollFrame = safeGetElement("messages-container");
