@@ -844,55 +844,63 @@ return messages
 }
 
 async function syncUserChatsDashboard() {
-const containerSlot = safeGetElement("chats-list");
-if (!containerSlot) return;
-
 if (isGuestSession(activeUserSession)) {
 globalWorkspaceChatList = loadGuestChats();
-} else {
-try {
-const queryReference = query(
-collection(db, "ai_users_history"),
-where("chatOwner", "==", activeUserSession)
-);
-
-const historySnapshot = await getDocs(queryReference);
-
-globalWorkspaceChatList = [];
-
-historySnapshot.forEach(chatNode => {
-const chatNodeData = chatNode.data();
-
-globalWorkspaceChatList.push({
-id: chatNode.id,
-title: decodeSecurePipeline(chatNodeData.encryptedTitle) || "Untitled Chat"
-});
-});
-} catch (error) {
-console.warn("Cloud chat list unavailable. Using local chat storage.", error);
-
-globalWorkspaceChatList = [
-{ id: "local_default_1", title: "Main Project Hub" }
-];
-}
-}
-
 if (!globalWorkspaceChatList.length) {
-globalWorkspaceChatList = [
-{ id: "local_default_1", title: "Main Project Hub" }
-];
+globalWorkspaceChatList = [{ id: "guest_chat_1", title: "Guest Chat" }];
 }
-
 focusActiveChatId = globalWorkspaceChatList[0].id;
-
-const activeChatTitle = safeGetElement("active-chat-title");
-
-if (activeChatTitle) {
-activeChatTitle.innerText = globalWorkspaceChatList[0].title;
-}
-
 renderWorkspaceChatsList();
-renderChatMessages(focusActiveChatId);
+return;
+  const containerSlot = safeGetElement("chats-list");
+  if (!containerSlot) return;
+
+  if (isGuestSession(activeUserSession)) {
+    globalWorkspaceChatList = loadGuestChats();
+  } else {
+    try {
+      const queryReference = query(
+        collection(db, "ai_users_history"),
+        where("chatOwner", "==", activeUserSession)
+      );
+
+      const historySnapshot = await getDocs(queryReference);
+
+      globalWorkspaceChatList = [];
+
+      historySnapshot.forEach(chatNode => {
+        const chatNodeData = chatNode.data();
+
+        globalWorkspaceChatList.push({
+          id: chatNode.id,
+          title: decodeSecurePipeline(chatNodeData.encryptedTitle) || "Untitled Chat"
+        });
+      });
+    } catch (error) {
+      console.warn("Cloud chat list unavailable. Using local chat storage.", error);
+
+      globalWorkspaceChatList = [
+        { id: "local_default_1", title: "Main Project Hub" }
+      ];
+    }
+  }
+
+  if (!globalWorkspaceChatList.length) {
+    globalWorkspaceChatList = [
+      { id: "local_default_1", title: "Main Project Hub" }
+    ];
+  }
+
+  focusActiveChatId = globalWorkspaceChatList[0].id;
+
+  const activeChatTitle = safeGetElement("active-chat-title");
+
+  if (activeChatTitle) {
+    activeChatTitle.innerText = globalWorkspaceChatList[0].title;
+  }
+
+  renderWorkspaceChatsList();
+  renderChatMessages(focusActiveChatId);
 }
 
 const containerSlot = safeGetElement("chats-list");
@@ -936,11 +944,8 @@ itemRow.className = `chat-list-item ${isFocused ? "active" : ""}`;
 itemRow.addEventListener("click", () => {
 focusActiveChatId = chatItem.id;
 const activeChatTitle = safeGetElement("active-chat-title");
-if (activeChatTitle) {
-activeChatTitle.innerText = chatItem.title;
-}
+if (activeChatTitle) activeChatTitle.innerText = chatItem.title;
 renderWorkspaceChatsList();
-renderChatMessages(chatItem.id);
 });
 
 itemRow.innerHTML = `
@@ -986,8 +991,8 @@ const activeChatTitle = safeGetElement("active-chat-title");
 if (activeChatTitle) activeChatTitle.innerText = baseTitleText;
 
 renderWorkspaceChatsList();
-renderChatMessages(uniqueId);
 return;
+}
 
 if (!activeUserSession) return;
 
@@ -1035,21 +1040,12 @@ if (activeChatTitle) activeChatTitle.innerText = targetNode.title;
 
 function triggerChatDeletionAction(id) {
 if (!confirm("Are you sure you want to permanently delete this chat history thread?")) return;
-  if (!confirm("Are you sure you want to delete this chat history?")) return;
 
 globalWorkspaceChatList = globalWorkspaceChatList.filter((item) => item.id !== id);
-  globalWorkspaceChatList = globalWorkspaceChatList.filter(
-    item => item.id !== id
-  );
 
 if (isGuestSession(activeUserSession)) {
 saveGuestChats();
 }
-  try {
-    localStorage.removeItem(chatMessagesStorageKey(id));
-  } catch (error) {
-    console.warn("Deleted chat history could not be cleared.", error);
-  }
 
 if (focusActiveChatId === id) {
 focusActiveChatId = null;
@@ -1057,25 +1053,6 @@ const activeChatTitle = safeGetElement("active-chat-title");
 if (activeChatTitle) activeChatTitle.innerText = "New Chat";
 }
 renderWorkspaceChatsList();
-renderChatMessages(uniqueId);
-  if (isGuestSession(activeUserSession)) {
-    saveGuestChats();
-  }
-
-  if (focusActiveChatId === id) {
-    focusActiveChatId = globalWorkspaceChatList[0]?.id || null;
-
-    const activeChatTitle = safeGetElement("active-chat-title");
-
-    if (activeChatTitle) {
-      activeChatTitle.innerText =
-        globalWorkspaceChatList[0]?.title || "New Chat";
-    }
-
-    renderChatMessages(focusActiveChatId);
-  }
-
-  renderWorkspaceChatsList();
 }
 
 // ==========================================================================
@@ -1145,84 +1122,7 @@ return currentResponse;
 // ==========================================================================
 async function transmitChatMessagePayload() {
 const chatInputBox = safeGetElement("message-input");
-const sendButton = safeGetElement("send-btn");
-
 if (!chatInputBox) return;
-
-const baseMessageText = chatInputBox.value.trim();
-
-if (!baseMessageText || !focusActiveChatId) return;
-
-const chatId = focusActiveChatId;
-
-currentQuery = baseMessageText;
-chatInputBox.value = "";
-
-const chatMessages = loadChatMessages(chatId);
-
-chatMessages.push({
-role: "user",
-text: currentQuery,
-createdAt: Date.now()
-});
-
-saveChatMessages(chatId, chatMessages);
-
-if (sendButton) sendButton.disabled = true;
-
-if (focusActiveChatId === chatId) {
-renderChatMessages(chatId);
-}
-
-const memorySummary = buildChatMemory(chatMessages.slice(0, -1));
-
-try {
-currentResponse = await AiBrainFunction(
-currentQuery,
-memorySummary
-);
-
-const updatedMessages = loadChatMessages(chatId);
-
-updatedMessages.push({
-role: "assistant",
-text: currentResponse,
-createdAt: Date.now()
-});
-
-saveChatMessages(chatId, updatedMessages);
-
-history.push({
-q: currentQuery,
-r: currentResponse,
-mood: calculateContextMood(currentQuery)
-});
-
-if (focusActiveChatId === chatId) {
-renderChatMessages(chatId);
-}
-} catch (error) {
-console.error("Could not get an AI response:", error);
-
-currentResponse = "[GRAPE AI ERROR]: The response could not be completed.";
-
-const updatedMessages = loadChatMessages(chatId);
-
-updatedMessages.push({
-role: "assistant",
-text: currentResponse,
-createdAt: Date.now()
-});
-
-saveChatMessages(chatId, updatedMessages);
-
-if (focusActiveChatId === chatId) {
-renderChatMessages(chatId);
-}
-} finally {
-if (sendButton) sendButton.disabled = false;
-}
-}
 
 const baseMessageText = chatInputBox.value.trim();
 if (!baseMessageText) return;
