@@ -505,7 +505,6 @@ const tierValue =
         ? userPlan
         : "free";
 
-  const tier = String(tierValue).toLowerCase();
 
   const tierLimits = {
     free: { maxOutputTokens: 150, memoryTokens: 800, maxThinkTimeMs: 11000 },
@@ -522,15 +521,9 @@ const tierValue =
 const requestedTier = String(tierValue || "free").toLowerCase();
 const tier = requestedTier === "owner" ? "max" : requestedTier;
 
-const tierLimits = {
-  free:  { maxOutputTokens: 150, memoryTokens: 800,  maxThinkTimeMs: 11000 },
-  plus:  { maxOutputTokens: 200, memoryTokens: 950,  maxThinkTimeMs: 17000 },
-  pro:   { maxOutputTokens: 250, memoryTokens: 1150, maxThinkTimeMs: 24000 },
-  max:   { maxOutputTokens: 300, memoryTokens: 1300, maxThinkTimeMs: 35000 }
-};
 
   const limits = tierLimits[tier] ?? tierLimits.free;
-const limits = tierLimits[tier] ?? tierLimits.free;
+
 
 // This is an approximate whitespace-token cap. API.js should enforce the
 // actual limit with the model's tokenizer.
