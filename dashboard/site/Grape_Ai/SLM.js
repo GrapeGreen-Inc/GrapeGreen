@@ -895,34 +895,6 @@ async function syncUserChatsDashboard() {
   renderChatMessages(focusActiveChatId);
 }
 
-const containerSlot = safeGetElement("chats-list");
-if (!containerSlot) return;
-containerSlot.innerHTML = "";
-
-try {
-const queryReference = query(
-collection(db, "ai_users_history"),
-where("chatOwner", "==", activeUserSession)
-);
-const historySnapshot = await getDocs(queryReference);
-globalWorkspaceChatList = [];
-
-historySnapshot.forEach((chatNode) => {
-const chatNodeData = chatNode.data();
-globalWorkspaceChatList.push({
-id: chatNode.id,
-title: decodeSecurePipeline(chatNodeData.encryptedTitle) || "Encrypted Chat Node"
-});
-});
-
-renderWorkspaceChatsList();
-} catch (error) {
-console.warn("Firestore access restrictions. Initializing local workspace memory framework layer.", error);
-globalWorkspaceChatList = [{ id: "local_default_1", title: "Main Project Hub" }];
-renderWorkspaceChatsList();
-}
-}
-
 function renderWorkspaceChatsList() {
 const containerSlot = safeGetElement("chats-list");
 if (!containerSlot) return;
