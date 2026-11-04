@@ -844,14 +844,55 @@ function buildChatMemory(messages) {
 }
 
 async function syncUserChatsDashboard() {
-if (isGuestSession(activeUserSession)) {
-globalWorkspaceChatList = loadGuestChats();
-if (!globalWorkspaceChatList.length) {
-globalWorkspaceChatList = [{ id: "guest_chat_1", title: "Guest Chat" }];
-}
-focusActiveChatId = globalWorkspaceChatList[0].id;
-renderWorkspaceChatsList();
-return;
+  const containerSlot = safeGetElement("chats-list");
+  if (!containerSlot) return;
+
+  if (isGuestSession(activeUserSession)) {
+    globalWorkspaceChatList = loadGuestChats();
+  } else {
+    try {
+      const queryReference = query(
+        collection(db, "ai_users_history"),
+        where("chatOwner", "==", activeUserSession)
+      );
+
+      const historySnapshot = await getDocs(queryReference);
+
+      globalWorkspaceChatList = [];
+
+      historySnapshot.forEach(chatNode => {
+        const chatNodeData = chatNode.data();
+
+        globalWorkspaceChatList.push({
+          id: chatNode.id,
+          title: decodeSecurePipeline(chatNodeData.encryptedTitle) || "Untitled Chat"
+        });
+      });
+    } catch (error) {
+      console.warn("Cloud chat list unavailable. Using local chat storage.", error);
+
+      globalWorkspaceChatList = [
+        { id: "local_default_1", title: "Main Project Hub" }
+      ];
+    }
+  }
+
+  if (!globalWorkspaceChatList.length) {
+    globalWorkspaceChatList = [
+      { id: "local_default_1", title: "Main Project Hub" }
+    ];
+  }
+
+  focusActiveChatId = globalWorkspaceChatList[0].id;
+
+  const activeChatTitle = safeGetElement("active-chat-title");
+
+  if (activeChatTitle) {
+    activeChatTitle.innerText = globalWorkspaceChatList[0].title;
+  }
+
+  renderWorkspaceChatsList();
+  renderChatMessages(focusActiveChatId);
 }
 
 const containerSlot = safeGetElement("chats-list");
