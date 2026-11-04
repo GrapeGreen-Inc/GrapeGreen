@@ -1186,34 +1186,7 @@ async function transmitChatMessagePayload() {
   }
 }
 
-const baseMessageText = chatInputBox.value.trim();
-if (!baseMessageText) return;
 
-currentQuery = baseMessageText;
-appendChatBubbleDOM(currentQuery, "user-message", "User");
-chatInputBox.value = "";
-
-const simulatedCompressedMemorySummary =
-"[System memory status stable. Active session logs running.]";
-
-try {
-currentResponse = await AiBrainFunction(
-currentQuery,
-simulatedCompressedMemorySummary
-);
-
-appendChatBubbleDOM(currentResponse, "ai-message", "AI");
-history.push({
-q: currentQuery,
-r: currentResponse,
-mood: calculateContextMood(currentQuery)
-});
-} catch (error) {
-console.error("Could not get an AI response:", error);
-currentResponse = "[GRAPE AI ERROR]: The response could not be completed.";
-appendChatBubbleDOM(currentResponse, "ai-message", "AI");
-}
-}
 
 function appendChatBubbleDOM(text, styleClass, identityLabel) {
 const messagesScrollFrame = safeGetElement("messages-container");
