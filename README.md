@@ -77,10 +77,10 @@ Grape AI has limits on how long it can reply, how much recent chat it can consid
 
 | Plan | Max reply length | Chat context remembered | Thinking time limit |
 |---|---:|---:|---:|
-| Free | 150 tokens | 800 tokens | 11 seconds |
-| Plus | 200 tokens | 950 tokens | 17 seconds |
-| Pro | 250 tokens | 1,150 tokens | 24 seconds |
-| Max | 300 tokens | 1,300 tokens | 35 seconds |
+| Free | 150 tokens | 800 tokens | 11 seconds | $0.00/mo |
+| Plus | 200 tokens | 950 tokens | 17 seconds | $4.99/mo |
+| Pro | 250 tokens | 1,150 tokens | 24 seconds | $19.99/mo |
+| Max | 300 tokens | 1,300 tokens | 35 seconds | $49.99/mo |
 
 Tokens are small bits of text, so the counts don’t exactly equal words. These are maximums, not guaranteed reply lengths or wait times.
 
