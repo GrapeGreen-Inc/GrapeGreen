@@ -1,3 +1,27 @@
+# GrapeGreen Update Log
+
+## V1.8.1
+### Smart Ai+
+* [ADD] added more mumbo jumbo
+* [ADD] my fingers hurted
+* [REMOVE] dumb-ish responses
+
+---
+
+## V1.8
+### Smart Ai+
+* [ADD] can now respond to users
+* [REMOVE] got rid of wip message
+* [CHANGE] changed brain
+
+---
+
+## V1.7.1
+### AI+
+* [ADD] change password feild
+
+---
+
 ## V1.7
 ### Style+
 * [ADD] Add Style in Atomic science
