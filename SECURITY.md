@@ -6,8 +6,8 @@ Please check the table below to see the security status of your current GrapeGre
 
 | Version | Status | Notes |
 | ------- | :---: | ----- |
-| **V1.7.x** | :shield: | Latest production update. Fully supported. |
-| **V1.6.x** | :key: | Functional older version. Move to V1.7 if possible. |
+| **V1.8.x** | :shield: | Latest production update. Fully supported. |
+| **V1.6.x** | :key: | Functional older version. Move to V1.8 if possible. |
 | **V1.2 (Security+)** | :lock: | Security+ update. Active security support milestone. |
 | **< V1.2** | :warning: | No security updates. Fully deprecated. |
 
