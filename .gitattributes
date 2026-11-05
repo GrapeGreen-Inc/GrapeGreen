@@ -4,7 +4,7 @@
 
 # Force JSON (.json) files to be detectable as source code instead of static data sheets
 *.json linguist-data=false
-*.json linguist-detectable=true
+*.json linguist-detectable=false
 
 # Force plain text files to appear as an official language bar metric
 *.txt linguist-detectable
