@@ -4,6 +4,7 @@ const DB = `https://firestore.googleapis.com/v1/projects/${CFG.projectId}/databa
 const KEY = `?key=${CFG.apiKey}`;
 
 /* ---------- data layer ---------- */
+//data
 const hash = (pw, salt) => CryptoJS.PBKDF2(pw, salt, { keySize: 8, iterations: 10000 }).toString();
 
 async function getUser(u) {
