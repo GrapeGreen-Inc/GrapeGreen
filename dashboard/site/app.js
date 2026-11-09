@@ -1929,11 +1929,237 @@ if ($("sub-chat-form")) {
     }
   });
 }
+/* ============================================================================
+   GRApeGREEN EXTENDED CHAT ARCHITECTURE SYSTEM — UNIFIED APPEND ENGINE
+   Paste this single, self-contained block directly at the bottom of app.js
+   ============================================================================ */
+
+/* ---------- Core State Management Variables ---------- */
+let curSubRoom = null;
+let curPrivRoom = null;
+let subMsgsUnsubscribe = null;
+let privMsgsUnsubscribe = null;
+const GIPHY_API_KEY = "dc6zaTOxFJmzC"; // Public demo search key
+
+/* ---------- Automated Tab Switch Hook Engine ---------- */
+// Intercepts side-item navigation clicks to build automated view initializations
+document.addEventListener("click", e => {
+  const sideItem = e.target.closest(".side-item");
+  if (!sideItem) return;
+
+  const tabId = sideItem.dataset.tab;
+  
+  // Clean up any remaining visual asset overlays when navigating away
+  closeGifPickers();
+  const contextMenu = document.getElementById("chat-global-context-menu");
+  if (contextMenu) contextMenu.classList.add("hide");
+
+  // Route collection initializations cleanly based on tab configurations
+  if (tabId === "chat_topics") {
+    const createCard = $("sub-create-card");
+    if (createCard) {
+      if (typeof isDev === "function") {
+        createCard.classList.toggle("hide", !isDev());
+      } else {
+        createCard.classList.add("hide");
+      }
+    }
+    loadSubRooms();
+  }
+  if (tabId === "priv_chat") {
+    loadPrivRooms();
+  }
+});
+
+/* ---------- Clean Replacement for Global Chat render() Function ---------- */
+// Updates the global rendering routine to bind the vertical 3-dot dropdown selectors
+function render() {
+  const box = $("msgs");
+  if (!box) return;
+  const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+  const ts = $("ts") && $("ts").checked;
+  const kidViewer = me && me.age === "1";
+  
+  const html = lastMsgs.map(m => {
+    const kidMsg = m.k === "1";
+    if (kidViewer && !kidMsg) return ""; // Kids view matching tier entries only
+    if (kidMsg && !kidViewer && !isMod()) {
+      return '<p class="msg"><span class="kidbox" tabindex="0" title="Only kids can see this" data-tip="Only kids can see this"></span></p>';
+    }
+
+    const time = ts && !m.local ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
+    const tag = m.r === "bot" ? '<span class="tag">bot</span>' : rk(m.r) >= 3 ? `<span class="tag">${m.r}</span>`
+      : m.r === "mod" ? '<span class="tag">mod</span> <span class="chk" title="Verified moderator">&check;</span>' : kidMsg ? '<span class="tag">kid</span>' : "";
+    const av = AVATARS.includes(m.a) ? m.a + " " : "";
+    
+    // Check for Giphy signature payload arrays inside string contents
+    let contentText = fmt(filt(m.x || ""));
+    if (m.x && m.x.startsWith("[GIF]:")) {
+      const gifUrl = m.x.slice(6);
+      if (gifUrl.startsWith("https://")) {
+        contentText = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px; border:2px solid var(--line);">`;
+      }
+    }
+
+    // Embed vertical action icons adjacent to user message wrappers
+    const actionBtn = m.local ? "" : `
+      <div class="chat-action-menu-container" style="display:inline-block; position:relative; margin-left:6px; vertical-align:middle;">
+        <button class="chat-action-trigger-btn" 
+                data-msg-id="${esc(m.id)}" 
+                data-msg-author="${esc(m.u)}" 
+                title="Message Actions" 
+                style="background:none; border:none; color:var(--mute); font-weight:bold; cursor:pointer; padding:2px 6px; font-size:16px;">⋮</button>
+      </div>
+    `;
+
+    return `<p class="msg" style="margin-bottom:10px;">${time}${av}<b>${esc(m.u)}</b>${tag}: <span>${contentText}</span>${actionBtn}</p>`;
+  }).join("");
+  
+  box.innerHTML = html || '<p class="mute">No messages yet. Say hi!</p>';
+  if (near) box.scrollTop = box.scrollHeight;
+}
+
+/* ---------- Chat Rooms (Sub-Chats) Engine ---------- */
+async function loadSubRooms() {
+  const listContainer = $("sub-topics-list");
+  if (!listContainer) return;
+  listContainer.textContent = "Loading chat rooms...";
+  try {
+    const r = await fetch(`${ROOT}/SubChats${KEY}&pageSize=100`);
+    const docs = ((await r.json()).documents || []).map(parseDoc);
+    
+    listContainer.innerHTML = docs.length ? docs.map(room => 
+      `<div class="card">
+        <b># ${esc(room.id)}</b>
+        <button class="btn" data-join-sub="${esc(room.id)}">Join Room</button>
+      </div>`
+    ).join("") : '<p class="mute">No chat rooms created yet.</p>';
+  } catch (x) {
+    listContainer.textContent = "Couldn't load rooms.";
+  }
+}
+
+if ($("sub-create-btn")) {
+  $("sub-create-btn").onclick = async () => {
+    const msgEl = $("sub-create-msg");
+    if (!msgEl) return;
+    msgEl.textContent = "";
+    if (typeof isDev === "function" && !isDev()) return (msgEl.textContent = "Devs and above only.");
+
+    const title = cleanText($("sub-new-title").value).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40);
+    if (!title) return (msgEl.textContent = "Enter a valid room name.");
+
+    try {
+      await put(`SubChats/${encodeURIComponent(title)}`, { createdBy: me ? me.name : "Unknown", t: Date.now() });
+      $("sub-new-title").value = "";
+      msgEl.textContent = "Room created successfully!";
+      loadSubRooms();
+    } catch (x) {
+      msgEl.textContent = "Failed to create room. It might already exist.";
+    }
+  };
+}
+
+function renderSubMessages(list) {
+  const box = $("sub-msgs");
+  if (!box) return;
+  const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+  
+  const parsed = list.map(o => ({
+    id: o.id, u: o.u, x: dec(o.x), r: o.r, a: o.a, t: o.t
+  })).reverse();
+
+  box.innerHTML = parsed.map(m => {
+    const timeStr = $("ts") && $("ts").checked ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
+    const tag = rk(m.r) >= 3 ? `<span class="tag">${m.r}</span>` : m.r === "mod" ? '<span class="tag">mod</span> &check;' : "";
+    const av = AVATARS.includes(m.a) ? m.a + " " : "";
+    
+    let content = fmt(filt(m.x || ""));
+    if (m.x && m.x.startsWith("[GIF]:")) {
+      const gifUrl = m.x.slice(6);
+      if (gifUrl.startsWith("https://")) {
+        content = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px; border:2px solid var(--line);">`;
+      }
+    }
+    
+    return `<p class="msg">${timeStr}${av}<b>${esc(m.u)}</b>${tag}: ${content}</p>`;
+  }).join("") || '<p class="mute">Welcome to the room! Say hi!</p>';
+
+  if (near) box.scrollTop = box.scrollHeight;
+}
+
+async function openSubRoom(roomName) {
+  curSubRoom = roomName;
+  closeGifPickers();
+  if (subMsgsUnsubscribe) { subMsgsUnsubscribe(); subMsgsUnsubscribe = null; }
+  
+  if ($("sub-thread-title")) $("sub-thread-title").textContent = `# ${roomName}`;
+  if ($("sub-list-card")) $("sub-list-card").classList.add("hide");
+  if ($("sub-create-card")) $("sub-create-card").classList.add("hide");
+  if ($("sub-thread-card")) $("sub-thread-card").classList.remove("hide");
+  if ($("sub-msgs")) $("sub-msgs").innerHTML = '<p class="mute">Loading message history...</p>';
+
+  const pollUrl = `${ROOT}/SubChats/${encodeURIComponent(roomName)}/messages${KEY}&orderBy=t%20desc&pageSize=50`;
+  const runPoll = async () => {
+    if (curSubRoom !== roomName || document.hidden || !$("chat_topics").classList.contains("active")) return;
+    try {
+      const r = await fetch(pollUrl);
+      const docs = ((await r.json()).documents || []).map(parseDoc);
+      renderSubMessages(docs);
+    } catch (e) {}
+  };
+
+  runPoll();
+  const subInterval = setInterval(runPoll, 4000);
+  subMsgsUnsubscribe = () => clearInterval(subInterval);
+}
+
+if ($("sub-close-btn")) {
+  $("sub-close-btn").onclick = () => {
+    if (subMsgsUnsubscribe) { subMsgsUnsubscribe(); subMsgsUnsubscribe = null; }
+    curSubRoom = null;
+    closeGifPickers();
+    if ($("sub-thread-card")) $("sub-thread-card").classList.add("hide");
+    if ($("sub-list-card")) $("sub-list-card").classList.remove("hide");
+    if ($("sub-create-card")) $("sub-create-card").classList.toggle("hide", typeof isDev === "function" ? !isDev() : true);
+    loadSubRooms();
+  };
+}
+
+if ($("sub-chat-form")) {
+  $("sub-chat-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const input = $("sub-chat-in");
+    const raw = input ? input.value.trim() : "";
+    if (!raw || !me || me.role === "guest" || !curSubRoom) return;
+
+    const txt = cleanText(raw).slice(0, 500);
+    if (input) input.value = "";
+
+    try {
+      await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages${KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: {
+            u: { stringValue: me.name },
+            x: { stringValue: wrap(filt(txt), CHAT_KEY) },
+            a: { stringValue: me.avatar || "" },
+            r: { stringValue: me.role },
+            t: { integerValue: String(Date.now()) }
+          }
+        })
+      });
+    } catch (x) {
+      toast("Failed to send message.");
+    }
+  });
+}
 
 /* ---------- Private Messages Engine ---------- */
 async function loadPrivRooms() {
   const container = $("priv-rooms-list");
-  if (!container) return;
+  if (!container || !me) return;
   container.textContent = "Loading active conversations...";
   try {
     const r = await fetch(`${ROOT}/PrivChats${KEY}&pageSize=100`);
@@ -1958,7 +2184,7 @@ if ($("priv-start-btn")) {
     const msgEl = $("priv-start-msg");
     if (!msgEl) return;
     msgEl.textContent = "";
-    if (me.role === "guest") return (msgEl.textContent = "Guests cannot open private threads.");
+    if (!me || me.role === "guest") return (msgEl.textContent = "Guests cannot open private threads.");
 
     const peer = $("priv-target-user").value.trim();
     if (!peer || peer === me.name) return (msgEl.textContent = "Enter a valid target username.");
@@ -2046,7 +2272,7 @@ if ($("priv-chat-form")) {
     e.preventDefault();
     const input = $("priv-chat-in");
     const raw = input ? input.value.trim() : "";
-    if (!raw || me.role === "guest" || !curPrivRoom) return;
+    if (!raw || !me || me.role === "guest" || !curPrivRoom) return;
 
     const txt = cleanText(raw).slice(0, 500);
     if (input) input.value = "";
@@ -2133,10 +2359,10 @@ document.body.addEventListener("click", async e => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fields: {
-            u: { stringValue: me.name },
+            u: { stringValue: me ? me.name : "Unknown" },
             x: { stringValue: wrap(payload, CHAT_KEY) },
-            a: { stringValue: me.avatar || "" },
-            r: { stringValue: me.role },
+            a: { stringValue: me ? me.avatar : "" },
+            r: { stringValue: me ? me.role : "guest" },
             t: { integerValue: String(Date.now()) }
           }
         })
@@ -2150,10 +2376,10 @@ document.body.addEventListener("click", async e => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fields: {
-            u: { stringValue: me.name },
+            u: { stringValue: me ? me.name : "Unknown" },
             x: { stringValue: wrap(payload, CHAT_KEY) },
-            a: { stringValue: me.avatar || "" },
-            r: { stringValue: me.role },
+            a: { stringValue: me ? me.avatar : "" },
+            r: { stringValue: me ? me.role : "guest" },
             t: { integerValue: String(Date.now()) }
           }
         })
@@ -2242,7 +2468,7 @@ document.body.addEventListener("click", e => {
     const msgId = trigger.dataset.msgId;
     const author = trigger.dataset.msgAuthor;
     
-    const showDeleteOption = isMod(); 
+    const showDeleteOption = (typeof isMod === "function") ? isMod() : false; 
     const isOwnMessage = me && (author === me.name);
 
     menu.innerHTML = `
@@ -2298,7 +2524,7 @@ document.body.addEventListener("click", e => {
     } 
     else if (action === "delete") {
       const id = menuItem.dataset.id;
-      if (isMod()) {
+      if (typeof isMod === "function" && isMod()) {
         fetch(`${ROOT}/chat/${encodeURIComponent(id)}${KEY}`, { method: "DELETE" })
           .then(() => {
             if (!window.listenChat) { seen = 0; pollChat(true); }
