@@ -1425,7 +1425,24 @@ $("copy").onclick = async () => {
     else document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "tos"));
     removeOverlay();
   });
-
+if (typeof window.switchTab === "function") {
+  const originalSwitchTab = window.switchTab;
+  window.switchTab = function (id) {
+    if (typeof originalSwitchTab === "function") originalSwitchTab(id);
+    
+    // Clear any open GIF overlays when jumping between tabs
+    closeGifPickers();
+    
+    // Auto-trigger data fetching loops when user hits the new side tabs
+    if (id === "chat_topics") {
+      checkSubCreateVisibility();
+      loadSubRooms();
+    }
+    if (id === "priv_chat") {
+      loadPrivRooms();
+    }
+  };
+}
   if (typeof switchTab === "function") {
     const _switch = switchTab;
     window.switchTab = function (id) {
@@ -1709,22 +1726,26 @@ if (document.readyState === "loading") {
         }, randomStaggerOffset);
     });
 })();
-/* ---------- sub-chats & private messaging state variables ---------- */
 let curSubRoom = null;
 let curPrivRoom = null;
 let subMsgsUnsubscribe = null;
 let privMsgsUnsubscribe = null;
 
+// Public Giphy API key for demo / browser sandbox access
+const GIPHY_API_KEY = "dc6zaTOxFJmzC"; 
+
 /* ---------- sub-chats (chat rooms) logic ---------- */
 
 // Check if dev+ to reveal the creation card upon entering the tab
 function checkSubCreateVisibility() {
-  $("sub-create-card").classList.toggle("hide", !isDev());
+  const el = $("sub-create-card");
+  if (el) el.classList.toggle("hide", !isDev());
 }
 
 // Load available rooms list from collection 'SubChats'
 async function loadSubRooms() {
   const listContainer = $("sub-topics-list");
+  if (!listContainer) return;
   listContainer.textContent = "Loading chat rooms...";
   try {
     const r = await fetch(`${ROOT}/SubChats${KEY}&pageSize=100`);
@@ -1742,28 +1763,31 @@ async function loadSubRooms() {
 }
 
 // Setup creator submission for dev+ roles
-$("sub-create-btn").onclick = async () => {
-  const msgEl = $("sub-create-msg");
-  msgEl.textContent = "";
-  if (!isDev()) return (msgEl.textContent = "Devs and above only.");
+if ($("sub-create-btn")) {
+  $("sub-create-btn").onclick = async () => {
+    const msgEl = $("sub-create-msg");
+    if (!msgEl) return;
+    msgEl.textContent = "";
+    if (!isDev()) return (msgEl.textContent = "Devs and above only.");
 
-  const title = cleanText($("sub-new-title").value).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40);
-  if (!title) return (msgEl.textContent = "Enter a valid alphanumeric name.");
+    const title = cleanText($("sub-new-title").value).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40);
+    if (!title) return (msgEl.textContent = "Enter a valid alphanumeric name.");
 
-  try {
-    // Put dummy or configuration properties to initialize the document root path cleanly
-    await put(`SubChats/${encodeURIComponent(title)}`, { createdBy: me.name, t: Date.now() });
-    $("sub-new-title").value = "";
-    msgEl.textContent = "Room created successfully!";
-    loadSubRooms();
-  } catch (x) {
-    msgEl.textContent = "Failed to create room. It might already exist.";
-  }
-};
+    try {
+      await put(`SubChats/${encodeURIComponent(title)}`, { createdBy: me.name, t: Date.now() });
+      $("sub-new-title").value = "";
+      msgEl.textContent = "Room created successfully!";
+      loadSubRooms();
+    } catch (x) {
+      msgEl.textContent = "Failed to create room. It might already exist.";
+    }
+  };
+}
 
 // Render message logs inside sub-chats mirroring global styles cleanly
 function renderSubMessages(list) {
   const box = $("sub-msgs");
+  if (!box) return;
   const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
   
   const parsed = list.map(o => ({
@@ -1776,16 +1800,15 @@ function renderSubMessages(list) {
   })).reverse();
 
   box.innerHTML = parsed.map(m => {
-    const timeStr = $("ts").checked ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
+    const timeStr = $("ts") && $("ts").checked ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
     const tag = rk(m.r) >= 3 ? `<span class="tag">${m.r}</span>` : m.r === "mod" ? '<span class="tag">mod</span> &check;' : "";
     const av = AVATARS.includes(m.a) ? m.a + " " : "";
     
-    // Renders either standard wrapped text string or an optimized inline graphic if parsed as a Giphy token
     let content = fmt(filt(m.x || ""));
     if (m.x && m.x.startsWith("[GIF]:")) {
       const gifUrl = m.x.slice(6);
       if (gifUrl.startsWith("https://")) {
-        content = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px;">`;
+        content = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px; border:2px solid var(--line);">`;
       }
     }
     
@@ -1798,15 +1821,15 @@ function renderSubMessages(list) {
 // Core room activation frame routing template loops
 async function openSubRoom(roomName) {
   curSubRoom = roomName;
+  closeGifPickers();
   if (subMsgsUnsubscribe) { subMsgsUnsubscribe(); subMsgsUnsubscribe = null; }
   
-  $("sub-thread-title").textContent = `# ${roomName}`;
-  $("sub-list-card").classList.add("hide");
-  $("sub-create-card").classList.add("hide");
-  $("sub-thread-card").classList.remove("hide");
-  $("sub-msgs").innerHTML = '<p class="mute">Loading message history...</p>';
+  if ($("sub-thread-title")) $("sub-thread-title").textContent = `# ${roomName}`;
+  if ($("sub-list-card")) $("sub-list-card").classList.add("hide");
+  if ($("sub-create-card")) $("sub-create-card").classList.add("hide");
+  if ($("sub-thread-card")) $("sub-thread-card").classList.remove("hide");
+  if ($("sub-msgs")) $("sub-msgs").innerHTML = '<p class="mute">Loading message history...</p>';
 
-  // Setup live channel polling connections mapping sub-collections matching rules blocks exactly
   const pollUrl = `${ROOT}/SubChats/${encodeURIComponent(roomName)}/messages${KEY}&orderBy=t%20desc&pageSize=50`;
   const runPoll = async () => {
     if (curSubRoom !== roomName || document.hidden || !$("chat_topics").classList.contains("active")) return;
@@ -1823,55 +1846,59 @@ async function openSubRoom(roomName) {
 }
 
 // Exit click logic targets returning to main room menus
-$("sub-close-btn").onclick = () => {
-  if (subMsgsUnsubscribe) { subMsgsUnsubscribe(); subMsgsUnsubscribe = null; }
-  curSubRoom = null;
-  $("sub-thread-card").classList.add("hide");
-  $("sub-list-card").classList.remove("hide");
-  checkSubCreateVisibility();
-  loadSubRooms();
-};
+if ($("sub-close-btn")) {
+  $("sub-close-btn").onclick = () => {
+    if (subMsgsUnsubscribe) { subMsgsUnsubscribe(); subMsgsUnsubscribe = null; }
+    curSubRoom = null;
+    closeGifPickers();
+    if ($("sub-thread-card")) $("sub-thread-card").classList.add("hide");
+    if ($("sub-list-card")) $("sub-list-card").classList.remove("hide");
+    checkSubCreateVisibility();
+    loadSubRooms();
+  };
+}
 
 // Form submit text encryption processors attaching context structures
-$("sub-chat-form").addEventListener("submit", async e => {
-  e.preventDefault();
-  const input = $("sub-chat-in");
-  const raw = input.value.trim();
-  if (!raw || me.role === "guest" || !curSubRoom) return;
+if ($("sub-chat-form")) {
+  $("sub-chat-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const input = $("sub-chat-in");
+    const raw = input ? input.value.trim() : "";
+    if (!raw || me.role === "guest" || !curSubRoom) return;
 
-  const txt = cleanText(raw).slice(0, 500);
-  input.value = "";
+    const txt = cleanText(raw).slice(0, 500);
+    if (input) input.value = "";
 
-  try {
-    await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages${KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fields: {
-          u: { stringValue: me.name },
-          x: { stringValue: wrap(filt(txt), CHAT_KEY) },
-          a: { stringValue: me.avatar || "" },
-          r: { stringValue: me.role },
-          t: { integerValue: String(Date.now()) }
-        }
-      })
-    });
-  } catch (x) {
-    toast("Failed to send message.");
-  }
-});
+    try {
+      await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages${KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: {
+            u: { stringValue: me.name },
+            x: { stringValue: wrap(filt(txt), CHAT_KEY) },
+            a: { stringValue: me.avatar || "" },
+            r: { stringValue: me.role },
+            t: { integerValue: String(Date.now()) }
+          }
+        })
+      });
+    } catch (x) {
+      toast("Failed to send message.");
+    }
+  });
+}
 
 /* ---------- private chats logic ---------- */
 
 // Scan current ongoing loops in 'PrivChats' where you are a tracking participant user
 async function loadPrivRooms() {
   const container = $("priv-rooms-list");
+  if (!container) return;
   container.textContent = "Loading conversation nodes...";
   try {
     const r = await fetch(`${ROOT}/PrivChats${KEY}&pageSize=100`);
     const docs = ((await r.json()).documents || []).map(parseDoc);
-    
-    // Filter rooms locally based on your username signature matching participant strings
     const activeRooms = docs.filter(room => room.id.split("~").includes(me.name));
 
     container.innerHTML = activeRooms.length ? activeRooms.map(room => {
@@ -1888,31 +1915,35 @@ async function loadPrivRooms() {
 }
 
 // Initiate new user companion channels via standard action click binds
-$("priv-start-btn").onclick = async () => {
-  const msgEl = $("priv-start-msg");
-  msgEl.textContent = "";
-  if (me.role === "guest") return (msgEl.textContent = "Guests cannot open private threads.");
+if ($("priv-start-btn")) {
+  $("priv-start-btn").onclick = async () => {
+    const msgEl = $("priv-start-msg");
+    if (!msgEl) return;
+    msgEl.textContent = "";
+    if (me.role === "guest") return (msgEl.textContent = "Guests cannot open private threads.");
 
-  const peer = $("priv-target-user").value.trim();
-  if (!peer || peer === me.name) return (msgEl.textContent = "Enter a valid alternative username.");
+    const peer = $("priv-target-user").value.trim();
+    if (!peer || peer === me.name) return (msgEl.textContent = "Enter a valid alternative username.");
 
-  try {
-    const peerDoc = await getUser(peer);
-    if (!peerDoc) return (msgEl.textContent = "Target account does not exist.");
+    try {
+      const peerDoc = await getUser(peer);
+      if (!peerDoc) return (msgEl.textContent = "Target account does not exist.");
 
-    const roomId = [me.name, peer].sort().join("~");
-    await put(`PrivChats/${encodeURIComponent(roomId)}`, { initiatedBy: me.name, t: Date.now() });
-    $("priv-target-user").value = "";
-    msgEl.textContent = "Chat initialized!";
-    openPrivRoom(roomId, peer);
-  } catch (x) {
-    msgEl.textContent = "Initialization failed.";
-  }
-};
+      const roomId = [me.name, peer].sort().join("~");
+      await put(`PrivChats/${encodeURIComponent(roomId)}`, { initiatedBy: me.name, t: Date.now() });
+      $("priv-target-user").value = "";
+      msgEl.textContent = "Chat initialized!";
+      openPrivRoom(roomId, peer);
+    } catch (x) {
+      msgEl.textContent = "Initialization failed.";
+    }
+  };
+}
 
 // Render matching outputs inside active private layers
 function renderPrivMessages(list) {
   const box = $("priv-msgs");
+  if (!box) return;
   const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
   
   const parsed = list.map(o => ({
@@ -1925,14 +1956,14 @@ function renderPrivMessages(list) {
   })).reverse();
 
   box.innerHTML = parsed.map(m => {
-    const timeStr = $("ts").checked ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
+    const timeStr = $("ts") && $("ts").checked ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
     const av = AVATARS.includes(m.a) ? m.a + " " : "";
     
     let content = fmt(filt(m.x || ""));
     if (m.x && m.x.startsWith("[GIF]:")) {
       const gifUrl = m.x.slice(6);
       if (gifUrl.startsWith("https://")) {
-        content = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px;">`;
+        content = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px; border:2px solid var(--line);">`;
       }
     }
     
@@ -1945,12 +1976,13 @@ function renderPrivMessages(list) {
 // Active connection router hooks for Private Messaging layouts
 async function openPrivRoom(roomId, peerName) {
   curPrivRoom = roomId;
+  closeGifPickers();
   if (privMsgsUnsubscribe) { privMsgsUnsubscribe(); privMsgsUnsubscribe = null; }
 
-  $("priv-thread-title").textContent = `Chat with ${peerName}`;
-  $("priv-sessions-card").classList.add("hide");
-  $("priv-thread-card").classList.remove("hide");
-  $("priv-msgs").innerHTML = '<p class="mute">Synchronizing history elements...</p>';
+  if ($("priv-thread-title")) $("priv-thread-title").textContent = `Chat with ${peerName}`;
+  if ($("priv-sessions-card")) $("priv-sessions-card").classList.add("hide");
+  if ($("priv-thread-card")) $("priv-thread-card").classList.remove("hide");
+  if ($("priv-msgs")) $("priv-msgs").innerHTML = '<p class="mute">Synchronizing history elements...</p>';
 
   const pollUrl = `${ROOT}/PrivChats/${encodeURIComponent(roomId)}/messages${KEY}&orderBy=t%20desc&pageSize=50`;
   const runPoll = async () => {
@@ -1968,46 +2000,49 @@ async function openPrivRoom(roomId, peerName) {
 }
 
 // View frames closing flag triggers
-$("priv-close-btn").onclick = () => {
-  if (privMsgsUnsubscribe) { privMsgsUnsubscribe(); privMsgsUnsubscribe = null; }
-  curPrivRoom = null;
-  $("priv-thread-card").classList.add("hide");
-  $("priv-sessions-card").classList.remove("hide");
-  loadPrivRooms();
-};
+if ($("priv-close-btn")) {
+  $("priv-close-btn").onclick = () => {
+    if (privMsgsUnsubscribe) { privMsgsUnsubscribe(); privMsgsUnsubscribe = null; }
+    curPrivRoom = null;
+    closeGifPickers();
+    if ($("priv-thread-card")) $("priv-thread-card").classList.add("hide");
+    if ($("priv-sessions-card")) $("priv-sessions-card").classList.remove("hide");
+    loadPrivRooms();
+  };
+}
 
 // Handle tracking text loops matching standard inputs
-$("priv-chat-form").addEventListener("submit", async e => {
-  e.preventDefault();
-  const input = $("priv-chat-in");
-  const raw = input.value.trim();
-  if (!raw || me.role === "guest" || !curPrivRoom) return;
+if ($("priv-chat-form")) {
+  $("priv-chat-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const input = $("priv-chat-in");
+    const raw = input ? input.value.trim() : "";
+    if (!raw || me.role === "guest" || !curPrivRoom) return;
 
-  const txt = cleanText(raw).slice(0, 500);
-  input.value = "";
+    const txt = cleanText(raw).slice(0, 500);
+    if (input) input.value = "";
 
-  try {
-    await fetch(`${ROOT}/PrivChats/${encodeURIComponent(curPrivRoom)}/messages${KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fields: {
-          u: { stringValue: me.name },
-          x: { stringValue: wrap(filt(txt), CHAT_KEY) },
-          a: { stringValue: me.avatar || "" },
-          r: { stringValue: me.role },
-          t: { integerValue: String(Date.now()) }
-        }
-      })
-    });
-  } catch (x) {
-    toast("Private message delivery failed.");
-  }
-});
+    try {
+      await fetch(`${ROOT}/PrivChats/${encodeURIComponent(curPrivRoom)}/messages${KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: {
+            u: { stringValue: me.name },
+            x: { stringValue: wrap(filt(txt), CHAT_KEY) },
+            a: { stringValue: me.avatar || "" },
+            r: { stringValue: me.role },
+            t: { integerValue: String(Date.now()) }
+          }
+        })
+      });
+    } catch (x) {
+      toast("Private message delivery failed.");
+    }
+  });
+}
 
-/* ---------- intercepting dynamic link and navigation listeners ---------- */
-
-// Monitor topic buttons clicks on the fly inside active grid wrappers
+/* ---------- Intercepting dynamic link grid click listeners ---------- */
 document.body.addEventListener("click", e => {
   if (e.target.dataset.joinSub) {
     e.preventDefault();
@@ -2019,58 +2054,136 @@ document.body.addEventListener("click", e => {
   }
 });
 
-// Hook tab routers inside your standard switchTab wrapper array sequence
-const originalSwitchTab = window.switchTab;
-window.switchTab = function (id) {
-  if (typeof originalSwitchTab === "function") originalSwitchTab(id);
-  
-  if (id === "chat_topics") {
-    checkSubCreateVisibility();
-    loadSubRooms();
+/* ---------- Live Giphy API Selection Overlay Engine ---------- */
+
+function closeGifPickers() {
+  document.querySelectorAll(".gif-picker-overlay").forEach(picker => picker.classList.add("hide"));
+}
+
+async function fetchGiphyGifs(pickerType, searchQuery = "") {
+  const container = $(`${pickerType}-gif-results`);
+  if (!container) return;
+  container.innerHTML = "<p class='mute'>Searching Giphy...</p>";
+
+  let url = `https://giphy.com{GIPHY_API_KEY}&limit=12&rating=g`;
+  if (searchQuery.trim()) {
+    url = `https://giphy.com{GIPHY_API_KEY}&q=${encodeURIComponent(searchQuery.trim())}&limit=12&rating=g`;
   }
-  if (id === "priv_chat") {
-    loadPrivRooms();
-  }
-};
 
-/* ---------- Giphy layout hooks placeholder integration trigger ---------- */
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    const items = json.data || [];
 
-// Hook input selectors into simple prompt generators returning mock strings for style-guide parity
-function handleGifInsertion(type) {
-  const url = prompt("Enter a Giphy URL (e.g., https://giphy.com...):");
-  if (!url || !url.startsWith("https://")) return toast("Invalid asset resource address string.");
+    if (!items.length) {
+      container.innerHTML = "<p class='mute'>No GIFs found.</p>";
+      return;
+    }
 
-  const payload = `[GIF]:${url}`;
-  if (type === "sub" && curSubRoom) {
-    fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages${KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fields: {
-          u: { stringValue: me.name },
-          x: { stringValue: wrap(payload, CHAT_KEY) },
-          a: { stringValue: me.avatar || "" },
-          r: { stringValue: me.role },
-          t: { integerValue: String(Date.now()) }
-        }
-      })
-    });
-  } else if (type === "priv" && curPrivRoom) {
-    fetch(`${ROOT}/PrivChats/${encodeURIComponent(curPrivRoom)}/messages${KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fields: {
-          u: { stringValue: me.name },
-          x: { stringValue: wrap(payload, CHAT_KEY) },
-          a: { stringValue: me.avatar || "" },
-          r: { stringValue: me.role },
-          t: { integerValue: String(Date.now()) }
-        }
-      })
-    });
+    container.innerHTML = items.map(gif => {
+      const fixedUrl = gif.images?.fixed_height_small?.url || gif.images?.original?.url;
+      return `<img src="${esc(fixedUrl)}" data-gif-src="${esc(fixedUrl)}" class="gif-picker-thumb" alt="GIF" style="height:90px; border-radius:6px; cursor:pointer; object-fit:cover;">`;
+    }).join("");
+  } catch (err) {
+    container.innerHTML = "<p class='mute'>Giphy load error.</p>";
   }
 }
 
-$("sub-gif-btn").onclick = () => handleGifInsertion("sub");
-$("priv-gif-btn").onclick = () => handleGifInsertion("priv");
+// Global click delegation listener catching selection triggers for loaded thumbs
+document.body.addEventListener("click", async e => {
+  const thumb = e.target.closest(".gif-picker-thumb");
+  if (!thumb) return;
+
+  const url = thumb.dataset.gifSrc;
+  if (!url) return;
+
+  const payload = `[GIF]:${url}`;
+  
+  // Detect structural context wrapper IDs to distribute correct Firestore collections payloads
+  if (curSubRoom && !$("sub-gif-picker").classList.contains("hide")) {
+    try {
+      await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages${KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: {
+            u: { stringValue: me.name },
+            x: { stringValue: wrap(payload, CHAT_KEY) },
+            a: { stringValue: me.avatar || "" },
+            r: { stringValue: me.role },
+            t: { integerValue: String(Date.now()) }
+          }
+        })
+      });
+      closeGifPickers();
+    } catch (x) { toast("Failed to send GIF."); }
+  } else if (curPrivRoom && !$("priv-gif-picker").classList.contains("hide")) {
+    try {
+      await fetch(`${ROOT}/PrivChats/${encodeURIComponent(curPrivRoom)}/messages${KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: {
+            u: { stringValue: me.name },
+            x: { stringValue: wrap(payload, CHAT_KEY) },
+            a: { stringValue: me.avatar || "" },
+            r: { stringValue: me.role },
+            t: { integerValue: String(Date.now()) }
+          }
+        })
+      });
+      closeGifPickers();
+    } catch (x) { toast("Failed to send GIF."); }
+  }
+});
+
+// Configure click behavior to toggle overlays open/closed fluidly
+if ($("sub-gif-btn")) {
+  $("sub-gif-btn").onclick = (e) => {
+    e.stopPropagation();
+    const picker = $("sub-gif-picker");
+    const isHidden = picker.classList.contains("hide");
+    closeGifPickers();
+    if (isHidden) {
+      picker.classList.remove("hide");
+      $ Linda = $("sub-gif-search");
+      if (Linda) Linda.value = "";
+      fetchGiphyGifs("sub");
+    }
+  };
+}
+
+if ($("priv-gif-btn")) {
+  $("priv-gif-btn").onclick = (e) => {
+    e.stopPropagation();
+    const picker = $("priv-gif-picker");
+    const isHidden = picker.classList.contains("hide");
+    closeGifPickers();
+    if (isHidden) {
+      picker.classList.remove("hide");
+      const Linda = $("priv-gif-search");
+      if (Linda) Linda.value = "";
+      fetchGiphyGifs("priv");
+    }
+  };
+}
+
+// Hook text change listeners to trigger continuous live filter updates
+if ($("sub-gif-search")) {
+  $("sub-gif-search").addEventListener("input", e => {
+    fetchGiphyGifs("sub", e.target.value);
+  });
+}
+
+if ($("priv-gif-search")) {
+  $("priv-gif-search").addEventListener("input", e => {
+    fetchGiphyGifs("priv", e.target.value);
+  });
+}
+
+// Close selector overlays if user clicks outside anywhere on page surface
+document.addEventListener("click", e => {
+  if (!e.target.closest(".gif-picker-overlay") && !e.target.closest(".gif-trigger-btn")) {
+    closeGifPickers();
+  }
+});
