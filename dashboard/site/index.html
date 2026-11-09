@@ -190,11 +190,75 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
 </nav>
 
 <main>
-    <section id="priv_chat" class="view">
-        <h1>WORK IN PROGRESS</h1>
+    <section id="chat_topics" class="view">
+        <div id="sub-create-card" class="card hide">
+            <h3>Create a New Chat Room (dev+)</h3>
+            <div class="input-group">
+                <input type="text" id="sub-new-title" class="fld" placeholder="Room name (e.g., Gaming, Anime)...">
+                <button class="btn" id="sub-create-btn" type="button">Create Room</button>
+            </div>
+            <span id="sub-create-msg" class="mute"></span>
+        </div>
+
+        <div id="sub-list-card" class="card">
+            <h3>Available Chat Rooms</h3>
+            <p class="mute">Click on any room below to join the conversation.</p>
+            <div id="sub-topics-list" class="topics-grid"></div>
+        </div>
+
+
+        <div id="sub-thread-card" class="view-thread hide">
+            <div class="thread-header">
+                <h2 id="sub-thread-title">Chat Room</h2>
+                <button id="sub-close-btn" class="btn red" type="button" title="Leave Room">Leave Room</button>
+            </div>
+            
+            <div id="sub-msgs" class="chat-message-box"></div>
+            
+            <form id="sub-chat-form" class="chat-entry-form">
+                <button id="sub-gif-btn" class="btn gif-trigger-btn" type="button" title="Send GIF from Giphy">+</button>
+                <input type="text" id="sub-chat-in" class="chat-input-field" maxlength="500" placeholder="Say something in this room...">
+                <button class="btn" type="submit">Send</button>
+            </form>
+        </div>
     </section>
-     <section id="chat_topics" class="view">
-        <h1>WORK IN PROGRESS</h1>
+
+    <!-- ==================================================== -->
+    <!-- UPDATED: PRIVATE CHATS SECTION                       -->
+    <!-- ==================================================== -->
+
+    <section id="priv_chat" class="view">
+        <div class="card">
+            <h3>Start a Private Chat</h3>
+            <p class="mute">Type a username below to start a private one-on-one conversation.</p>
+            <div class="input-group">
+                <input type="text" id="priv-target-user" class="fld" placeholder="Enter username...">
+                <button class="btn" id="priv-start-btn" type="button">Start Chat</button>
+            </div>
+            <span id="priv-start-msg" class="mute"></span>
+        </div>
+
+        <div id="priv-sessions-card" class="card">
+            <h3>Active Private Chats</h3>
+            <p class="mute">Your ongoing open private conversations.</p>
+            <div id="priv-rooms-list" class="rooms-grid"></div>
+        </div>
+
+        <div id="priv-thread-card" class="view-thread hide">
+            <div class="thread-header">
+
+                <h2 id="priv-thread-title">Private Chat</h2>
+                <button id="priv-close-btn" class="btn red" type="button" title="Close Chat">Close Chat</button>
+            </div>
+            
+            <div id="priv-msgs" class="chat-message-box"></div>
+            
+            <form id="priv-chat-form" class="chat-entry-form">
+                <button id="priv-gif-btn" class="btn gif-trigger-btn" type="button" title="Send GIF from Giphy">+</button>
+                <input type="text" id="priv-chat-in" class="chat-input-field" maxlength="500" placeholder="Type a private message...">
+                <button class="btn" type="submit">Send</button>
+            </form>
+        </div>
     </section>
   <section id="dashboard" class="view active">
     <h1>Dashboard</h1>
