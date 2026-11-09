@@ -346,3 +346,116 @@ td img{display:block;margin-top:6px;border:1px solid var(--line);border-radius:6
     padding: 12px;
   }
 }
+/* ==================================================== */
+/* SUB-CHATS (CHAT ROOMS) & PRIVATE MESSAGE VIEWS      */
+/* ==================================================== */
+
+/* Grid container for available chat topics and active private sessions */
+.topics-grid,
+.rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+/* Individual topic or room card inside the grid selection */
+.topics-grid .card,
+.rooms-grid .card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.topics-grid .card:hover,
+.rooms-grid .card:hover {
+    transform: translateY(-2px);
+    border-color: var(--grape2);
+}
+
+/* Flex headers for active message views */
+.thread-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 760px;
+    margin-bottom: 12px;
+}
+
+.thread-header h2 {
+    margin: 0;
+    font-size: 22px;
+    color: var(--grape);
+}
+
+/* Standard message containers matching main global chat parameters */
+.chat-message-box {
+    height: 52vh;
+    max-width: 760px;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 15px;
+}
+
+/* Inline horizontal input groups */
+.input-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.input-group .fld {
+    margin: 0;
+    flex: 1;
+}
+
+/* Chat text entry forms matching main layout behaviors */
+.chat-entry-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    max-width: 760px;
+}
+
+/* Dedicated styling for the text input fields */
+.chat-input-field {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    font-size: 15px;
+    background: #ffffff;
+    color: var(--ink);
+}
+
+.chat-input-field:focus {
+    border-color: var(--grape2);
+    outline: 0;
+}
+
+/* Decorative '+' trigger button for the Giphy window */
+.gif-trigger-btn {
+    background: var(--grape2);
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 0 16px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.gif-trigger-btn:hover {
+    background: var(--grape);
+}
