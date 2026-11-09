@@ -173,7 +173,9 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
   <button class="side-item" data-tab="code">Coding advice</button>
   <button class="side-item" data-tab="memes">Wall of memes</button>
   <button class="side-item" data-tab="products">Products & Tokens</button>
-  <button class="side-item" data-tab="chat">Chat</button>
+  <button class="side-item" data-tab="chat_topics">Sub-Chat-Topics</button>
+  <button class="side-item" data-tab="priv_chat">Private Chats</button>
+  <button class="side-item" data-tab="chat">Global Chat</button>
   <button class="side-item" data-tab="Grape-Ai">Grape Ai (alpha v1.5)</button>
   <button class="side-item" data-tab="users">Users</button>
   <button class="side-item hide" id="nav-staff" data-tab="staff">Staff chat</button>
@@ -188,6 +190,12 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
 </nav>
 
 <main>
+    <section id="priv_chat" class="view">
+        <h1>WORK IN PROGRESS</h1>
+    </section>
+     <section id="chat_topics" class="view">
+        <h1>WORK IN PROGRESS</h1>
+    </section>
   <section id="dashboard" class="view active">
     <h1>Dashboard</h1>
     <div id="motd-banner" class="card hide" style="max-width:640px;border-left:4px solid var(--leaf)">
