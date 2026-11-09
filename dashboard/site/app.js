@@ -1709,3 +1709,368 @@ if (document.readyState === "loading") {
         }, randomStaggerOffset);
     });
 })();
+/* ---------- sub-chats & private messaging state variables ---------- */
+let curSubRoom = null;
+let curPrivRoom = null;
+let subMsgsUnsubscribe = null;
+let privMsgsUnsubscribe = null;
+
+/* ---------- sub-chats (chat rooms) logic ---------- */
+
+// Check if dev+ to reveal the creation card upon entering the tab
+function checkSubCreateVisibility() {
+  $("sub-create-card").classList.toggle("hide", !isDev());
+}
+
+// Load available rooms list from collection 'SubChats'
+async function loadSubRooms() {
+  const listContainer = $("sub-topics-list");
+  listContainer.textContent = "Loading chat rooms...";
+  try {
+    const r = await fetch(`${ROOT}/SubChats${KEY}&pageSize=100`);
+    const docs = ((await r.json()).documents || []).map(parseDoc);
+    
+    listContainer.innerHTML = docs.length ? docs.map(room => 
+      `<div class="card">
+        <b># ${esc(room.id)}</b>
+        <button class="btn" data-join-sub="${esc(room.id)}">Join Room</button>
+      </div>`
+    ).join("") : '<p class="mute">No chat rooms created yet.</p>';
+  } catch (x) {
+    listContainer.textContent = "Couldn't load rooms.";
+  }
+}
+
+// Setup creator submission for dev+ roles
+$("sub-create-btn").onclick = async () => {
+  const msgEl = $("sub-create-msg");
+  msgEl.textContent = "";
+  if (!isDev()) return (msgEl.textContent = "Devs and above only.");
+
+  const title = cleanText($("sub-new-title").value).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40);
+  if (!title) return (msgEl.textContent = "Enter a valid alphanumeric name.");
+
+  try {
+    // Put dummy or configuration properties to initialize the document root path cleanly
+    await put(`SubChats/${encodeURIComponent(title)}`, { createdBy: me.name, t: Date.now() });
+    $("sub-new-title").value = "";
+    msgEl.textContent = "Room created successfully!";
+    loadSubRooms();
+  } catch (x) {
+    msgEl.textContent = "Failed to create room. It might already exist.";
+  }
+};
+
+// Render message logs inside sub-chats mirroring global styles cleanly
+function renderSubMessages(list) {
+  const box = $("sub-msgs");
+  const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+  
+  const parsed = list.map(o => ({
+    id: o.id,
+    u: o.u,
+    x: dec(o.x),
+    r: o.r,
+    a: o.a,
+    t: o.t
+  })).reverse();
+
+  box.innerHTML = parsed.map(m => {
+    const timeStr = $("ts").checked ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
+    const tag = rk(m.r) >= 3 ? `<span class="tag">${m.r}</span>` : m.r === "mod" ? '<span class="tag">mod</span> &check;' : "";
+    const av = AVATARS.includes(m.a) ? m.a + " " : "";
+    
+    // Renders either standard wrapped text string or an optimized inline graphic if parsed as a Giphy token
+    let content = fmt(filt(m.x || ""));
+    if (m.x && m.x.startsWith("[GIF]:")) {
+      const gifUrl = m.x.slice(6);
+      if (gifUrl.startsWith("https://")) {
+        content = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px;">`;
+      }
+    }
+    
+    return `<p class="msg">${timeStr}${av}<b>${esc(m.u)}</b>${tag}: ${content}</p>`;
+  }).join("") || '<p class="mute">Welcome to the room! Say hi!</p>';
+
+  if (near) box.scrollTop = box.scrollHeight;
+}
+
+// Core room activation frame routing template loops
+async function openSubRoom(roomName) {
+  curSubRoom = roomName;
+  if (subMsgsUnsubscribe) { subMsgsUnsubscribe(); subMsgsUnsubscribe = null; }
+  
+  $("sub-thread-title").textContent = `# ${roomName}`;
+  $("sub-list-card").classList.add("hide");
+  $("sub-create-card").classList.add("hide");
+  $("sub-thread-card").classList.remove("hide");
+  $("sub-msgs").innerHTML = '<p class="mute">Loading message history...</p>';
+
+  // Setup live channel polling connections mapping sub-collections matching rules blocks exactly
+  const pollUrl = `${ROOT}/SubChats/${encodeURIComponent(roomName)}/messages${KEY}&orderBy=t%20desc&pageSize=50`;
+  const runPoll = async () => {
+    if (curSubRoom !== roomName || document.hidden || !$("chat_topics").classList.contains("active")) return;
+    try {
+      const r = await fetch(pollUrl);
+      const docs = ((await r.json()).documents || []).map(parseDoc);
+      renderSubMessages(docs);
+    } catch (e) {}
+  };
+
+  runPoll();
+  const subInterval = setInterval(runPoll, 4000);
+  subMsgsUnsubscribe = () => clearInterval(subInterval);
+}
+
+// Exit click logic targets returning to main room menus
+$("sub-close-btn").onclick = () => {
+  if (subMsgsUnsubscribe) { subMsgsUnsubscribe(); subMsgsUnsubscribe = null; }
+  curSubRoom = null;
+  $("sub-thread-card").classList.add("hide");
+  $("sub-list-card").classList.remove("hide");
+  checkSubCreateVisibility();
+  loadSubRooms();
+};
+
+// Form submit text encryption processors attaching context structures
+$("sub-chat-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const input = $("sub-chat-in");
+  const raw = input.value.trim();
+  if (!raw || me.role === "guest" || !curSubRoom) return;
+
+  const txt = cleanText(raw).slice(0, 500);
+  input.value = "";
+
+  try {
+    await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages${KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fields: {
+          u: { stringValue: me.name },
+          x: { stringValue: wrap(filt(txt), CHAT_KEY) },
+          a: { stringValue: me.avatar || "" },
+          r: { stringValue: me.role },
+          t: { integerValue: String(Date.now()) }
+        }
+      })
+    });
+  } catch (x) {
+    toast("Failed to send message.");
+  }
+});
+
+/* ---------- private chats logic ---------- */
+
+// Scan current ongoing loops in 'PrivChats' where you are a tracking participant user
+async function loadPrivRooms() {
+  const container = $("priv-rooms-list");
+  container.textContent = "Loading conversation nodes...";
+  try {
+    const r = await fetch(`${ROOT}/PrivChats${KEY}&pageSize=100`);
+    const docs = ((await r.json()).documents || []).map(parseDoc);
+    
+    // Filter rooms locally based on your username signature matching participant strings
+    const activeRooms = docs.filter(room => room.id.split("~").includes(me.name));
+
+    container.innerHTML = activeRooms.length ? activeRooms.map(room => {
+      const parts = room.id.split("~");
+      const peer = parts[0] === me.name ? parts[1] : parts[0];
+      return `<div class="card">
+        <b>👤 ${esc(peer)}</b>
+        <button class="btn" data-join-priv="${esc(room.id)}" data-peer="${esc(peer)}">Open Chat</button>
+      </div>`;
+    }).join("") : '<p class="mute">No active private chats found.</p>';
+  } catch (x) {
+    container.textContent = "Failed to load chats.";
+  }
+}
+
+// Initiate new user companion channels via standard action click binds
+$("priv-start-btn").onclick = async () => {
+  const msgEl = $("priv-start-msg");
+  msgEl.textContent = "";
+  if (me.role === "guest") return (msgEl.textContent = "Guests cannot open private threads.");
+
+  const peer = $("priv-target-user").value.trim();
+  if (!peer || peer === me.name) return (msgEl.textContent = "Enter a valid alternative username.");
+
+  try {
+    const peerDoc = await getUser(peer);
+    if (!peerDoc) return (msgEl.textContent = "Target account does not exist.");
+
+    const roomId = [me.name, peer].sort().join("~");
+    await put(`PrivChats/${encodeURIComponent(roomId)}`, { initiatedBy: me.name, t: Date.now() });
+    $("priv-target-user").value = "";
+    msgEl.textContent = "Chat initialized!";
+    openPrivRoom(roomId, peer);
+  } catch (x) {
+    msgEl.textContent = "Initialization failed.";
+  }
+};
+
+// Render matching outputs inside active private layers
+function renderPrivMessages(list) {
+  const box = $("priv-msgs");
+  const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+  
+  const parsed = list.map(o => ({
+    id: o.id,
+    u: o.u,
+    x: dec(o.x),
+    r: o.r,
+    a: o.a,
+    t: o.t
+  })).reverse();
+
+  box.innerHTML = parsed.map(m => {
+    const timeStr = $("ts").checked ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
+    const av = AVATARS.includes(m.a) ? m.a + " " : "";
+    
+    let content = fmt(filt(m.x || ""));
+    if (m.x && m.x.startsWith("[GIF]:")) {
+      const gifUrl = m.x.slice(6);
+      if (gifUrl.startsWith("https://")) {
+        content = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px;">`;
+      }
+    }
+    
+    return `<p class="msg">${timeStr}${av}<b>${esc(m.u)}</b>: ${content}</p>`;
+  }).join("") || '<p class="mute">Secure messaging channel ready.</p>';
+
+  if (near) box.scrollTop = box.scrollHeight;
+}
+
+// Active connection router hooks for Private Messaging layouts
+async function openPrivRoom(roomId, peerName) {
+  curPrivRoom = roomId;
+  if (privMsgsUnsubscribe) { privMsgsUnsubscribe(); privMsgsUnsubscribe = null; }
+
+  $("priv-thread-title").textContent = `Chat with ${peerName}`;
+  $("priv-sessions-card").classList.add("hide");
+  $("priv-thread-card").classList.remove("hide");
+  $("priv-msgs").innerHTML = '<p class="mute">Synchronizing history elements...</p>';
+
+  const pollUrl = `${ROOT}/PrivChats/${encodeURIComponent(roomId)}/messages${KEY}&orderBy=t%20desc&pageSize=50`;
+  const runPoll = async () => {
+    if (curPrivRoom !== roomId || document.hidden || !$("priv_chat").classList.contains("active")) return;
+    try {
+      const r = await fetch(pollUrl);
+      const docs = ((await r.json()).documents || []).map(parseDoc);
+      renderPrivMessages(docs);
+    } catch (e) {}
+  };
+
+  runPoll();
+  const privInterval = setInterval(runPoll, 4000);
+  privMsgsUnsubscribe = () => clearInterval(privInterval);
+}
+
+// View frames closing flag triggers
+$("priv-close-btn").onclick = () => {
+  if (privMsgsUnsubscribe) { privMsgsUnsubscribe(); privMsgsUnsubscribe = null; }
+  curPrivRoom = null;
+  $("priv-thread-card").classList.add("hide");
+  $("priv-sessions-card").classList.remove("hide");
+  loadPrivRooms();
+};
+
+// Handle tracking text loops matching standard inputs
+$("priv-chat-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const input = $("priv-chat-in");
+  const raw = input.value.trim();
+  if (!raw || me.role === "guest" || !curPrivRoom) return;
+
+  const txt = cleanText(raw).slice(0, 500);
+  input.value = "";
+
+  try {
+    await fetch(`${ROOT}/PrivChats/${encodeURIComponent(curPrivRoom)}/messages${KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fields: {
+          u: { stringValue: me.name },
+          x: { stringValue: wrap(filt(txt), CHAT_KEY) },
+          a: { stringValue: me.avatar || "" },
+          r: { stringValue: me.role },
+          t: { integerValue: String(Date.now()) }
+        }
+      })
+    });
+  } catch (x) {
+    toast("Private message delivery failed.");
+  }
+});
+
+/* ---------- intercepting dynamic link and navigation listeners ---------- */
+
+// Monitor topic buttons clicks on the fly inside active grid wrappers
+document.body.addEventListener("click", e => {
+  if (e.target.dataset.joinSub) {
+    e.preventDefault();
+    openSubRoom(e.target.dataset.joinSub);
+  }
+  if (e.target.dataset.joinPriv) {
+    e.preventDefault();
+    openPrivRoom(e.target.dataset.joinPriv, e.target.dataset.peer);
+  }
+});
+
+// Hook tab routers inside your standard switchTab wrapper array sequence
+const originalSwitchTab = window.switchTab;
+window.switchTab = function (id) {
+  if (typeof originalSwitchTab === "function") originalSwitchTab(id);
+  
+  if (id === "chat_topics") {
+    checkSubCreateVisibility();
+    loadSubRooms();
+  }
+  if (id === "priv_chat") {
+    loadPrivRooms();
+  }
+};
+
+/* ---------- Giphy layout hooks placeholder integration trigger ---------- */
+
+// Hook input selectors into simple prompt generators returning mock strings for style-guide parity
+function handleGifInsertion(type) {
+  const url = prompt("Enter a Giphy URL (e.g., https://giphy.com...):");
+  if (!url || !url.startsWith("https://")) return toast("Invalid asset resource address string.");
+
+  const payload = `[GIF]:${url}`;
+  if (type === "sub" && curSubRoom) {
+    fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages${KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fields: {
+          u: { stringValue: me.name },
+          x: { stringValue: wrap(payload, CHAT_KEY) },
+          a: { stringValue: me.avatar || "" },
+          r: { stringValue: me.role },
+          t: { integerValue: String(Date.now()) }
+        }
+      })
+    });
+  } else if (type === "priv" && curPrivRoom) {
+    fetch(`${ROOT}/PrivChats/${encodeURIComponent(curPrivRoom)}/messages${KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fields: {
+          u: { stringValue: me.name },
+          x: { stringValue: wrap(payload, CHAT_KEY) },
+          a: { stringValue: me.avatar || "" },
+          r: { stringValue: me.role },
+          t: { integerValue: String(Date.now()) }
+        }
+      })
+    });
+  }
+}
+
+$("sub-gif-btn").onclick = () => handleGifInsertion("sub");
+$("priv-gif-btn").onclick = () => handleGifInsertion("priv");
