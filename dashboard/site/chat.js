@@ -1,4 +1,3 @@
-
 /* ============================================================================
    GRApeGREEN SEPARATE CHAT ARCHITECTURE SYSTEM — CHAT.JS MODULE
    Save this complete file as chat.js and link it via <script src="chat.js"></script>
@@ -18,69 +17,64 @@
   let curSubRoom = null;
   let curPrivRoom = null;
   let subMsgsUnsubscribe = null;
-
   let privMsgsUnsubscribe = null;
   let reportsInterval = null;
   let invitePollInterval = null;
   const GIPHY_API_KEY = "dc6zaTOxFJmzC"; // Public demo search key
 
-  /* ---------- Advanced AES Cryptographic Layer ---------- */
-  // Minimal self-contained AES-128-CBC text cipher implementation for chat payload data masking
+  /* ---------- Native Browser Web Crypto AES-GCM Layer ---------- */
   const AES = {
-    generateSalt: () => Array.from({ length: 16 }, () => Math.floor(Math.random() * 256)),
-    
-    deriveKeyAndIv: (passphrase, salt) => {
-      // Basic deterministic key derivation simulation for local sandbox environments
-      let derived = [];
-      let hashSource = passphrase + salt.map(b => String.fromCharCode(b)).join("");
-      for (let i = 0; i < 32; i++) {
-        let charCode = hashSource.charCodeAt(i % hashSource.length) + i;
-        derived.push((charCode * 31) % 256);
-      }
-      return { key: derived.slice(0, 16), iv: derived.slice(16, 32) };
-
+    // Derives a native CryptoKey object from a text passphrase using SHA-256
+    deriveKey: async (passphrase) => {
+      const enc = new TextEncoder();
+      const keyData = enc.encode(passphrase);
+      const hash = await window.crypto.subtle.digest("SHA-256", keyData);
+      return await window.crypto.subtle.importKey(
+        "raw",
+        hash,
+        { name: "AES-GCM" },
+        false,
+        ["encrypt", "decrypt"]
+      );
     },
 
-    encrypt: (text, passphrase) => {
+    encrypt: async (text, passphrase) => {
       try {
-        const salt = AES.generateSalt();
-        const { key, iv } = AES.deriveKeyAndIv(passphrase, salt);
-        const data = Array.from(text).map(c => c.charCodeAt(0));
+        const cryptoKey = await AES.deriveKey(passphrase);
+        const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Standard 12-byte IV for GCM
+        const enc = new TextEncoder();
         
-        // Simple substitution-permutation block network logic
-        let cipherData = [];
-        for (let i = 0; i < data.length; i++) {
-          let blockIv = iv[i % 16];
-          let keyByte = key[i % 16];
-          cipherData.push(data[i] ^ blockIv ^ keyByte);
-        }
-        
-        // Return structured transport payload
-        return {
-          c: btoa(String.fromCharCode(...cipherData)),
+        const encrypted = await window.crypto.subtle.encrypt(
+          { name: "AES-GCM", iv: iv },
+          cryptoKey,
+          enc.encode(text)
+        );
 
-          s: btoa(String.fromCharCode(...salt))
-        };
+        // Convert raw binary arrays to base64 strings safely for transport
+        const cipherText = btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+        const ivText = btoa(String.fromCharCode(...iv));
+        return { c: cipherText, s: ivText };
       } catch (e) {
         return { c: btoa(text), s: btoa("fail") };
       }
     },
 
-    decrypt: (cipherText, saltText, passphrase) => {
+    decrypt: async (cipherText, ivText, passphrase) => {
       try {
-        if (!cipherText || !saltText) return cipherText;
-        const salt = Array.from(atob(saltText)).map(c => c.charCodeAt(0));
-        const { key, iv } = AES.deriveKeyAndIv(passphrase, salt);
-        const cipherData = Array.from(atob(cipherText)).map(c => c.charCodeAt(0));
+        if (!cipherText || !ivText) return cipherText;
+        const cryptoKey = await AES.deriveKey(passphrase);
         
-        let plainData = [];
-        for (let i = 0; i < cipherData.length; i++) {
-          let blockIv = iv[i % 16];
-          let keyByte = key[i % 16];
-          plainData.push(cipherData[i] ^ keyByte ^ blockIv);
+        const iv = new Uint8Array(Array.from(atob(ivText)).map(c => c.charCodeAt(0)));
+        const encryptedData = new Uint8Array(Array.from(atob(cipherText)).map(c => c.charCodeAt(0)));
 
-        }
-        return String.fromCharCode(...plainData);
+        const decrypted = await window.crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: iv },
+          cryptoKey,
+          encryptedData
+        );
+
+        const dec = new TextDecoder();
+        return dec.decode(decrypted);
       } catch (e) {
         return "[Decryption Error: Key mismatch or tampered payload]";
       }
@@ -98,7 +92,6 @@
           fields: {
             s: { stringValue: saltData },
             k: { stringValue: CHAT_KEY },
-
             t: { integerValue: String(Date.now()) }
           }
         })
@@ -118,7 +111,6 @@
           }
         })
       });
-
     } catch (e) {}
   }
 
@@ -137,7 +129,6 @@
   document.addEventListener("click", e => {
     const sideItem = e.target.closest(".side-item");
     if (!sideItem) return;
-
 
     const tabId = sideItem.dataset.tab;
     
@@ -158,7 +149,6 @@
   });
 
   /* ---------- Helper: Role hierarchy and validation ---------- */
-
   function getRoleLabel(role) {
     if (!role) return "";
     const lower = role.toLowerCase();
@@ -178,7 +168,6 @@
 
   /* ---------- Private Chat Real-Time Invite Receiver Pop-up ---------- */
   function startInviteListener() {
-
     if (invitePollInterval) clearInterval(invitePollInterval);
     if (typeof me === "undefined" || !me || !me.name) return;
 
@@ -198,7 +187,6 @@
         if (pendingInvite && !$(`invite-popup-${pendingInvite.id}`)) {
           showInvitePopup(pendingInvite);
         }
-
       } catch (e) {}
     }, 5000);
   }
@@ -218,7 +206,6 @@
       <div style="display:flex; gap:10px; justify-content:flex-end;">
         <button class="btn btn-small" id="accept-inv-${room.id}" style="background:#2ecc71; color:#fff; padding:4px 8px; font-size:12px;">Go to Chat</button>
         <button class="btn btn-small mute" id="dismiss-inv-${room.id}" style="padding:4px 8px; font-size:12px; background:#ddd;">Dismiss</button>
-
       </div>
     `;
     document.body.appendChild(popup);
@@ -237,7 +224,6 @@
     $(`dismiss-inv-${room.id}`).onclick = () => {
       popup.remove();
     };
-
 
     setTimeout(() => { if (popup) popup.remove(); }, 12000);
   }
@@ -259,7 +245,6 @@
     const listCard = $("sub-list-card");
     if (!listCard) return;
 
-
     let panel = $("staff-reports-panel");
     if (!panel) {
       panel = document.createElement("div");
@@ -279,7 +264,6 @@
         panel.innerHTML = `
           <h3 style="margin-top:0; color:#d63b3b; font-size:15px; display:flex; align-items:center; gap:6px;">⚠️ Content Moderation Reports</h3>
           <div id="reports-list-container" style="max-height:220px; overflow-y:auto; font-size:12px;">
-
             ${docs.length ? docs.map(rep => `
               <div style="padding:8px; border-bottom:1px solid var(--line); position:relative;">
                 <b>Reported:</b> ${esc(rep.author)} | <b>By:</b> ${esc(rep.by)} <br>
@@ -298,7 +282,6 @@
     if (reportsInterval) clearInterval(reportsInterval);
     reportsInterval = setInterval(pollReports, 6000);
   }
-
 
   document.body.addEventListener("click", async e => {
     const reportDelBtn = e.target.closest("[data-delete-report-id]");
@@ -319,7 +302,6 @@
     const el = $("sub-create-card");
     if (!el) return;
     if (typeof isDev === "function") {
-
       el.classList.toggle("hide", !isDev());
     } else {
       el.classList.add("hide");
@@ -339,7 +321,6 @@
           <b># ${esc(room.id)}</b>
           <button class="btn" data-join-sub="${esc(room.id)}">Join Room</button>
         </div>`
-
       ).join("") : '<p class="mute">No chat rooms created yet.</p>';
     } catch (x) {
       listContainer.textContent = "Couldn't load rooms.";
@@ -359,7 +340,6 @@
       try {
         await put(`SubChats/${encodeURIComponent(title)}`, { createdBy: (typeof me !== "undefined" && me) ? me.name : "Unknown", t: Date.now() });
         $("sub-new-title").value = "";
-
         msgEl.textContent = "Room created successfully!";
         loadSubRooms();
       } catch (x) {
@@ -379,7 +359,6 @@
 
     let htmlBuffer = [];
 
-
     for (let m of parsed) {
       const timeStr = $("ts") && $("ts").checked ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
       
@@ -389,17 +368,16 @@
       
       const av = (typeof AVATARS !== "undefined") && AVATARS.includes(m.a) ? m.a + " " : "";
       
-      // Resolve cryptographic properties dynamically from localized nodes
+      // Handle asynchronous native decryption layer cleanly via async resolution loops
       let rawText = m.x || "";
       const saltValue = await resolveLocalSalt(m.id);
       if (saltValue && typeof CHAT_KEY !== "undefined") {
-        rawText = AES.decrypt(rawText, saltValue, CHAT_KEY);
+        rawText = await AES.decrypt(rawText, saltValue, CHAT_KEY);
       }
 
       let content = fmt(filt(rawText));
       if (rawText && rawText.startsWith("[GIF]:")) {
         const gifUrl = rawText.slice(6);
-
         if (gifUrl.startsWith("https://")) {
           content = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px; border:2px solid var(--line);">`;
         }
@@ -418,7 +396,6 @@
 
     if (near) box.scrollTop = box.scrollHeight;
   }
-
 
   async function openSubRoom(roomName) {
     curSubRoom = roomName;
@@ -439,7 +416,6 @@
         const docs = ((await r.json()).documents || []).map(parseDoc);
         renderSubMessages(docs);
       } catch (e) {}
-
     };
 
     runPoll();
@@ -460,7 +436,6 @@
     };
   }
 
-
   if ($("sub-chat-form")) {
     $("sub-chat-form").addEventListener("submit", async e => {
       e.preventDefault();
@@ -471,16 +446,14 @@
       const txt = cleanText(raw).slice(0, 500);
       if (input) input.value = "";
 
-      // Structural deployment of data sealing pipeline
       const msgGeneratedId = "msg-" + Math.random().toString(36).slice(2, 11) + "-" + Date.now();
       let finalizedPayload = wrap(filt(txt), CHAT_KEY);
       
       if (typeof CHAT_KEY !== "undefined") {
-        const encryptedContext = AES.encrypt(txt, CHAT_KEY);
+        const encryptedContext = await AES.encrypt(txt, CHAT_KEY);
         finalizedPayload = encryptedContext.c;
         await syncLocalSecurityContext(msgGeneratedId, encryptedContext.c, encryptedContext.s);
       }
-
 
       try {
         await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages/${msgGeneratedId}${KEY}`, {
@@ -502,7 +475,6 @@
     });
   }
 
-
   /* ---------- Private Messages Engine ---------- */
   async function loadPrivRooms() {
     const container = $("priv-rooms-list");
@@ -522,7 +494,6 @@
         </div>`;
       }).join("") : '<p class="mute">No active private chats found.</p>';
     } catch (x) {
-
       container.textContent = "Failed to load conversations.";
     }
   }
@@ -542,7 +513,6 @@
         if (!peerDoc) return (msgEl.textContent = "Account does not exist.");
 
         const roomId = [me.name, peer].sort().join("~");
-
         await put(`PrivChats/${encodeURIComponent(roomId)}`, { initiatedBy: me.name, t: Date.now() });
         $("priv-target-user").value = "";
         msgEl.textContent = "Chat initialized!";
@@ -562,7 +532,6 @@
       id: o.id, u: o.u, x: dec(o.x), r: o.r, a: o.a, t: o.t
     })).reverse();
 
-
     let htmlBuffer = [];
 
     for (let m of parsed) {
@@ -572,7 +541,7 @@
       let rawText = m.x || "";
       const saltValue = await resolveLocalSalt(m.id);
       if (saltValue && typeof CHAT_KEY !== "undefined") {
-        rawText = AES.decrypt(rawText, saltValue, CHAT_KEY);
+        rawText = await AES.decrypt(rawText, saltValue, CHAT_KEY);
       }
 
       let content = fmt(filt(rawText));
@@ -582,7 +551,6 @@
           content = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px; border:2px solid var(--line);">`;
         }
       }
-
       
       htmlBuffer.push(`<p class="msg" style="margin-bottom:8px;">${timeStr}${av}<b>${esc(m.u)}</b>: <span class="msg-body-content">${content}</span></p>`);
     }
@@ -602,7 +570,6 @@
     if (privMsgsUnsubscribe) { privMsgsUnsubscribe(); privMsgsUnsubscribe = null; }
 
     if ($("priv-thread-title")) $("priv-thread-title").textContent = `Chat with ${peerName}`;
-
     if ($("priv-sessions-card")) $("priv-sessions-card").classList.add("hide");
     if ($("priv-thread-card")) $("priv-thread-card").classList.remove("hide");
     if ($("priv-msgs")) $("priv-msgs").innerHTML = '<p class="mute">Synchronizing messages...</p>';
@@ -621,7 +588,6 @@
     const privInterval = setInterval(runPoll, 4000);
     privMsgsUnsubscribe = () => clearInterval(privInterval);
   }
-
 
   if ($("priv-close-btn")) {
     $("priv-close-btn").onclick = () => {
@@ -642,14 +608,13 @@
       if (!raw || typeof me === "undefined" || !me || me.role === "guest" || !curPrivRoom) return;
 
       const txt = cleanText(raw).slice(0, 500);
-
       if (input) input.value = "";
 
       const msgGeneratedId = "msg-" + Math.random().toString(36).slice(2, 11) + "-" + Date.now();
       let finalizedPayload = wrap(filt(txt), CHAT_KEY);
       
       if (typeof CHAT_KEY !== "undefined") {
-        const encryptedContext = AES.encrypt(txt, CHAT_KEY);
+        const encryptedContext = await AES.encrypt(txt, CHAT_KEY);
         finalizedPayload = encryptedContext.c;
         await syncLocalSecurityContext(msgGeneratedId, encryptedContext.c, encryptedContext.s);
       }
@@ -662,7 +627,6 @@
             fields: {
               u: { stringValue: me.name },
               x: { stringValue: finalizedPayload },
-
               a: { stringValue: me.avatar || "" },
               r: { stringValue: me.role },
               t: { integerValue: String(Date.now()) }
@@ -682,7 +646,6 @@
       openSubRoom(e.target.dataset.joinSub);
     }
     if (e.target.dataset.joinPriv) {
-
       e.preventDefault();
       openPrivRoom(e.target.dataset.joinPriv, e.target.dataset.peer);
     }
@@ -703,7 +666,6 @@
       url = `https://giphy.com{GIPHY_API_KEY}&q=${encodeURIComponent(searchQuery.trim())}&limit=12&rating=g`;
     }
 
-
     try {
       const res = await fetch(url);
       const json = await res.json();
@@ -722,7 +684,6 @@
       container.innerHTML = "<p class='mute'>Giphy load error.</p>";
     }
   }
-
 
   document.body.addEventListener("click", async e => {
     const thumb = e.target.closest(".gif-picker-thumb");
@@ -743,7 +704,6 @@
               u: { stringValue: (typeof me !== "undefined" && me) ? me.name : "Unknown" },
               x: { stringValue: wrap(payload, CHAT_KEY) },
               a: { stringValue: (typeof me !== "undefined" && me) ? me.avatar : "" },
-
               r: { stringValue: (typeof me !== "undefined" && me) ? me.role : "guest" },
               t: { integerValue: String(Date.now()) }
             }
@@ -763,7 +723,6 @@
               a: { stringValue: (typeof me !== "undefined" && me) ? me.avatar : "" },
               r: { stringValue: (typeof me !== "undefined" && me) ? me.role : "guest" },
               t: { integerValue: String(Date.now()) }
-
             }
           })
         });
@@ -783,7 +742,6 @@
         picker.classList.remove("hide");
         const searchBox = $("sub-gif-search");
         if (searchBox) searchBox.value = "";
-
         fetchGiphyGifs("sub");
       }
     };
@@ -803,7 +761,6 @@
         fetchGiphyGifs("priv");
       }
     };
-
   }
 
   if ($("sub-gif-search")) {
@@ -824,7 +781,6 @@
     }
   });
 
-
   /* ---------- Vertical 3-Dot Dropdown Context Menu Engine ---------- */
   (function initChatContextMenu() {
     if (document.getElementById("chat-global-context-menu")) return;
@@ -844,7 +800,6 @@
 
   document.body.addEventListener("click", e => {
     const trigger = e.target.closest(".chat-action-trigger-btn");
-
     const menu = document.getElementById("chat-global-context-menu");
     if (!menu) return;
 
@@ -863,7 +818,6 @@
       
       const showDeleteOption = (typeof me !== "undefined" && me) ? isStaff(me.role) : false; 
       const isOwnMessage = typeof me !== "undefined" && me && (author === me.name);
-
 
       menu.innerHTML = `
         <ul style="list-style:none; padding:0; margin:0; font-family:inherit; font-size:13px;">
@@ -884,7 +838,6 @@
     const menuItem = e.target.closest("#chat-global-context-menu li");
     if (menuItem) {
       const action = menuItem.dataset.action;
-
       
       if (action === "reply") {
         const author = menuItem.dataset.author;
@@ -904,7 +857,6 @@
             toast("Private chat request sent!");
             const privTabBtn = document.querySelector('.side-item[data-tab="priv_chat"]');
             if (privTabBtn) {
-
               privTabBtn.click();
               setTimeout(() => { openPrivRoom(roomId, peer); }, 100);
             }
@@ -924,7 +876,6 @@
 
         if (typeof me !== "undefined" && me) {
           fetch(`${ROOT}/reports${KEY}`, {
-
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -944,7 +895,6 @@
       } 
       else if (action === "delete") {
         const id = menuItem.dataset.id;
-
         if (typeof me !== "undefined" && me && isStaff(me.role)) {
           fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages/${encodeURIComponent(id)}${KEY}`, { method: "DELETE" })
             .then(() => {
@@ -965,5 +915,3 @@
   }
 
 })();
-
-
