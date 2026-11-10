@@ -1,3 +1,5 @@
+# Plain-Text Firebase Chat Module (chat.js)
+
 /* ============================================================================
    GRApeGREEN SEPARATE CHAT ARCHITECTURE SYSTEM — CHAT.JS MODULE
    Save this complete file as chat.js and link it via <script src="chat.js"></script>
@@ -17,72 +19,14 @@
   let curSubRoom = null;
   let curPrivRoom = null;
   let subMsgsUnsubscribe = null;
+
   let privMsgsUnsubscribe = null;
   let reportsInterval = null;
   let invitePollInterval = null;
   const GIPHY_API_KEY = "dc6zaTOxFJmzC"; // Public demo search key
 
-  /* ---------- Multi-Layered Synchronous Encoding Engine ---------- */
-  const ENCODER = {
-    // Pipeline: Raw Text ➔ Base64 ➔ Binary String ➔ Base16 (Hex)
-    encode: function (text) {
-      try {
-        if (!text) return "";
-        
-        // Layer 1: Standard Base64 Encoding
-        const base64 = btoa(unescape(encodeURIComponent(text)));
-        
-        // Layer 2: Convert Base64 characters to a continuous 8-bit Binary String
-        let binStr = "";
-        for (let i = 0; i < base64.length; i++) {
-          let binChunk = base64.charCodeAt(i).toString(2);
-          binStr += binChunk.padStart(8, "0");
-        }
-        
-        // Layer 3: Convert Binary String to Base16 (Hexadecimal) representation
-        let hexStr = "";
-        for (let i = 0; i < binStr.length; i += 4) {
-          let halfByte = binStr.substr(i, 4);
-          hexStr += parseInt(halfByte, 2).toString(16);
-        }
-        
-        return hexStr;
-      } catch (e) {
-        return text;
-      }
-    },
-
-    // Pipeline: Base16 (Hex) ➔ Binary String ➔ Base64 ➔ Raw Text
-    decode: function (hex) {
-      try {
-        if (!hex) return "";
-        
-        // Reverse Layer 3: Base16 (Hex) back to 4-bit Binary chunks
-        let binStr = "";
-        for (let i = 0; i < hex.length; i++) {
-          let binChunk = parseInt(hex[i], 16).toString(2);
-          binStr += binChunk.padStart(4, "0");
-        }
-        
-        // Reverse Layer 2: 8-bit Binary chunks back to Base64 characters
-        let base64 = "";
-        for (let i = 0; i < binStr.length; i += 8) {
-          let byteStr = binStr.substr(i, 8);
-          if (byteStr.length === 8) {
-            base64 += String.fromCharCode(parseInt(byteStr, 2));
-          }
-        }
-        
-        // Reverse Layer 1: Base64 back to original Raw Text
-        return decodeURIComponent(escape(atob(base64)));
-      } catch (e) {
-        return "[Encoding Error: Corrupted Payload Layout]";
-      }
-    }
-  };
-
   /* ---------- Vault Synchronization Engine ---------- */
-  async function syncLocalSecurityContext(targetId, signaturePayload) {
+  async function syncLocalSecurityContext(targetId, plainTextPayload) {
     // Store structural parameters securely to the local workspace utility node
     try {
       await fetch(`${ROOT}/ExtraSmallUtils/${encodeURIComponent(targetId)}${KEY}`, {
@@ -90,11 +34,12 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fields: {
-            s: { stringValue: signaturePayload },
+            s: { stringValue: plainTextPayload },
             k: { stringValue: CHAT_KEY },
             t: { integerValue: String(Date.now()) }
           }
         })
+
       });
     } catch (e) {}
 
@@ -113,6 +58,7 @@
       });
     } catch (e) {}
   }
+
 
   /* ---------- Automated Tab Switch Hook Engine ---------- */
   document.addEventListener("click", e => {
@@ -133,6 +79,7 @@
       initStaffReportsPanel();
     }
     if (tabId === "priv_chat") {
+
       loadPrivRooms();
     }
   });
@@ -152,6 +99,7 @@
   function isStaff(role) {
     if (!role) return false;
     const lower = role.toLowerCase();
+
     return ["mod", "moderator", "admin", "head admin", "headadmin", "dev", "developer", "owner"].includes(lower);
   }
 
@@ -171,6 +119,7 @@
         const pendingInvite = docs.find(room => {
           const parts = room.id.split("~");
           return parts.includes(me.name) && room.initiatedBy !== me.name && (Date.now() - room.t < 15000);
+
         });
 
         if (pendingInvite && !$(`invite-popup-${pendingInvite.id}`)) {
@@ -190,6 +139,7 @@
     popup.style.cssText = "position:fixed; bottom:20px; right:20px; background:#fff; border-left:4px solid #2ecc71; padding:15px; box-shadow:0 4px 15px rgba(0,0,0,0.2); border-radius:4px; z-index:10009; font-family:inherit; max-width:280px;";
     
     popup.innerHTML = `
+
       <div style="font-weight:bold; margin-bottom:5px; color:var(--ink);">✉️ Private Chat Request</div>
       <div style="font-size:13px; margin-bottom:10px;"><b>${esc(peer)}</b> has invited you to a secure private conversation.</div>
       <div style="display:flex; gap:10px; justify-content:flex-end;">
@@ -210,6 +160,7 @@
       }
     };
 
+
     $(`dismiss-inv-${room.id}`).onclick = () => {
       popup.remove();
     };
@@ -229,6 +180,7 @@
       if (existingPanel) existingPanel.remove();
       if (reportsInterval) { clearInterval(reportsInterval); reportsInterval = null; }
       return;
+
     }
 
     const listCard = $("sub-list-card");
@@ -248,6 +200,7 @@
       if (!$("chat_topics").classList.contains("active")) return;
       try {
         const r = await fetch(`${ROOT}/reports${KEY}&orderBy=t desc&pageSize=30`);
+
         const docs = ((await r.json()).documents || []).map(parseDoc);
         
         panel.innerHTML = `
@@ -266,6 +219,7 @@
         panel.innerHTML = `<h3 style="color:#d63b3b; font-size:15px;">⚠️ Content Moderation Reports</h3><p class="mute">Error reading incident database stream.</p>`;
       }
     };
+
 
     pollReports();
     if (reportsInterval) clearInterval(reportsInterval);
@@ -286,6 +240,7 @@
     }
   });
 
+
   /* ---------- Chat Rooms (Sub-Chats) Engine ---------- */
   function checkSubCreateVisibility() {
     const el = $("sub-create-card");
@@ -305,6 +260,7 @@
       const r = await fetch(`${ROOT}/SubChats${KEY}&pageSize=100`);
       const docs = ((await r.json()).documents || []).map(parseDoc);
       
+
       listContainer.innerHTML = docs.length ? docs.map(room => 
         `<div class="card" style="display:flex; justify-content:between; align-items:center;">
           <b># ${esc(room.id)}</b>
@@ -324,6 +280,7 @@
       if (typeof isDev === "function" && !isDev()) return (msgEl.textContent = "Devs and above only.");
 
       const title = cleanText($("sub-new-title").value).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40);
+
       if (!title) return (msgEl.textContent = "Enter a valid room name.");
 
       try {
@@ -343,6 +300,7 @@
     const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
     
     const parsed = list.map(o => ({
+
       id: o.id, u: o.u, x: o.x, r: o.r, a: o.a, t: o.t
     })).reverse();
 
@@ -357,14 +315,12 @@
       
       const av = (typeof AVATARS !== "undefined") && AVATARS.includes(m.a) ? m.a + " " : "";
       
-      // Synchronous Decoding Layer: Base16 (Hex) ➔ Binary ➔ Base64 ➔ Raw Text
+      // Reading plain text data payload directory out of Firebase fields mapping
       let rawText = m.x || "";
-      if (rawText && !rawText.startsWith("[GIF]:")) {
-        rawText = ENCODER.decode(rawText);
-      }
 
       let content = fmt(filt(rawText));
       if (rawText && rawText.startsWith("[GIF]:")) {
+
         const gifUrl = rawText.slice(6);
         if (gifUrl.startsWith("https://")) {
           content = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px; border:2px solid var(--line);">`;
@@ -385,6 +341,7 @@
     if (near) box.scrollTop = box.scrollHeight;
   }
 
+
   async function openSubRoom(roomName) {
     curSubRoom = roomName;
     closeGifPickers();
@@ -404,6 +361,7 @@
         const docs = ((await r.json()).documents || []).map(parseDoc);
         renderSubMessages(docs);
       } catch (e) {}
+
     };
 
     runPoll();
@@ -418,11 +376,12 @@
       closeGifPickers();
       if ($("sub-thread-card")) $("sub-thread-card").classList.add("hide");
       if ($("sub-list-card")) $("sub-list-card").classList.remove("hide");
-      if ($("sub-create-card")) $("sub-create-card").classList.toggle("hide", typeof isDev === "function" ? !isDev() : true);
+      if ($("sub-create-card")) $("sub-create-card").toggle("hide", typeof isDev === "function" ? !isDev() : true);
       loadSubRooms();
       initStaffReportsPanel();
     };
   }
+
 
   if ($("sub-chat-form")) {
     $("sub-chat-form").addEventListener("submit", async e => {
@@ -436,20 +395,18 @@
 
       const msgGeneratedId = "msg-" + Math.random().toString(36).slice(2, 11) + "-" + Date.now();
       
-      // Synchronous Multilayer Encoding Execution
-      const finalizedPayload = ENCODER.encode(txt);
-      
-      // Maintain parallel tracking contexts to mirror storage definitions safely
-      await syncLocalSecurityContext(msgGeneratedId, finalizedPayload);
+      // Local security configuration sync
+      await syncLocalSecurityContext(msgGeneratedId, txt);
 
       try {
         await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages/${msgGeneratedId}${KEY}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
+
           body: JSON.stringify({
             fields: {
               u: { stringValue: me.name },
-              x: { stringValue: finalizedPayload },
+              x: { stringValue: txt },
               a: { stringValue: me.avatar || "" },
               r: { stringValue: me.role },
               t: { integerValue: String(Date.now()) }
@@ -465,6 +422,7 @@
   /* ---------- Private Messages Engine ---------- */
   async function loadPrivRooms() {
     const container = $("priv-rooms-list");
+
     if (!container || typeof me === "undefined" || !me) return;
     container.textContent = "Loading active conversations...";
     try {
@@ -485,6 +443,7 @@
     }
   }
 
+
   if ($("priv-start-btn")) {
     $("priv-start-btn").onclick = async () => {
       const msgEl = $("priv-start-msg");
@@ -504,6 +463,7 @@
         $("priv-target-user").value = "";
         msgEl.textContent = "Chat initialized!";
         openPrivRoom(roomId, peer);
+
       } catch (x) {
         msgEl.textContent = "Initialization failed.";
       }
@@ -523,12 +483,10 @@
 
     for (let m of parsed) {
       const timeStr = $("ts") && $("ts").checked ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
+
       const av = (typeof AVATARS !== "undefined") && AVATARS.includes(m.a) ? m.a + " " : "";
       
       let rawText = m.x || "";
-      if (rawText && !rawText.startsWith("[GIF]:")) {
-        rawText = ENCODER.decode(rawText);
-      }
 
       let content = fmt(filt(rawText));
       if (rawText && rawText.startsWith("[GIF]:")) {
@@ -545,6 +503,7 @@
 
     box.querySelectorAll(".msg-body-content").forEach(el => {
       el.innerHTML = el.innerHTML.replace(/(@[A-Za-z0-9_-]+)/g, '<span style="color:#2ecc71; font-weight:bold;">$1</span>');
+
     });
 
     if (near) box.scrollTop = box.scrollHeight;
@@ -564,6 +523,7 @@
     const runPoll = async () => {
       if (curPrivRoom !== roomId || document.hidden || !$("priv_chat").classList.contains("active")) return;
       try {
+
         const r = await fetch(pollUrl);
         const docs = ((await r.json()).documents || []).map(parseDoc);
         renderPrivMessages(docs);
@@ -583,6 +543,7 @@
       if ($("priv-thread-card")) $("priv-thread-card").classList.add("hide");
       if ($("priv-sessions-card")) $("priv-sessions-card").classList.remove("hide");
       loadPrivRooms();
+
     };
   }
 
@@ -597,18 +558,18 @@
       if (input) input.value = "";
 
       const msgGeneratedId = "msg-" + Math.random().toString(36).slice(2, 11) + "-" + Date.now();
-      const finalizedPayload = ENCODER.encode(txt);
       
-      await syncLocalSecurityContext(msgGeneratedId, finalizedPayload);
+      await syncLocalSecurityContext(msgGeneratedId, txt);
 
       try {
         await fetch(`${ROOT}/PrivChats/${encodeURIComponent(curPrivRoom)}/messages/${msgGeneratedId}${KEY}`, {
+
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             fields: {
               u: { stringValue: me.name },
-              x: { stringValue: finalizedPayload },
+              x: { stringValue: txt },
               a: { stringValue: me.avatar || "" },
               r: { stringValue: me.role },
               t: { integerValue: String(Date.now()) }
@@ -622,6 +583,7 @@
   }
 
   /* ---------- Global Click Routing Delegation Listener ---------- */
+
   document.body.addEventListener("click", e => {
     if (e.target.dataset.joinSub) {
       e.preventDefault();
@@ -641,6 +603,7 @@
   async function fetchGiphyGifs(pickerType, searchQuery = "") {
     const container = $(`${pickerType}-gif-results`);
     if (!container) return;
+
     container.innerHTML = "<p class='mute'>Searching Giphy...</p>";
 
     let url = `https://giphy.com{GIPHY_API_KEY}&limit=12&rating=g`;
@@ -660,6 +623,7 @@
 
       container.innerHTML = items.map(gif => {
         const fixedUrl = gif.images?.fixed_height_small?.url || gif.images?.original?.url;
+
         return `<img src="${esc(fixedUrl)}" data-gif-src="${esc(fixedUrl)}" class="gif-picker-thumb" alt="GIF" style="height:90px; border-radius:6px; cursor:pointer; object-fit:cover;">`;
       }).join("");
     } catch (err) {
@@ -679,6 +643,7 @@
     if (curSubRoom && !$("sub-gif-picker").classList.contains("hide")) {
       try {
         await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages${KEY}`, {
+
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -698,6 +663,7 @@
         await fetch(`${ROOT}/PrivChats/${encodeURIComponent(curPrivRoom)}/messages${KEY}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+
           body: JSON.stringify({
             fields: {
               u: { stringValue: (typeof me !== "undefined" && me) ? me.name : "Unknown" },
@@ -717,6 +683,7 @@
     $("sub-gif-btn").onclick = (e) => {
       e.stopPropagation();
       const picker = $("sub-gif-picker");
+
       if (!picker) return;
       const isHidden = picker.classList.contains("hide");
       closeGifPickers();
@@ -736,6 +703,7 @@
       if (!picker) return;
       const isHidden = picker.classList.contains("hide");
       closeGifPickers();
+
       if (isHidden) {
         picker.classList.remove("hide");
         const searchBox = $("priv-gif-search");
@@ -755,6 +723,7 @@
     $("priv-gif-search").addEventListener("input", e => {
       fetchGiphyGifs("priv", e.target.value);
     });
+
   }
 
   document.addEventListener("click", e => {
@@ -774,6 +743,7 @@
     menu.style.background = "#fff";
     menu.style.border = "1px solid var(--line)";
     menu.style.borderRadius = "8px";
+
     menu.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
     menu.style.padding = "4px 0";
     menu.style.minWidth = "150px";
@@ -792,6 +762,7 @@
       const msgId = trigger.dataset.msgId;
       const author = trigger.dataset.msgAuthor;
       const channel = trigger.dataset.msgChannel;
+
 
       if (channel === "priv") {
         menu.classList.add("hide");
@@ -812,6 +783,7 @@
 
       const rect = trigger.getBoundingClientRect();
       menu.style.top = `${rect.bottom + window.scrollY + 4}px`;
+
       menu.style.left = `${Math.min(window.innerWidth - 160, rect.left + window.scrollX - 120)}px`;
       menu.classList.remove("hide");
       return;
@@ -831,6 +803,7 @@
       } 
       else if (action === "priv") {
         const peer = menuItem.dataset.peer;
+
         if (typeof me === "undefined" || !me) return;
 
         const roomId = [me.name, peer].sort().join("~");
@@ -850,6 +823,7 @@
         const author = menuItem.dataset.author;
         
         let reportSnippet = "Reported message text";
+
         const messageContainer = e.target.closest(".msg");
         if (messageContainer) {
           const textEl = messageContainer.querySelector(".msg-body-content");
@@ -869,6 +843,7 @@
                 by: { stringValue: me.name },
                 t: { integerValue: String(Date.now()) }
               }
+
             })
           })
           .then(() => toast("Reported. Thanks!"))
@@ -888,6 +863,7 @@
     menu.classList.add("hide");
   });
 
+
   const messageBox = $("sub-msgs") || $("msgs");
   if (messageBox) {
     messageBox.addEventListener("scroll", () => {
@@ -897,3 +873,5 @@
   }
 
 })();
+
+
