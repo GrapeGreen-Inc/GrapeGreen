@@ -1,5 +1,3 @@
-# Plain-Text Firebase Chat Module (chat.js)
-
 /* ============================================================================
    GRApeGREEN SEPARATE CHAT ARCHITECTURE SYSTEM — CHAT.JS MODULE
    Save this complete file as chat.js and link it via <script src="chat.js"></script>
@@ -19,10 +17,10 @@
   let curSubRoom = null;
   let curPrivRoom = null;
   let subMsgsUnsubscribe = null;
-
   let privMsgsUnsubscribe = null;
   let reportsInterval = null;
   let invitePollInterval = null;
+  let activeReportsCache = []; // Cache active incident payloads locally to handle styling matches
   const GIPHY_API_KEY = "dc6zaTOxFJmzC"; // Public demo search key
 
   /* ---------- Vault Synchronization Engine ---------- */
@@ -39,7 +37,6 @@
             t: { integerValue: String(Date.now()) }
           }
         })
-
       });
     } catch (e) {}
 
@@ -58,7 +55,6 @@
       });
     } catch (e) {}
   }
-
 
   /* ---------- Automated Tab Switch Hook Engine ---------- */
   document.addEventListener("click", e => {
@@ -79,7 +75,6 @@
       initStaffReportsPanel();
     }
     if (tabId === "priv_chat") {
-
       loadPrivRooms();
     }
   });
@@ -99,7 +94,6 @@
   function isStaff(role) {
     if (!role) return false;
     const lower = role.toLowerCase();
-
     return ["mod", "moderator", "admin", "head admin", "headadmin", "dev", "developer", "owner"].includes(lower);
   }
 
@@ -119,7 +113,6 @@
         const pendingInvite = docs.find(room => {
           const parts = room.id.split("~");
           return parts.includes(me.name) && room.initiatedBy !== me.name && (Date.now() - room.t < 15000);
-
         });
 
         if (pendingInvite && !$(`invite-popup-${pendingInvite.id}`)) {
@@ -139,7 +132,6 @@
     popup.style.cssText = "position:fixed; bottom:20px; right:20px; background:#fff; border-left:4px solid #2ecc71; padding:15px; box-shadow:0 4px 15px rgba(0,0,0,0.2); border-radius:4px; z-index:10009; font-family:inherit; max-width:280px;";
     
     popup.innerHTML = `
-
       <div style="font-weight:bold; margin-bottom:5px; color:var(--ink);">✉️ Private Chat Request</div>
       <div style="font-size:13px; margin-bottom:10px;"><b>${esc(peer)}</b> has invited you to a secure private conversation.</div>
       <div style="display:flex; gap:10px; justify-content:flex-end;">
@@ -160,7 +152,6 @@
       }
     };
 
-
     $(`dismiss-inv-${room.id}`).onclick = () => {
       popup.remove();
     };
@@ -173,6 +164,92 @@
     startInviteListener();
   }
 
+  /* ---------- Mod/Admin Incident Workflow Modal Modifiers ---------- */
+  function createModerationTicketModal(reportId, author, reportedBy, textSnippet, associatedMsgId) {
+    const fallbackId = `modal-container-${Date.now()}`;
+    let overlay = $("staff-ticket-resolution-modal");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "staff-ticket-resolution-modal";
+      overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:20000; font-family:inherit;";
+      document.body.appendChild(overlay);
+    }
+    overlay.classList.remove("hide");
+
+    overlay.innerHTML = `
+      <div class="card" style="width:100%; max-width:460px; background:#fff; padding:20px; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.3); border-top:4px solid #d63b3b;">
+        <h3 style="margin-top:0; color:#d63b3b; font-size:16px; margin-bottom:12px;">🛠️ Moderate Incident Ticket</h3>
+        <div style="font-size:13px; margin-bottom:10px; line-height:1.4;">
+          <b>Reported User:</b> <span style="color:#d63b3b; font-weight:bold;">${esc(author)}</span><br>
+          <b>Filed By:</b> ${esc(reportedBy)}<br>
+          <b>Message ID Context:</b> <small class="mute">${esc(associatedMsgId || 'N/A')}</small>
+        </div>
+        <div style="background:#f9f9f9; border-left:3px solid #d63b3b; padding:10px; font-size:13px; font-style:italic; margin-bottom:18px; max-height:120px; overflow-y:auto; color:var(--ink);">
+          "${esc(textSnippet)}"
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn" id="mod-action-warn" style="background:#f39c12; color:#fff; text-align:left; padding:8px 12px; font-weight:bold;">⚠️ Action 1: Warn User & Close Ticket</button>
+          <button class="btn" id="mod-action-delete" style="background:#d63b3b; color:#fff; text-align:left; padding:8px 12px; font-weight:bold;">🗑️ Action 2: Delete Content & Close Ticket</button>
+          <button class="btn" id="mod-action-keep" style="background:#2ecc71; color:#fff; text-align:left; padding:8px 12px; font-weight:bold;">✔️ Action 3: Keep Content & Close Ticket</button>
+          <button class="btn mute" id="mod-action-cancel" style="background:#eee; color:#333; margin-top:6px; padding:6px; font-size:12px;">Dismiss Dialog</button>
+        </div>
+      </div>
+    `;
+
+    const cleanUpTicket = async () => {
+      try {
+        await fetch(`${ROOT}/reports/${encodeURIComponent(reportId)}${KEY}`, { method: "DELETE" });
+        toast("Report ticket closed and deleted.");
+        overlay.classList.add("hide");
+        initStaffReportsPanel();
+        if (curSubRoom) openSubRoom(curSubRoom); // Refresh current stream view layouts
+      } catch (err) {
+        toast("Failed to remove historical report log token entries.");
+      }
+    };
+
+    $("mod-action-warn").onclick = async () => {
+      try {
+        // Option 1: Send structural warning log context records
+        await fetch(`${ROOT}/warnings${KEY}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fields: {
+              targetUser: { stringValue: author },
+              warnedBy: me.name,
+              reason: { stringValue: `Inappropriate message flagged context: "${textSnippet}"` },
+              t: { integerValue: String(Date.now()) }
+            }
+          })
+        });
+        toast("Warning processed to ledger account.");
+        await cleanUpTicket();
+      } catch (x) { toast("Warning workflow pipeline broken."); }
+    };
+
+    $("mod-action-delete").onclick = async () => {
+      if (associatedMsgId && curSubRoom) {
+        try {
+          await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages/${encodeURIComponent(associatedMsgId)}${KEY}`, { method: "DELETE" });
+          toast("Target message record deleted from message nodes.");
+        } catch (x) { toast("Direct background document sync deletion failed."); }
+      } else {
+        toast("Message configuration context unavailable for automatic room tree removal. Check master terminal manually.");
+      }
+      await cleanUpTicket();
+    };
+
+    $("mod-action-keep").onclick = async () => {
+      toast("Content verified safe.");
+      await cleanUpTicket();
+    };
+
+    $("mod-action-cancel").onclick = () => {
+      overlay.classList.add("hide");
+    };
+  }
+
   /* ---------- Staff Reports Dashboard Module ---------- */
   function initStaffReportsPanel() {
     if (typeof me === "undefined" || !me || !isStaff(me.role)) {
@@ -180,7 +257,6 @@
       if (existingPanel) existingPanel.remove();
       if (reportsInterval) { clearInterval(reportsInterval); reportsInterval = null; }
       return;
-
     }
 
     const listCard = $("sub-list-card");
@@ -200,17 +276,26 @@
       if (!$("chat_topics").classList.contains("active")) return;
       try {
         const r = await fetch(`${ROOT}/reports${KEY}&orderBy=t desc&pageSize=30`);
-
         const docs = ((await r.json()).documents || []).map(parseDoc);
         
+        // Cache active reporting footprints for active red layout tint matches
+        activeReportsCache = docs.map(d => ({ msgId: d.msgId, text: d.text }));
+
         panel.innerHTML = `
           <h3 style="margin-top:0; color:#d63b3b; font-size:15px; display:flex; align-items:center; gap:6px;">⚠️ Content Moderation Reports</h3>
+          <p style="font-size:11px; margin: -5px 0 10px 0;" class="mute">Click an incident container card directly to process options (Warn, Delete, Keep).</p>
           <div id="reports-list-container" style="max-height:220px; overflow-y:auto; font-size:12px;">
             ${docs.length ? docs.map(rep => `
-              <div style="padding:8px; border-bottom:1px solid var(--line); position:relative;">
-                <b>Reported:</b> ${esc(rep.author)} | <b>By:</b> ${esc(rep.by)} <br>
-                <span style="color:#555; font-style:italic;">"${esc(rep.text)}"</span>
-                <button class="btn btn-small" data-delete-report-id="${esc(rep.id)}" style="position:absolute; right:5px; top:8px; background:#d63b3b; color:#fff; padding:2px 6px; font-size:10px;">Dismiss</button>
+              <div class="interactive-report-ticket-node" 
+                   data-report-id="${esc(rep.id)}"
+                   data-report-author="${esc(rep.author)}"
+                   data-report-by="${esc(rep.by)}"
+                   data-report-snippet="${esc(rep.text)}"
+                   data-report-msg-id="${esc(rep.msgId || '')}"
+                   style="padding:10px; border-bottom:1px solid var(--line); position:relative; cursor:pointer; background:#fff1f1; margin-bottom:4px; border-radius:4px; transition: background 0.2s;">
+                <b>Reported:</b> <span style="color:#d63b3b;">${esc(rep.author)}</span> | <b>By:</b> ${esc(rep.by)} <br>
+                <span style="color:#444; font-style:italic;">"${esc(rep.text)}"</span>
+                <span style="display:block; text-align:right; font-size:10px; color:#999; margin-top:4px;">Open Moderation Workflow ➔</span>
               </div>
             `).join("") : '<p class="mute" style="margin:5px 0 0 0;">No active incident reports file log found.</p>'}
           </div>
@@ -220,26 +305,20 @@
       }
     };
 
-
     pollReports();
     if (reportsInterval) clearInterval(reportsInterval);
     reportsInterval = setInterval(pollReports, 6000);
   }
 
-  document.body.addEventListener("click", async e => {
-    const reportDelBtn = e.target.closest("[data-delete-report-id]");
-    if (!reportDelBtn) return;
+  // Handle reporting dashboard clicks to spin up modal pipelines
+  document.body.addEventListener("click", e => {
+    const reportCardNode = e.target.closest(".interactive-report-ticket-node");
+    if (!reportCardNode) return;
     e.preventDefault();
-    const id = reportDelBtn.dataset.deleteReportId;
-    try {
-      await fetch(`${ROOT}/reports/${encodeURIComponent(id)}${KEY}`, { method: "DELETE" });
-      toast("Report dismissed.");
-      initStaffReportsPanel();
-    } catch(x) {
-      toast("Failed to dismiss report.");
-    }
+    
+    const d = reportCardNode.dataset;
+    createModerationTicketModal(d.reportId, d.reportAuthor, d.reportBy, d.reportSnippet, d.reportMsgId);
   });
-
 
   /* ---------- Chat Rooms (Sub-Chats) Engine ---------- */
   function checkSubCreateVisibility() {
@@ -260,7 +339,6 @@
       const r = await fetch(`${ROOT}/SubChats${KEY}&pageSize=100`);
       const docs = ((await r.json()).documents || []).map(parseDoc);
       
-
       listContainer.innerHTML = docs.length ? docs.map(room => 
         `<div class="card" style="display:flex; justify-content:between; align-items:center;">
           <b># ${esc(room.id)}</b>
@@ -280,7 +358,6 @@
       if (typeof isDev === "function" && !isDev()) return (msgEl.textContent = "Devs and above only.");
 
       const title = cleanText($("sub-new-title").value).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40);
-
       if (!title) return (msgEl.textContent = "Enter a valid room name.");
 
       try {
@@ -300,7 +377,6 @@
     const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
     
     const parsed = list.map(o => ({
-
       id: o.id, u: o.u, x: o.x, r: o.r, a: o.a, t: o.t
     })).reverse();
 
@@ -318,9 +394,12 @@
       // Reading plain text data payload directory out of Firebase fields mapping
       let rawText = m.x || "";
 
+      // Check cache targets to decide if message layer should have a explicit slight red configuration background layout tint applied
+      const isCurrentlyReported = activeReportsCache.some(r => (r.msgId === m.id || (m.id && r.text === rawText)));
+      const redTintStyle = isCurrentlyReported ? 'background: rgba(214, 59, 59, 0.08); padding: 4px 8px; border-radius: 4px; border-left: 3px solid #d63b3b; margin-top: 2px;' : '';
+
       let content = fmt(filt(rawText));
       if (rawText && rawText.startsWith("[GIF]:")) {
-
         const gifUrl = rawText.slice(6);
         if (gifUrl.startsWith("https://")) {
           content = `<img src="${esc(gifUrl)}" class="chat-inline-gif" alt="GIF" style="max-width:200px; display:block; border-radius:8px; margin-top:5px; border:2px solid var(--line);">`;
@@ -329,7 +408,12 @@
       
       const actionTrigger = `<button class="chat-action-trigger-btn" data-msg-id="${esc(m.id)}" data-msg-author="${esc(m.u)}" data-msg-channel="sub" style="background:none; border:none; cursor:pointer; padding:0 4px; font-weight:bold; color:#888; float:right;">⋮</button>`;
       
-      htmlBuffer.push(`<div class="msg" style="clear:both; margin-bottom:8px;">${actionTrigger}${timeStr}${av}<b>${esc(m.u)}</b>${verifiedCheck}${staffTag}: <span class="msg-body-content">${content}</span></div>`);
+      htmlBuffer.push(`
+        <div class="msg" style="clear:both; margin-bottom:8px; ${redTintStyle}">
+          ${actionTrigger}${timeStr}${av}<b>${esc(m.u)}</b>${verifiedCheck}${staffTag}: 
+          <span class="msg-body-content">${content}</span>
+        </div>
+      `);
     }
 
     box.innerHTML = htmlBuffer.join("") || '<p class="mute">Welcome to the room! Say hi!</p>';
@@ -340,7 +424,6 @@
 
     if (near) box.scrollTop = box.scrollHeight;
   }
-
 
   async function openSubRoom(roomName) {
     curSubRoom = roomName;
@@ -361,7 +444,6 @@
         const docs = ((await r.json()).documents || []).map(parseDoc);
         renderSubMessages(docs);
       } catch (e) {}
-
     };
 
     runPoll();
@@ -382,7 +464,6 @@
     };
   }
 
-
   if ($("sub-chat-form")) {
     $("sub-chat-form").addEventListener("submit", async e => {
       e.preventDefault();
@@ -402,7 +483,6 @@
         await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages/${msgGeneratedId}${KEY}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-
           body: JSON.stringify({
             fields: {
               u: { stringValue: me.name },
@@ -422,7 +502,6 @@
   /* ---------- Private Messages Engine ---------- */
   async function loadPrivRooms() {
     const container = $("priv-rooms-list");
-
     if (!container || typeof me === "undefined" || !me) return;
     container.textContent = "Loading active conversations...";
     try {
@@ -443,7 +522,6 @@
     }
   }
 
-
   if ($("priv-start-btn")) {
     $("priv-start-btn").onclick = async () => {
       const msgEl = $("priv-start-msg");
@@ -463,7 +541,6 @@
         $("priv-target-user").value = "";
         msgEl.textContent = "Chat initialized!";
         openPrivRoom(roomId, peer);
-
       } catch (x) {
         msgEl.textContent = "Initialization failed.";
       }
@@ -483,7 +560,6 @@
 
     for (let m of parsed) {
       const timeStr = $("ts") && $("ts").checked ? `<small>${new Date(m.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small> ` : "";
-
       const av = (typeof AVATARS !== "undefined") && AVATARS.includes(m.a) ? m.a + " " : "";
       
       let rawText = m.x || "";
@@ -503,7 +579,6 @@
 
     box.querySelectorAll(".msg-body-content").forEach(el => {
       el.innerHTML = el.innerHTML.replace(/(@[A-Za-z0-9_-]+)/g, '<span style="color:#2ecc71; font-weight:bold;">$1</span>');
-
     });
 
     if (near) box.scrollTop = box.scrollHeight;
@@ -523,7 +598,6 @@
     const runPoll = async () => {
       if (curPrivRoom !== roomId || document.hidden || !$("priv_chat").classList.contains("active")) return;
       try {
-
         const r = await fetch(pollUrl);
         const docs = ((await r.json()).documents || []).map(parseDoc);
         renderPrivMessages(docs);
@@ -543,7 +617,6 @@
       if ($("priv-thread-card")) $("priv-thread-card").classList.add("hide");
       if ($("priv-sessions-card")) $("priv-sessions-card").classList.remove("hide");
       loadPrivRooms();
-
     };
   }
 
@@ -563,7 +636,6 @@
 
       try {
         await fetch(`${ROOT}/PrivChats/${encodeURIComponent(curPrivRoom)}/messages/${msgGeneratedId}${KEY}`, {
-
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -583,7 +655,6 @@
   }
 
   /* ---------- Global Click Routing Delegation Listener ---------- */
-
   document.body.addEventListener("click", e => {
     if (e.target.dataset.joinSub) {
       e.preventDefault();
@@ -603,7 +674,6 @@
   async function fetchGiphyGifs(pickerType, searchQuery = "") {
     const container = $(`${pickerType}-gif-results`);
     if (!container) return;
-
     container.innerHTML = "<p class='mute'>Searching Giphy...</p>";
 
     let url = `https://giphy.com{GIPHY_API_KEY}&limit=12&rating=g`;
@@ -623,7 +693,6 @@
 
       container.innerHTML = items.map(gif => {
         const fixedUrl = gif.images?.fixed_height_small?.url || gif.images?.original?.url;
-
         return `<img src="${esc(fixedUrl)}" data-gif-src="${esc(fixedUrl)}" class="gif-picker-thumb" alt="GIF" style="height:90px; border-radius:6px; cursor:pointer; object-fit:cover;">`;
       }).join("");
     } catch (err) {
@@ -643,7 +712,6 @@
     if (curSubRoom && !$("sub-gif-picker").classList.contains("hide")) {
       try {
         await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages${KEY}`, {
-
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -663,7 +731,6 @@
         await fetch(`${ROOT}/PrivChats/${encodeURIComponent(curPrivRoom)}/messages${KEY}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-
           body: JSON.stringify({
             fields: {
               u: { stringValue: (typeof me !== "undefined" && me) ? me.name : "Unknown" },
@@ -683,7 +750,6 @@
     $("sub-gif-btn").onclick = (e) => {
       e.stopPropagation();
       const picker = $("sub-gif-picker");
-
       if (!picker) return;
       const isHidden = picker.classList.contains("hide");
       closeGifPickers();
@@ -703,7 +769,6 @@
       if (!picker) return;
       const isHidden = picker.classList.contains("hide");
       closeGifPickers();
-
       if (isHidden) {
         picker.classList.remove("hide");
         const searchBox = $("priv-gif-search");
@@ -723,7 +788,6 @@
     $("priv-gif-search").addEventListener("input", e => {
       fetchGiphyGifs("priv", e.target.value);
     });
-
   }
 
   document.addEventListener("click", e => {
@@ -743,7 +807,6 @@
     menu.style.background = "#fff";
     menu.style.border = "1px solid var(--line)";
     menu.style.borderRadius = "8px";
-
     menu.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
     menu.style.padding = "4px 0";
     menu.style.minWidth = "150px";
@@ -762,7 +825,6 @@
       const msgId = trigger.dataset.msgId;
       const author = trigger.dataset.msgAuthor;
       const channel = trigger.dataset.msgChannel;
-
 
       if (channel === "priv") {
         menu.classList.add("hide");
@@ -783,7 +845,6 @@
 
       const rect = trigger.getBoundingClientRect();
       menu.style.top = `${rect.bottom + window.scrollY + 4}px`;
-
       menu.style.left = `${Math.min(window.innerWidth - 160, rect.left + window.scrollX - 120)}px`;
       menu.classList.remove("hide");
       return;
@@ -803,7 +864,6 @@
       } 
       else if (action === "priv") {
         const peer = menuItem.dataset.peer;
-
         if (typeof me === "undefined" || !me) return;
 
         const roomId = [me.name, peer].sort().join("~");
@@ -823,7 +883,6 @@
         const author = menuItem.dataset.author;
         
         let reportSnippet = "Reported message text";
-
         const messageContainer = e.target.closest(".msg");
         if (messageContainer) {
           const textEl = messageContainer.querySelector(".msg-body-content");
@@ -843,10 +902,12 @@
                 by: { stringValue: me.name },
                 t: { integerValue: String(Date.now()) }
               }
-
             })
           })
-          .then(() => toast("Reported. Thanks!"))
+          .then(() => {
+            toast("Reported. Thanks!");
+            if (curSubRoom) openSubRoom(curSubRoom); // Force immediate red-tint re-layout paint
+          })
           .catch(() => toast("Failed to send report."));
         }
       } 
@@ -863,7 +924,6 @@
     menu.classList.add("hide");
   });
 
-
   const messageBox = $("sub-msgs") || $("msgs");
   if (messageBox) {
     messageBox.addEventListener("scroll", () => {
@@ -873,5 +933,3 @@
   }
 
 })();
-
-
