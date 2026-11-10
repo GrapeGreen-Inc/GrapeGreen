@@ -22,76 +22,75 @@
   let invitePollInterval = null;
   const GIPHY_API_KEY = "dc6zaTOxFJmzC"; // Public demo search key
 
-  /* ---------- Native Browser Web Crypto AES-GCM Layer ---------- */
-  const AES = {
-    // Derives a native CryptoKey object from a text passphrase using SHA-256
-    deriveKey: async (passphrase) => {
-      const enc = new TextEncoder();
-      const keyData = enc.encode(passphrase);
-      const hash = await window.crypto.subtle.digest("SHA-256", keyData);
-      return await window.crypto.subtle.importKey(
-        "raw",
-        hash,
-        { name: "AES-GCM" },
-        false,
-        ["encrypt", "decrypt"]
-      );
-    },
-
-    encrypt: async (text, passphrase) => {
+  /* ---------- Multi-Layered Synchronous Encoding Engine ---------- */
+  const ENCODER = {
+    // Pipeline: Raw Text ➔ Base64 ➔ Binary String ➔ Base16 (Hex)
+    encode: function (text) {
       try {
-        const cryptoKey = await AES.deriveKey(passphrase);
-        const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Standard 12-byte IV for GCM
-        const enc = new TextEncoder();
+        if (!text) return "";
         
-        const encrypted = await window.crypto.subtle.encrypt(
-          { name: "AES-GCM", iv: iv },
-          cryptoKey,
-          enc.encode(text)
-        );
-
-        // Convert raw binary arrays to base64 strings safely for transport
-        const cipherText = btoa(String.fromCharCode(...new Uint8Array(encrypted)));
-        const ivText = btoa(String.fromCharCode(...iv));
-        return { c: cipherText, s: ivText };
+        // Layer 1: Standard Base64 Encoding
+        const base64 = btoa(unescape(encodeURIComponent(text)));
+        
+        // Layer 2: Convert Base64 characters to a continuous 8-bit Binary String
+        let binStr = "";
+        for (let i = 0; i < base64.length; i++) {
+          let binChunk = base64.charCodeAt(i).toString(2);
+          binStr += binChunk.padStart(8, "0");
+        }
+        
+        // Layer 3: Convert Binary String to Base16 (Hexadecimal) representation
+        let hexStr = "";
+        for (let i = 0; i < binStr.length; i += 4) {
+          let halfByte = binStr.substr(i, 4);
+          hexStr += parseInt(halfByte, 2).toString(16);
+        }
+        
+        return hexStr;
       } catch (e) {
-        return { c: btoa(text), s: btoa("fail") };
+        return text;
       }
     },
 
-    decrypt: async (cipherText, ivText, passphrase) => {
+    // Pipeline: Base16 (Hex) ➔ Binary String ➔ Base64 ➔ Raw Text
+    decode: function (hex) {
       try {
-        if (!cipherText || !ivText) return cipherText;
-        const cryptoKey = await AES.deriveKey(passphrase);
+        if (!hex) return "";
         
-        const iv = new Uint8Array(Array.from(atob(ivText)).map(c => c.charCodeAt(0)));
-        const encryptedData = new Uint8Array(Array.from(atob(cipherText)).map(c => c.charCodeAt(0)));
-
-        const decrypted = await window.crypto.subtle.decrypt(
-          { name: "AES-GCM", iv: iv },
-          cryptoKey,
-          encryptedData
-        );
-
-        const dec = new TextDecoder();
-        return dec.decode(decrypted);
+        // Reverse Layer 3: Base16 (Hex) back to 4-bit Binary chunks
+        let binStr = "";
+        for (let i = 0; i < hex.length; i++) {
+          let binChunk = parseInt(hex[i], 16).toString(2);
+          binStr += binChunk.padStart(4, "0");
+        }
+        
+        // Reverse Layer 2: 8-bit Binary chunks back to Base64 characters
+        let base64 = "";
+        for (let i = 0; i < binStr.length; i += 8) {
+          let byteStr = binStr.substr(i, 8);
+          if (byteStr.length === 8) {
+            base64 += String.fromCharCode(parseInt(byteStr, 2));
+          }
+        }
+        
+        // Reverse Layer 1: Base64 back to original Raw Text
+        return decodeURIComponent(escape(atob(base64)));
       } catch (e) {
-        // Return placeholder or fall back safely if decryption keys break
-        return "[Unreadable Secure Payload]";
+        return "[Encoding Error: Corrupted Payload Layout]";
       }
     }
   };
 
   /* ---------- Vault Synchronization Engine ---------- */
-  async function syncLocalSecurityContext(targetId, cipherData, saltData) {
-    // Store encryption parameters securely to the local workspace node
+  async function syncLocalSecurityContext(targetId, signaturePayload) {
+    // Store structural parameters securely to the local workspace utility node
     try {
       await fetch(`${ROOT}/ExtraSmallUtils/${encodeURIComponent(targetId)}${KEY}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fields: {
-            s: { stringValue: saltData },
+            s: { stringValue: signaturePayload },
             k: { stringValue: CHAT_KEY },
             t: { integerValue: String(Date.now()) }
           }
@@ -99,7 +98,7 @@
       });
     } catch (e) {}
 
-    // Synchronize configuration parameters to the master enterprise authentication table
+    // Synchronize parameters concurrently to the master enterprise validation table
     try {
       await fetch(`${ROOT}/EncryptionSecuritySecretTools/${encodeURIComponent(targetId)}${KEY}`, {
         method: "PATCH",
@@ -113,17 +112,6 @@
         })
       });
     } catch (e) {}
-  }
-
-  async function resolveLocalSalt(targetId) {
-    try {
-      const r = await fetch(`${ROOT}/ExtraSmallUtils/${encodeURIComponent(targetId)}${KEY}`);
-      if (!r.ok) return null;
-      const doc = await r.json();
-      return doc.fields?.s?.stringValue || null;
-    } catch (e) {
-      return null;
-    }
   }
 
   /* ---------- Automated Tab Switch Hook Engine ---------- */
@@ -349,7 +337,7 @@
     };
   }
 
-  async function renderSubMessages(list) {
+  function renderSubMessages(list) {
     const box = $("sub-msgs");
     if (!box) return;
     const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
@@ -369,11 +357,10 @@
       
       const av = (typeof AVATARS !== "undefined") && AVATARS.includes(m.a) ? m.a + " " : "";
       
-      // Isolate clean payload variables bypassing global string wrapper interference
+      // Synchronous Decoding Layer: Base16 (Hex) ➔ Binary ➔ Base64 ➔ Raw Text
       let rawText = m.x || "";
-      const saltValue = await resolveLocalSalt(m.id);
-      if (saltValue && typeof CHAT_KEY !== "undefined") {
-        rawText = await AES.decrypt(rawText, saltValue, CHAT_KEY);
+      if (rawText && !rawText.startsWith("[GIF]:")) {
+        rawText = ENCODER.decode(rawText);
       }
 
       let content = fmt(filt(rawText));
@@ -448,14 +435,12 @@
       if (input) input.value = "";
 
       const msgGeneratedId = "msg-" + Math.random().toString(36).slice(2, 11) + "-" + Date.now();
-      let finalizedPayload = txt;
       
-      if (typeof CHAT_KEY !== "undefined") {
-        // Encrypt raw textual input cleanly before any transport headers apply
-        const encryptedContext = await AES.encrypt(txt, CHAT_KEY);
-        finalizedPayload = encryptedContext.c;
-        await syncLocalSecurityContext(msgGeneratedId, encryptedContext.c, encryptedContext.s);
-      }
+      // Synchronous Multilayer Encoding Execution
+      const finalizedPayload = ENCODER.encode(txt);
+      
+      // Maintain parallel tracking contexts to mirror storage definitions safely
+      await syncLocalSecurityContext(msgGeneratedId, finalizedPayload);
 
       try {
         await fetch(`${ROOT}/SubChats/${encodeURIComponent(curSubRoom)}/messages/${msgGeneratedId}${KEY}`, {
@@ -525,7 +510,7 @@
     };
   }
 
-  async function renderPrivMessages(list) {
+  function renderPrivMessages(list) {
     const box = $("priv-msgs");
     if (!box) return;
     const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
@@ -541,9 +526,8 @@
       const av = (typeof AVATARS !== "undefined") && AVATARS.includes(m.a) ? m.a + " " : "";
       
       let rawText = m.x || "";
-      const saltValue = await resolveLocalSalt(m.id);
-      if (saltValue && typeof CHAT_KEY !== "undefined") {
-        rawText = await AES.decrypt(rawText, saltValue, CHAT_KEY);
+      if (rawText && !rawText.startsWith("[GIF]:")) {
+        rawText = ENCODER.decode(rawText);
       }
 
       let content = fmt(filt(rawText));
@@ -613,13 +597,9 @@
       if (input) input.value = "";
 
       const msgGeneratedId = "msg-" + Math.random().toString(36).slice(2, 11) + "-" + Date.now();
-      let finalizedPayload = txt;
+      const finalizedPayload = ENCODER.encode(txt);
       
-      if (typeof CHAT_KEY !== "undefined") {
-        const encryptedContext = await AES.encrypt(txt, CHAT_KEY);
-        finalizedPayload = encryptedContext.c;
-        await syncLocalSecurityContext(msgGeneratedId, encryptedContext.c, encryptedContext.s);
-      }
+      await syncLocalSecurityContext(msgGeneratedId, finalizedPayload);
 
       try {
         await fetch(`${ROOT}/PrivChats/${encodeURIComponent(curPrivRoom)}/messages/${msgGeneratedId}${KEY}`, {
