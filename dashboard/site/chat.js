@@ -76,7 +76,8 @@
         const dec = new TextDecoder();
         return dec.decode(decrypted);
       } catch (e) {
-        return "[Decryption Error: Key mismatch or tampered payload]";
+        // Return placeholder or fall back safely if decryption keys break
+        return "[Unreadable Secure Payload]";
       }
     }
   };
@@ -354,7 +355,7 @@
     const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
     
     const parsed = list.map(o => ({
-      id: o.id, u: o.u, x: dec(o.x), r: o.r, a: o.a, t: o.t
+      id: o.id, u: o.u, x: o.x, r: o.r, a: o.a, t: o.t
     })).reverse();
 
     let htmlBuffer = [];
@@ -368,7 +369,7 @@
       
       const av = (typeof AVATARS !== "undefined") && AVATARS.includes(m.a) ? m.a + " " : "";
       
-      // Handle asynchronous native decryption layer cleanly via async resolution loops
+      // Isolate clean payload variables bypassing global string wrapper interference
       let rawText = m.x || "";
       const saltValue = await resolveLocalSalt(m.id);
       if (saltValue && typeof CHAT_KEY !== "undefined") {
@@ -447,9 +448,10 @@
       if (input) input.value = "";
 
       const msgGeneratedId = "msg-" + Math.random().toString(36).slice(2, 11) + "-" + Date.now();
-      let finalizedPayload = wrap(filt(txt), CHAT_KEY);
+      let finalizedPayload = txt;
       
       if (typeof CHAT_KEY !== "undefined") {
+        // Encrypt raw textual input cleanly before any transport headers apply
         const encryptedContext = await AES.encrypt(txt, CHAT_KEY);
         finalizedPayload = encryptedContext.c;
         await syncLocalSecurityContext(msgGeneratedId, encryptedContext.c, encryptedContext.s);
@@ -529,7 +531,7 @@
     const near = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
     
     const parsed = list.map(o => ({
-      id: o.id, u: o.u, x: dec(o.x), r: o.r, a: o.a, t: o.t
+      id: o.id, u: o.u, x: o.x, r: o.r, a: o.a, t: o.t
     })).reverse();
 
     let htmlBuffer = [];
@@ -611,7 +613,7 @@
       if (input) input.value = "";
 
       const msgGeneratedId = "msg-" + Math.random().toString(36).slice(2, 11) + "-" + Date.now();
-      let finalizedPayload = wrap(filt(txt), CHAT_KEY);
+      let finalizedPayload = txt;
       
       if (typeof CHAT_KEY !== "undefined") {
         const encryptedContext = await AES.encrypt(txt, CHAT_KEY);
@@ -702,7 +704,7 @@
           body: JSON.stringify({
             fields: {
               u: { stringValue: (typeof me !== "undefined" && me) ? me.name : "Unknown" },
-              x: { stringValue: wrap(payload, CHAT_KEY) },
+              x: { stringValue: payload },
               a: { stringValue: (typeof me !== "undefined" && me) ? me.avatar : "" },
               r: { stringValue: (typeof me !== "undefined" && me) ? me.role : "guest" },
               t: { integerValue: String(Date.now()) }
@@ -719,7 +721,7 @@
           body: JSON.stringify({
             fields: {
               u: { stringValue: (typeof me !== "undefined" && me) ? me.name : "Unknown" },
-              x: { stringValue: wrap(payload, CHAT_KEY) },
+              x: { stringValue: payload },
               a: { stringValue: (typeof me !== "undefined" && me) ? me.avatar : "" },
               r: { stringValue: (typeof me !== "undefined" && me) ? me.role : "guest" },
               t: { integerValue: String(Date.now()) }
