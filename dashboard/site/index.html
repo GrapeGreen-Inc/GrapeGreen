@@ -659,5 +659,21 @@ Furthermore, under no circumstances should you click any external links, weird p
 <script type="module" src="meme_rotate.js"></script>
 <script src="app.js"></script>
 <script src="chat.js"></script>
+<div id="ban-screen" class="ban-overlay hide" role="alertdialog" aria-modal="true">
+  <div class="ban-card">
+    <span id="ban-type-badge" class="ban-badge">Account Suspended</span>
+    <h2 id="ban-title">You have been banned</h2>
+    <p class="mute">Access to GrapeGreen is currently restricted.</p>
+
+    <div class="ban-reason-box">
+      <strong>Reason</strong>
+      <span id="ban-reason-text">No reason provided.</span>
+    </div>
+
+    <div id="ban-countdown" class="ban-timer">00d 00h 00m 00s</div>
+
+    <button id="ban-back-btn" class="btn">Back to Login</button>
+  </div>
+</div>
 </body>
 </html>
