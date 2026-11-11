@@ -99,4 +99,4 @@ Tokens are small bits of text, so the counts don’t exactly equal words. These 
 ## 🚫 **IF YOU FORK YOU ARE WILLING MAKING YOURSELF PUBLIC ENEMY** #1 🚫
 ### **this repo is locked to fork** 🔒
 
-<small><small><sub><sup>Error: You cannot disable or block someone from forking a public repo. Because this repo is currently public you cannot prevent anyone from forking it. - Ethan88438 (@Isan88438).</sub></sup></small></small>
+<small><small><small><small><sub><sup>Error: You cannot disable or block someone from forking a public repo. Because this repo is currently public you cannot prevent anyone from forking it. - Ethan88438 (@Isan88438).</sub></sup></small></small></small></small>
