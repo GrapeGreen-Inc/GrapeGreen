@@ -1,0 +1,53 @@
+let banTimerInterval = null;
+
+function showBanScreen(banUntil, reason = "No reason provided.", isPerm = false, isIpBan = false) {
+  const overlay = document.getElementById("ban-screen");
+  const badge = document.getElementById("ban-type-badge");
+  const title = document.getElementById("ban-title");
+  const reasonEl = document.getElementById("ban-reason-text");
+  const timerEl = document.getElementById("ban-countdown");
+
+  if (banTimerInterval) clearInterval(banTimerInterval);
+
+  badge.textContent = isIpBan ? "IP Banned" : "Account Banned";
+  title.textContent = isPerm ? "Permanent Ban" : "Temporary Ban";
+  reasonEl.textContent = reason || "No reason provided.";
+
+  overlay.classList.remove("hide");
+
+  // Handle permanent bans (or massive timestamps like > 50 years out)
+  const FIFTY_YEARS_MS = 50 * 365 * 24 * 60 * 60 * 1000;
+  if (isPerm || !banUntil || Number(banUntil) - Date.now() > FIFTY_YEARS_MS) {
+    timerEl.textContent = "PERMANENT BAN";
+    timerEl.classList.add("perm");
+    return;
+  }
+
+  timerEl.classList.remove("perm");
+
+  function updateClock() {
+    const diff = Number(banUntil) - Date.now();
+    if (diff <= 0) {
+      clearInterval(banTimerInterval);
+      timerEl.textContent = "Ban expired! Refreshing...";
+      setTimeout(() => location.reload(), 1500);
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const mins = Math.floor((diff / (1000 * 60)) % 60);
+    const secs = Math.floor((diff / 1000) % 60);
+
+    const pad = (n) => String(n).padStart(2, "0");
+    timerEl.textContent = `${pad(days)}d ${pad(hours)}h ${pad(mins)}m ${pad(secs)}s`;
+  }
+
+  updateClock();
+  banTimerInterval = setInterval(updateClock, 1000);
+}
+
+document.getElementById("ban-back-btn")?.addEventListener("click", () => {
+  if (banTimerInterval) clearInterval(banTimerInterval);
+  document.getElementById("ban-screen")?.classList.add("hide");
+});
