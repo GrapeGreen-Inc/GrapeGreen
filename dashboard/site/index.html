@@ -592,6 +592,79 @@ Furthermore, under no circumstances should you click any external links, weird p
     </div>
   </section>
     <section id="products" class="view">
+        <div class="gg-credits-wrap">
+  <h2>Products &amp; Tokens</h2>
+
+  <!-- Tilted Purple-to-Green Token Card -->
+  <div class="gg-token-card">
+    <div class="gg-card-top">
+      <span class="gg-card-brand">Grape<span class="gg-brand-green">Green</span></span>
+      <span class="gg-card-chip" aria-hidden="true"></span>
+    </div>
+
+    <div class="gg-card-balance-box">
+      <span class="gg-card-label">Token Balance</span>
+      <div id="gg-token-balance" class="gg-card-balance">5</div>
+    </div>
+
+    <div class="gg-card-bottom">
+      <div class="gg-card-number-wrap">
+        <span class="gg-card-label">Card Number</span>
+        <div id="gg-card-number" class="gg-card-number">USER-0000-0000-0000</div>
+      </div>
+
+      <div class="gg-card-cvv-wrap">
+        <span class="gg-card-label">Security Code</span>
+        <div class="gg-cvv-row">
+          <span id="gg-cvv-display" class="gg-cvv-code">***</span>
+          <button type="button" id="gg-cvv-toggle" class="btn gg-mini-btn">Show</button>
+          <button type="button" id="gg-cvv-edit-btn" class="btn gg-mini-btn">Set</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden 3-Digit Security Code Setter -->
+    <div id="gg-cvv-form" class="gg-cvv-form hide">
+      <input id="gg-cvv-input" type="text" inputmode="numeric" maxlength="3" placeholder="3 digits (e.g. 420)">
+      <button type="button" id="gg-cvv-save" class="btn">Submit</button>
+    </div>
+  </div>
+
+  <p id="gg-earn-status" class="mute">Stay active on GrapeGreen to earn +3 tokens every 10 minutes.</p>
+
+  <!-- Expandable Accordion Drop-Downs -->
+  <div class="gg-dropdowns">
+    <!-- 1. Gifts (Active) -->
+    <details class="gg-drop-item" open>
+      <summary class="gg-drop-header">Gifts</summary>
+      <div class="gg-drop-body">
+        <p class="mute">Send tokens to another GrapeGreen user (minimum 10 tokens).</p>
+        <div class="gg-gift-form">
+          <input id="gg-gift-user" type="text" placeholder="Recipient username">
+          <input id="gg-gift-amount" type="number" min="10" placeholder="Amount (10+)">
+          <button type="button" id="gg-gift-send" class="btn">Send Gift</button>
+        </div>
+        <div id="gg-gift-msg" class="mute"></div>
+      </div>
+    </details>
+
+    <!-- 2. Subscriptions (WIP) -->
+    <details class="gg-drop-item">
+      <summary class="gg-drop-header">Subscriptions <span class="gg-wip-badge">WIP</span></summary>
+      <div class="gg-drop-body">
+        <p class="mute">Work in progress — monthly perks and creator tiers coming soon.</p>
+      </div>
+    </details>
+
+    <!-- 3. Products (WIP) -->
+    <details class="gg-drop-item">
+      <summary class="gg-drop-header">Products <span class="gg-wip-badge">WIP</span></summary>
+      <div class="gg-drop-body">
+        <p class="mute">Work in progress — profile badges, themes, and items coming soon.</p>
+      </div>
+    </details>
+  </div>
+</div>
     </section>
     <section id="Vortex_3D" class="view">
     <iframe 
