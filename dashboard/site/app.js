@@ -1627,6 +1627,7 @@ const initGoogleAuthButtons = () => {
 
         await saveUser(u, { age, salt, hash: hash(googleUser.uid, salt), ...box, role, googleUid: googleUser.uid });
         localStorage.setItem("lastUser", u);
+        window.currentUser = u;
         if (age !== "1" && em && typeof sendWelcomeEmail !== 'undefined') sendWelcomeEmail(u, em);
 
         enter(u, { role, age, ...box });
