@@ -459,3 +459,21 @@ td img{display:block;margin-top:6px;border:1px solid var(--line);border-radius:6
 .gif-trigger-btn:hover {
     background: var(--grape);
 }
+/* Admin Panel Inputs & Ban Controls */
+.adm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+#a-reason {
+  flex: 1 1 220px;
+  max-width: 320px;
+}
+
+.adm .btn[data-a="ipban"],
+.adm .btn[data-a="permip"] {
+  font-weight: 600;
+}
