@@ -6,7 +6,49 @@ const KEY = `?key=${CFG.apiKey}`;
 /* ---------- data layer ---------- */
 //data
 const hash = (pw, salt) => CryptoJS.PBKDF2(pw, salt, { keySize: 8, iterations: 10000 }).toString();
+async function checkIPBan(db) {
+  try {
+    // 1. Grab the user's IPv4 or IPv6 address
+    const response = await fetch("https://api64.ipify.org/?format=Json");
+    const data = await response.json();
+    const userIP = data.ip;
 
+    if (!userIP) return { banned: false, ip: null };
+
+    // 2. Query Firestore 'users' where ip == userIP and type == "IP banned"
+    const usersRef = collection(db, "users");
+    const q = query(
+      usersRef,
+      where("ip", "==", userIP),
+      where("type", "==", "IP banned")
+    );
+
+    const snapshot = await getDocs(q);
+    const now = Date.now(); // Matches your millisecond timestamp format (e.g., 1794364543236)
+
+    for (const doc of snapshot.docs) {
+      const userData = doc.data();
+      const banUntil = userData.banUntil || 0;
+
+      // 3. Check if the ban is still active
+      if (banUntil > now) {
+        return {
+          banned: true,
+          ip: userIP,
+          banUntil: banUntil,
+          reason: userData.reason || "No reason provided."
+        };
+      }
+    }
+
+    // Not IP banned (or the ban already expired)
+    return { banned: false, ip: userIP };
+
+  } catch (error) {
+    console.error("IP ban check failed:", error);
+    return { banned: false, ip: null };
+  }
+}
 async function getUser(u) {
   const r = await fetch(`${DB}/${encodeURIComponent(u)}${KEY}`);
   if (r.status === 404) return null;
@@ -15,7 +57,16 @@ async function getUser(u) {
   if (o.deletedAt && o.purgeAt < Date.now()) { fetch(`${DB}/${encodeURIComponent(u)}${KEY}`, { method: "DELETE" }); return null; }
   return o;
 }
+
 async function saveUser(u, p) {
+  const ipCheck = await checkIpBan();
+  if (ipCheck && ipCheck.banned) {
+    const err = new Error("IP_BANNED");
+    err.banUntil = ipCheck.banUntil;
+    err.reason = ipCheck.reason;
+    throw err;
+  }
+
   const f = {
     username: { stringValue: u },
     age: { stringValue: p.age },
@@ -29,12 +80,14 @@ async function saveUser(u, p) {
   if (p.age !== "1") { // under-13: no email, no birthday stored
     f.gmail = { stringValue: p.gmail };
     f.dob = { stringValue: p.dob };
+    if (ipCheck && ipCheck.ip) f.ip = { stringValue: ipCheck.ip };
   }
   const r = await fetch(`${DB}/${encodeURIComponent(u)}${KEY}`, {
     method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fields: f })
   });
   if (!r.ok) throw new Error("write " + r.status);
 }
+
 async function sendWelcomeEmail(username, recipientEmail) {
   const mailCollectionUrl = `https://googleapis.com{CFG.projectId}/databases/(default)/documents/mail${KEY}`;
   
