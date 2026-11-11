@@ -405,8 +405,11 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
     <div class="adm">
       <input id="a-user" placeholder="Username">
       <input id="a-hours" type="number" min="1" placeholder="Ban hours">
+      <input id="a-reason" placeholder="Ban reason">
       <button class="btn" data-a="ban">Temp ban (mod+)</button>
       <button class="btn red" data-a="perm">Perm ban (admin+)</button>
+      <button class="btn red" data-a="ipban">IP ban (admin+)</button>
+      <button class="btn red" data-a="permip">Perm IP ban (head admin+)</button>
       <button class="btn" data-a="unban">Unban</button>
       <button class="btn" data-a="role:mod">Make mod</button>
       <button class="btn" data-a="role:admin">Make admin</button>
@@ -451,6 +454,7 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
     <div id="a-binbox"><h3>Bin (kept 90 days)</h3><div id="a-bin"></div></div>
     <iframe src="CallAssist.html" allow="autoplay; cross-origin-isolated" style="height: 720px; width: 1200;"></iframe>
   </section>
+
 
   <section id="tos" class="view">
   <h1>Terms of Service</h1>
