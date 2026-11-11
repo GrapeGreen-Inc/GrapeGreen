@@ -10,5 +10,6 @@
 - [ ] fix staff chat (does not need to be done for update to be released)
 - [ ] fix Google sign up (does not NEED to be done for update to  be released)
 - [ ] fix any bugs
+- [ ] add token system
 
 ---
