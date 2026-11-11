@@ -19,26 +19,12 @@ async function generateUniqueCardNumber(u){const clean=(u||"USER").replace(/[^a-
 const isInfiniteRank=r=>INFINITE_RANKS.includes((r||"").toLowerCase());
 function getStartingTokens(r){const role=(r||"user").toLowerCase();return isInfiniteRank(role)?Infinity:STAFF_RANKS.includes(role)?500:5;}
 function detectUsername(){
-  if(typeof currentUser!=="undefined"&&currentUser?.username)return currentUser.username;
-  if(window.currentUser?.username)return window.currentUser.username;
-  if(typeof cur!=="undefined"&&cur?.username)return cur.username;
-  if(typeof me!=="undefined"&&me?.username)return me.username;
-  for(const store of[localStorage,sessionStorage]){
-    for(const k of Object.keys(store)){
-      const v=(store.getItem(k)||"").trim();
-      if(!v)continue;
-      if(v.startsWith("{")){try{const p=JSON.parse(v);if(p?.username)return p.username;}catch{}}
-      if(/user|auth|login|session|gg/i.test(k)&&/^[A-Za-z0-9_.-]{2,32}$/.test(v)&&v.toLowerCase()!=="guest")return v;
-    }
-  }
-  for(const id of["whoami","current-user","profile-name","nav-username","user-name","header-username"]){
-    const el=getEl(id);
-    if(el){const txt=el.textContent.replace(/^@/,"").trim();if(txt&&!/guest|log\s*in/i.test(txt)&&/^[A-Za-z0-9_.-]{2,32}$/.test(txt))return txt;}
-  }
-  return"";
+  const w=typeof window.currentUser==="string"?window.currentUser:window.currentUser?.username;
+  return(w||localStorage.getItem("lastUser")||"").trim();
 }
 function renderCard(role="user"){const balEl=getEl("gg-token-balance"),numEl=getEl("gg-card-number"),cvvEl=getEl("gg-cvv-display"),btn=getEl("gg-cvv-toggle");if(!balEl)return;balEl.textContent=isInfiniteRank(role)?"∞":String(currentTokens);if(numEl)numEl.textContent=cardNumber;if(!cvvEl||!btn)return;if(!userCvv){cvvEl.textContent="***";btn.textContent="Show";}else{cvvEl.textContent=cvvVisible?userCvv:"***";btn.textContent=cvvVisible?"Hide":"Show";}}
 async function initCredits(){
+  if(typeof CryptoJS==="undefined")return;
   const uname=detectUsername();
   if(!uname){renderCard();return;}
   if(uname===loadedUser)return;
@@ -75,5 +61,5 @@ getEl("gg-cvv-save")?.addEventListener("click",async()=>{const val=(getEl("gg-cv
 getEl("gg-gift-send")?.addEventListener("click",async()=>{const target=getEl("gg-gift-user")?.value.trim(),amt=Math.floor(Number(getEl("gg-gift-amount")?.value)),msg=getEl("gg-gift-msg"),senderName=detectUsername();if(!senderName){msg.textContent="Log in to send gifts.";return;}if(!target||target.toLowerCase()===senderName.toLowerCase()){msg.textContent="Enter a valid recipient.";return;}if(!amt||amt<10){msg.textContent="Minimum gift is 10 tokens.";return;}const unlim=isInfiniteRank(window.currentUser?.role);if(!unlim&&currentTokens<amt){msg.textContent="Not enough tokens.";return;}try{msg.textContent="Sending...";const rec=await fetchUser(target);if(!rec){msg.textContent="User not found.";return;}const rRole=(rec.role||"user").toLowerCase(),decRec=rec.Tokens?decryptAES256(rec.Tokens):"",rCur=(decRec!==""&&!isNaN(Number(decRec)))?Number(decRec):getStartingTokens(rRole);if(!isInfiniteRank(rRole))await updateUserFields(target,{Tokens:{stringValue:encryptAES256(String(rCur+amt))}});if(!unlim){currentTokens-=amt;await updateUserFields(senderName,{Tokens:{stringValue:encryptAES256(String(currentTokens))}});}renderCard(window.currentUser?.role);msg.textContent=`Sent ${amt} tokens to ${target}!`;if(getEl("gg-gift-amount"))getEl("gg-gift-amount").value="";}catch(e){msg.textContent="Error: "+e.message;}});
 window.initCredits=initCredits;
 window.addEventListener("DOMContentLoaded",initCredits);
-setInterval(()=>{if(!loadedUser&&detectUsername())initCredits();},1500);
+setInterval(()=>{const u=detectUsername();if(u&&u!==loadedUser)initCredits();},1000);
 })();
