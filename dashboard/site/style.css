@@ -477,3 +477,85 @@ td img{display:block;margin-top:6px;border:1px solid var(--line);border-radius:6
 .adm .btn[data-a="permip"] {
   font-weight: 600;
 }
+/* V1.10 Ban Countdown Overlay */
+.ban-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 12, 46, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.ban-overlay.hide {
+  display: none;
+}
+
+.ban-card {
+  background: #ffffff;
+  color: #1e1e24;
+  width: 100%;
+  max-width: 460px;
+  border-radius: 14px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  border-top: 6px solid #d9383a;
+}
+
+.ban-badge {
+  display: inline-block;
+  background: #fde8e8;
+  color: #d9383a;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+
+.ban-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  color: #2d1457;
+}
+
+.ban-reason-box {
+  background: #f5f3fa;
+  border-left: 4px solid #4a238a;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 16px 0;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.ban-reason-box strong {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: #5c4b7d;
+  margin-bottom: 4px;
+}
+
+.ban-timer {
+  font-family: monospace;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #d9383a;
+  background: #fff5f5;
+  border: 1px solid #f8c9c9;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 14px 0 18px;
+}
+
+.ban-timer.perm {
+  font-family: inherit;
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+}
