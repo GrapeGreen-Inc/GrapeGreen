@@ -114,99 +114,145 @@
         <button class="feedback-btn" id="vote-down-btn" title="Thumbs Down">👎</button>
     </div>
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
-        import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
-        import { getRemoteConfig, fetchAndActivate, getString } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-remote-config.js";
-        const RECAPTCHA_PUBLIC_KEY = "6LcdDPktAAAAAHHNyGbwuZKF-63BNr-_35b6Rxh5";
-        let recaptchaSecretKey = null;
-        let activeVariant = "dark";
-        const firebaseConfig = {
-            apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es",
-            authDomain: "app-iguess-39f2f.firebaseapp.com",
-            databaseURL: "https://app-iguess-39f2f-default-rtdb.firebaseio.com",
-            projectId: "app-iguess-39f2f",
-            storageBucket: "app-iguess-39f2f.firebasestorage.app",
-            messagingSenderId: "1056619953768",
-            appId: "1:1056619953768:web:6ac154660c07c48a5005dd",
-            measurementId: "G-J4736J0D8J"
-        };
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const db = getFirestore(app);
-        const remoteConfig = getRemoteConfig(app);
-        remoteConfig.settings.minimumFetchIntervalMillis = 0;
-        remoteConfig.defaultConfig = { "dashboard_theme_variant": "dark" };
-        function evaluateThemeVariant() {
-            fetchAndActivate(remoteConfig).then(() => {
-                const variant = getString(remoteConfig, "dashboard_theme_variant");
-                activeVariant = variant;
-                if (variant === "light") {
-                    document.body.classList.add("light-variant");
-                } else {
-                    document.body.classList.remove("light-variant");
-                }
-            }).catch((err) => console.error(err));
-        }
-        async function submitVote(isPositive) {
-            const upBtn = document.getElementById("vote-up-btn");
-            const downBtn = document.getElementById("vote-down-btn");
-            const msgText = document.getElementById("feedback-msg");
-            upBtn.disabled = true;
-            downBtn.disabled = true;
-            try {
-                const docRef = doc(db, "meta", "A&B-votes");
-                const fieldPath = isPositive ? `${activeVariant}_upvotes` : `${activeVariant}_downvotes`;
-                await updateDoc(docRef, { [fieldPath]: increment(1) });
-                msgText.innerText = "Thanks for feedback!";
-            } catch (error) {
-                console.error(error);
-                upBtn.disabled = false;
-                downBtn.disabled = false;
-            }
-        }
-        async function fetchSecretKey() {
-            try {
-                const docRef = doc(db, "meta", "RECAP_KEY");
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    recaptchaSecretKey = docSnap.data().key;
-                }
-            } catch (error) {
-                console.error(error);
-            }
-        }
-        window.onVerificationSuccess = function(token) {
-            window.location.href = "redirect.html";
-        };
-        function onCaptchaError() {
-            const statusText = document.querySelector('.container p');
-            if (statusText) {
-                statusText.style.color = "var(--accent)";
-                statusText.innerText = "System validation bypass initialized. Loading verification gateway...";
-            }
-            setTimeout(function() { window.location.href = "redirect.html"; }, 1200);
-        }
-        function mountRecaptchaWidget() {
-            if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.render === 'function') {
-                grecaptcha.render("recaptcha-widget", {
-                    "sitekey": RECAPTCHA_PUBLIC_KEY,
-                    "theme": activeVariant === "light" ? "light" : "dark",
-                    "error-callback": onCaptchaError,
-                    "callback": window.onVerificationSuccess
-                });
-            } else {
-                setTimeout(mountRecaptchaWidget, 200);
-            }
-        }
-        document.getElementById("vote-up-btn").addEventListener("click", () => submitVote(true));
-        document.getElementById("vote-down-btn").addEventListener("click", () => submitVote(false));
-        function startGateway() {
-            evaluateThemeVariant();
-            fetchSecretKey();
-            mountRecaptchaWidget();
-        }
-        startGateway();
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
+  import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+  import { getRemoteConfig, fetchAndActivate, getString } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-remote-config.js";
+  import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-messaging.js";
+
+  const RECAPTCHA_PUBLIC_KEY = "6LcdDPktAAAAAHHNyGbwuZKF-63BNr-_35b6Rxh5";
+  let recaptchaSecretKey = null;
+  let activeVariant = "dark";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es",
+    authDomain: "app-iguess-39f2f.firebaseapp.com",
+    databaseURL: "https://app-iguess-39f2f-default-rtdb.firebaseio.com",
+    projectId: "app-iguess-39f2f",
+    storageBucket: "app-iguess-39f2f.firebasestorage.app",
+    messagingSenderId: "1056619953768",
+    appId: "1:1056619953768:web:6ac154660c07c48a5005dd",
+    measurementId: "G-J4736J0D8J"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+  const remoteConfig = getRemoteConfig(app);
+  const messaging = getMessaging(app);
+
+  remoteConfig.settings.minimumFetchIntervalMillis = 0;
+  remoteConfig.defaultConfig = { "dashboard_theme_variant": "dark" };
+
+  function evaluateThemeVariant() {
+    fetchAndActivate(remoteConfig).then(() => {
+      const variant = getString(remoteConfig, "dashboard_theme_variant");
+      activeVariant = variant;
+      if (variant === "light") {
+        document.body.classList.add("light-variant");
+      } else {
+        document.body.classList.remove("light-variant");
+      }
+    }).catch((err) => console.error(err));
+  }
+
+  async function submitVote(isPositive) {
+    const upBtn = document.getElementById("vote-up-btn");
+    const downBtn = document.getElementById("vote-down-btn");
+    const msgText = document.getElementById("feedback-msg");
+    upBtn.disabled = true;
+    downBtn.disabled = true;
+    try {
+      const docRef = doc(db, "meta", "A&B-votes");
+      const fieldPath = isPositive ? `${activeVariant}_upvotes` : `${activeVariant}_downvotes`;
+      await updateDoc(docRef, { [fieldPath]: increment(1) });
+      msgText.innerText = "Thanks for feedback!";
+    } catch (error) {
+      console.error(error);
+      upBtn.disabled = false;
+      downBtn.disabled = false;
+    }
+  }
+
+  async function fetchSecretKey() {
+    try {
+      const docRef = doc(db, "meta", "RECAP_KEY");
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        recaptchaSecretKey = docSnap.data().key;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function initAutoPush() {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+    try {
+      const swReg = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return;
+
+      const fcmToken = await getToken(messaging, {
+        vapidKey: "PASTE_YOUR_KEY_PAIR_HERE",
+        serviceWorkerRegistration: swReg
+      });
+
+      if (fcmToken) {
+        console.log("Auto-push registered:", fcmToken);
+      }
+    } catch (err) {
+      console.error("Auto-push failed:", err);
+    }
+  }
+
+  onMessage(messaging, (payload) => {
+    if (Notification.permission === "granted" && payload.notification) {
+      new Notification(payload.notification.title, {
+        body: payload.notification.body,
+        icon: "https://grapegreen-inc.github.io/GrapeGreen/dashboard/site/assets/images/logo.png"
+      });
+    }
+  });
+
+  window.onVerificationSuccess = async function(token) {
+    await initAutoPush();
+    window.location.href = "redirect.html";
+  };
+
+  function onCaptchaError() {
+    const statusText = document.querySelector('.container p');
+    if (statusText) {
+      statusText.style.color = "var(--accent)";
+      statusText.innerText = "System validation bypass initialized. Loading verification gateway...";
+    }
+    setTimeout(function() { window.location.href = "redirect.html"; }, 1200);
+  }
+
+  function mountRecaptchaWidget() {
+    if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.render === 'function') {
+      grecaptcha.render("recaptcha-widget", {
+        "sitekey": RECAPTCHA_PUBLIC_KEY,
+        "theme": activeVariant === "light" ? "light" : "dark",
+        "error-callback": onCaptchaError,
+        "callback": window.onVerificationSuccess
+      });
+    } else {
+      setTimeout(mountRecaptchaWidget, 200);
+    }
+  }
+
+  document.getElementById("vote-up-btn").addEventListener("click", () => submitVote(true));
+  document.getElementById("vote-down-btn").addEventListener("click", () => submitVote(false));
+
+  function startGateway() {
+    evaluateThemeVariant();
+    fetchSecretKey();
+    mountRecaptchaWidget();
+    initAutoPush();
+  }
+
+  startGateway();
     </script>
 </body>
 </html>
