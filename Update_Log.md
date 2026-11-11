@@ -1,5 +1,13 @@
 # GrapeGreen Update Log
 
+## V1.9
+### Chat+
+* [ADD] private chat
+* [ADD] sub chats
+* [ADD] stuff in general
+
+---
+
 ## V1.8.1
 ### Smart Ai+
 * [ADD] added more mumbo jumbo
