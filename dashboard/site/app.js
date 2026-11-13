@@ -601,9 +601,38 @@ $("admin").addEventListener("click", async e => {
       if (a === "dm") { if (me.role === "owner") openDM(u.id); else invite(u.id); return; }
       if (theirs >= mine || u.id === me.name) return msg("You can't do that to this account.");
       if (nr) { if (!isHeadAdmin() || rk(nr) >= mine) return msg("You can't do that to this account."); await patch(u.id, { role: nr }); }
-      else if (a === "ban") { if (!isMod()) return; const h = Number($("a-hours").value); if (!(h > 0)) return msg("Enter ban hours."); await patch(u.id, { banUntil: Date.now() + h * 36e5 }); }
-      else if (a === "perm") { if (!isAdmin()) return msg("Admins and above only."); await patch(u.id, { banUntil: -1 }); }
-      else if (a === "unban") { if (!isMod()) return; await patch(u.id, { banUntil: 0 }); }
+          else if (a === "ban") {
+            if (!isMod()) return;
+          
+            const h = Number($("a-hours").value);
+            const reason = $("a-ban-reason").value.trim();
+          
+            if (!(h > 0)) return msg("Enter ban hours.");
+            if (!reason) return msg("Enter a ban reason.");
+          
+            await patch(u.id, {
+              banUntil: Date.now() + h * 36e5,
+              banReason: reason
+            });
+          }
+          else if (a === "perm") {
+            if (!isAdmin()) return msg("Admins and above only.");
+          
+            const reason = $("a-ban-reason").value.trim();
+          
+            if (!reason) return msg("Enter a ban reason.");
+          
+            await patch(u.id, {
+              banUntil: -1,
+              banReason: reason
+            });
+          }
+          else if (a === "unban") {
+            if (!isMod()) return;
+          
+            await patch(u.id, { banUntil: 0 }, ["banReason"]);
+            $("a-ban-reason").value = "";
+          }
       else if (a === "delete") { if (!isAdmin()) return msg("Admins and above only."); await patch(u.id, { deletedAt: Date.now(), purgeAt: Date.now() + 90 * 864e5 }); }
       msg("Done.");
     } else return;
