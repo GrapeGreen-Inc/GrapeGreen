@@ -398,6 +398,7 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
     <div class="adm">
       <input id="a-user" placeholder="Username">
       <input id="a-hours" type="number" min="1" placeholder="Ban hours">
+      <input id="a-ban-reason" type="text" maxlength="240" placeholder="Reason for ban">
       <button class="btn" data-a="ban">Temp ban (mod+)</button>
       <button class="btn red" data-a="perm">Perm ban (admin+)</button>
       <button class="btn" data-a="unban">Unban</button>
