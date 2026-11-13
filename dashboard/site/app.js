@@ -217,7 +217,10 @@ $("login-form").addEventListener("submit", async e => {
     const user = await getUser(u);
     if (!user || hash(pw, user.salt) !== user.hash) return err("Wrong username or password.");
     if (user.deletedAt) return err("This account was deleted. Ask an admin to restore it.");
-    if (banLeft(user)) return err("This account is " + banText(user) + ".");
+    if (banLeft(user)) {
+  showBanScreen(user);
+  return;
+}
     sessionKey = deriveKey(pw, user.salt);
     localStorage.setItem("lastUser", u);
     enter(u, user);
@@ -344,6 +347,71 @@ const isLegal = () => me.role === "legal" || me.role === "owner";
 const isDev = () => rk(me.role) >= 6;       // dev+: create accounts, reset passwords, update log, bots, commands
 const banLeft = d => d.banUntil === -1 ? Infinity : Math.max(0, (d.banUntil || 0) - Date.now());
 const banText = d => banLeft(d) === Infinity ? "permanently banned" : `banned for ${Math.ceil(banLeft(d) / 36e5)} more hour(s)`;
+
+let banCountdownTimer = null;
+
+function showBanScreen(user) {
+  const screen = $("ban-screen");
+
+  if (!screen) {
+    err("Your account is banned: " + banText(user));
+    return;
+  }
+
+  $("gate").classList.add("hide");
+  screen.classList.remove("hide");
+
+  $("ban-reason").textContent =
+    user.banReason || "No reason was provided.";
+
+  if (banCountdownTimer) {
+    clearInterval(banCountdownTimer);
+    banCountdownTimer = null;
+  }
+
+  const updateCountdown = () => {
+    const remaining = banLeft(user);
+
+    if (remaining === Infinity) {
+      $("ban-countdown").textContent = "Permanent ban";
+      return;
+    }
+
+    if (remaining <= 0) {
+      $("ban-countdown").textContent =
+        "Ban period ended. You can return to login.";
+      clearInterval(banCountdownTimer);
+      banCountdownTimer = null;
+      return;
+    }
+
+    const seconds = Math.ceil(remaining / 1000);
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    $("ban-countdown").textContent =
+      `${days}d ${hours}h ${minutes}m ${secs}s`;
+  };
+
+  updateCountdown();
+
+  if (banLeft(user) !== Infinity) {
+    banCountdownTimer = setInterval(updateCountdown, 1000);
+  }
+}
+
+$("ban-back").addEventListener("click", () => {
+  if (banCountdownTimer) {
+    clearInterval(banCountdownTimer);
+    banCountdownTimer = null;
+  }
+
+  $("ban-screen").classList.add("hide");
+  $("gate").classList.remove("hide");
+  err("");
+});
 
 function parseDoc(doc) {
   const o = { id: decodeURIComponent(doc.name.split("/").pop()) }, f = doc.fields || {};
