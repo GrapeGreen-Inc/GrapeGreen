@@ -632,3 +632,91 @@ td img{display:block;margin-top:6px;border:1px solid var(--line);border-radius:6
 .gg-gift-form input {
   flex: 1 1 140px;
 }
+
+.ban-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10002;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #180b2a, #35164f);
+}
+
+.ban-card {
+  width: min(100%, 480px);
+  padding: 36px;
+  background: #fff;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 60px #0005;
+}
+
+.ban-symbol {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fce5e5;
+  color: #c62828;
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.ban-label {
+  color: #c62828;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.ban-card h1 {
+  color: var(--grape);
+  margin-bottom: 10px;
+}
+
+.ban-description {
+  color: var(--mute);
+  line-height: 1.5;
+}
+
+.ban-reason-box,
+.ban-time-box {
+  padding: 16px;
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.ban-reason-box strong,
+.ban-time-box span {
+  display: block;
+  color: var(--mute);
+  font-size: 13px;
+}
+
+.ban-reason-box p {
+  margin-bottom: 0;
+  overflow-wrap: anywhere;
+}
+
+.ban-time-box strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 23px;
+  color: var(--grape);
+}
+
+.ban-card button {
+  margin-top: 22px;
+  width: 100%;
+}
+
+@media (max-width: 500px) {
+  .ban-card {
+    padding: 24px;
+  }
+}
