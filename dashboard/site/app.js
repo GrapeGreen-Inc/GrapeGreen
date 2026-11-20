@@ -1150,7 +1150,13 @@ $("about-save").onclick = async () => {
   try { await put("meta/about", { text: $("about-area").value.slice(0, 1000) }); $("about-msg").textContent = "Saved."; loadAbout(); $("about-form").classList.add("hide"); }
   catch { $("about-msg").textContent = "Couldn't save."; }
 };
-const ADS = ["Your ad here - Slot 1", "Your ad here - Slot 2", "Your ad here - Slot 3", "Your ad here - Slot 4", "Your ad here - Slot 5"];
+const ADS = ["Powered by 100% pure virtual grapes!",
+  "Now with extra purple (and a hint of green)!",
+  "Warning: May contain traces of SCP memes.",
+  "Coded at 2 AM with questionable amounts of ice cream!",
+  "99.9% bug-free... probably!",
+  "Certified Owner & Dev approved!",
+  "Do not feed the Nightbot after midnight."];
 let adIdx = 0;
 function rotateAds() { $("ad-rotator").textContent = ADS[adIdx % ADS.length]; adIdx++; }
 rotateAds(); setInterval(rotateAds, 30000);
