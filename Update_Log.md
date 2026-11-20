@@ -1,5 +1,21 @@
 # GrapeGreen Update Log
 
+## V1.10
+### Admin+
+* [CHANGE] Fixed staff chat
+* [ADD] ban countdown
+* [ADD] ban reason
+
+---
+
+## V1.9.5
+### Tokens+
+* [ADD] credits and tokens
+* [ADD] products
+* [ADD] gifting
+
+---
+
 ## V1.9
 ### Chat+
 * [ADD] private chat
