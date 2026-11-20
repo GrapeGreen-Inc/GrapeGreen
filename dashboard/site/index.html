@@ -158,6 +158,31 @@ window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("ro
   </div></div>
 </div>
 
+<div id="ban-screen" class="ban-screen hide" role="alert" aria-live="polite">
+  <div class="ban-card">
+    <div class="ban-symbol">!</div>
+    <p class="ban-label">ACCOUNT RESTRICTED</p>
+    <h1>Account suspended</h1>
+    <p class="ban-description">
+      Your account currently cannot access GrapeGreen.
+    </p>
+
+    <div class="ban-reason-box">
+      <strong>Reason for ban</strong>
+      <p id="ban-reason"></p>
+    </div>
+
+    <div class="ban-time-box">
+      <span>Time remaining</span>
+      <strong id="ban-countdown"></strong>
+    </div>
+
+    <button class="btn" id="ban-back" type="button">
+      Return to login
+    </button>
+  </div>
+</div>
+    
 <div class="top">
   <b>GrapeGreen</b>
   <input id="find" placeholder="Search tabs..." aria-label="Search tabs">
