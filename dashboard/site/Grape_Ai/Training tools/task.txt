@@ -1,3 +1,0 @@
-Train this AI model and replace the Json for model with the new thingy, my computer is not powerfull enough to train it and I have a 4core 8gb ram computer,
-if your computer has 16gb or more cores I would appreciate if you trained this Ethan @isan88438 or any other dev.
-do settings epoches at 5 and learn rate 0.003 and validation fraction 0.2
