@@ -184,107 +184,111 @@ Continue as Guest
 
 <!-- PROFILE SETTINGS: TIERS MODAL POPUP -->
 <div id="settings-modal-overlay">
-<div id="settings-modal-card">
+  <div id="settings-modal-card">
 
-<div id="settings-modal-header">
-<h3>Grape AI Account Plans</h3>
-<button type="button" id="close-modal-btn">&times;</button>
+    <div id="settings-modal-header">
+      <h3>Grape AI Account Plans</h3>
+      <button type="button" id="close-modal-btn">&times;</button>
+    </div>
+
+    <div id="settings-modal-body">
+      <div class="settings-switcher" role="tablist">
+        <button type="button" id="plans-tab" class="settings-tab active" role="tab" aria-selected="true">Plans</button>
+        <button type="button" id="account-tab" class="settings-tab" role="tab" aria-selected="false">Settings</button>
+      </div>
+
+      <section id="plans-panel" class="settings-panel" role="tabpanel" aria-labelledby="plans-tab">
+        <p class="modal-intro">View the available Grape AI plans.</p>
+
+        <div id="tiers-grid">
+          <div class="tier-card active" id="plan-free">
+            <div class="tier-title">FREE</div>
+            <div class="tier-price">$0</div>
+            <p class="tier-description">Standard chat access with basic daily message limits.</p>
+          </div>
+
+          <div class="tier-card" id="plan-plus">
+            <div class="tier-title">PLUS</div>
+            <div class="tier-price">$4.99 / mo</div>
+            <p class="tier-description">Custom folders to organize your chat threads, plus higher messaging limits and faster, better responses.</p>
+          </div>
+
+          <div class="tier-card" id="plan-pro">
+            <div class="tier-title">PRO</div>
+            <div class="tier-price">$19.99 / mo</div>
+            <p class="tier-description">Even higher messaging limits, faster replies, and improved response quality. <em>(WIP: Complex code writing)</em></p>
+          </div>
+
+          <div class="tier-card" id="plan-max">
+            <div class="tier-title">MAX</div>
+            <div class="tier-price">$49.99 / mo</div>
+            <p class="tier-description">Ultimate performance and full system features. <em>(WIP: Complex code &amp; image generation)</em></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="account-panel" class="settings-panel hidden" role="tabpanel" aria-labelledby="account-tab">
+        <div class="account-settings-grid">
+          <div class="account-setting-card">
+            <h4>Account overview</h4>
+            <p>Username: <strong id="settings-username">Guest User</strong></p>
+            <p>Current plan: <strong id="settings-plan">FREE Plan</strong></p>
+          </div>
+
+          <div class="account-setting-card">
+            <h4>Change password</h4>
+            <p>Update the password for your Grape AI account.</p>
+
+            <form id="change-password-form" class="change-password-form">
+              <label for="current-ai-password">Current password</label>
+              <input
+                id="current-ai-password"
+                type="password"
+                autocomplete="current-password"
+                required
+              >
+
+              <label for="new-ai-password">New password</label>
+              <input
+                id="new-ai-password"
+                type="password"
+                autocomplete="new-password"
+                minlength="8"
+                required
+              >
+
+              <label for="confirm-ai-password">Confirm new password</label>
+              <input
+                id="confirm-ai-password"
+                type="password"
+                autocomplete="new-password"
+                minlength="8"
+                required
+              >
+
+              <button type="submit" id="change-password-submit">Update Password</button>
+              <p id="change-password-status" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+
+          <div class="account-setting-card">
+            <h4>Subscription</h4>
+            <p>Manage your current plan. Subscription cancellation will be available once billing is connected.</p>
+            <button type="button" id="cancel-plan-btn" disabled>Cancel Plan</button>
+          </div>
+
+          <div class="account-setting-card danger">
+            <h4>Delete account</h4>
+            <p>Account deletion will be enabled when a secure account and chat-history deletion process is available.</p>
+            <button type="button" id="delete-account-btn" disabled>Delete Account</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div>
 </div>
 
-<div id="settings-modal-body">
-<div class="settings-switcher" role="tablist">
-<button type="button" id="plans-tab" class="settings-tab active" role="tab" aria-selected="true">Plans</button>
-<button type="button" id="account-tab" class="settings-tab" role="tab" aria-selected="false">Settings</button>
-</div>
-
-<section id="plans-panel" class="settings-panel">
-<p class="modal-intro">View the available Grape AI plans.</p>
-
-<div id="tiers-grid">
-<div class="tier-card active" id="plan-free">
-<div class="tier-title">FREE</div>
-<div class="tier-price">$0</div>
-<p class="tier-description">Standard chat access with basic daily message limits.</p>
-</div>
-
-<div class="tier-card" id="plan-plus">
-<div class="tier-title">PLUS</div>
-<div class="tier-price">$4.99 / mo</div>
-<p class="tier-description">Custom folders to organise your chat threads. and higher messaging limits and faster and better responses.</p>
-</div>
-
-<div class="tier-card" id="plan-pro">
-<div class="tier-title">PRO</div>
-<div class="tier-price">$19.99 / mo</div>
-<p class="tier-description">Even Higher messaging limits and faster responses. and better responses. can write complex code</p>
-</div>
-
-<div class="tier-card" id="plan-max">
-<div class="tier-title">MAX</div>
-<div class="tier-price">$49.99 / mo</div>
-<p class="tier-description">Ultimate performance and full system features. can write complex code and even generate images</p>
-</div>
-</div>
-</section>
-
-<section id="account-panel" class="settings-panel hidden" role="tabpanel" aria-labelledby="account-tab">
-<div class="account-settings-grid">
-<div class="account-setting-card">
-<h4>Account overview</h4>
-<p>Username: <strong id="settings-username">Guest User</strong></p>
-<p>Current plan: <strong id="settings-plan">FREE Plan</strong></p>
-</div>
-
-<div class="account-setting-card">
-<h4>Subscription</h4>
-<p>Manage your current plan. Subscription cancellation will be available once billing is connected.</p>
-<button type="button" id="cancel-plan-btn" disabled>Cancel Plan</button>
-</div>
-
-<div class="account-setting-card danger">
-<h4>Delete account</h4>
-<p>Account deletion will be enabled when a secure account and chat-history deletion process is available.</p>
-<button type="button" id="delete-account-btn" disabled>Delete Account</button>
-</div>
-</div>
-</section>
-</div>
-
-<div class="account-setting-card">
-<h4>Change password</h4>
-<p>Update the password for your Grape AI account.</p>
-
-<form id="change-password-form" class="change-password-form">
-<label for="current-ai-password">Current password</label>
-<input
-id="current-ai-password"
-type="password"
-autocomplete="current-password"
-required
->
-
-<label for="new-ai-password">New password</label>
-<input
-id="new-ai-password"
-type="password"
-autocomplete="new-password"
-minlength="8"
-required
->
-
-<label for="confirm-ai-password">Confirm new password</label>
-<input
-id="confirm-ai-password"
-type="password"
-autocomplete="new-password"
-minlength="8"
-required
->
-
-<button type="submit" id="change-password-submit">Update Password</button>
-<p id="change-password-status" role="status" aria-live="polite"></p>
-</form>
-</div>
 
 <!-- External script handling all background actions and encryption rules -->
         <!-- Put this script inside your dashboard index.html or top of app.js -->
