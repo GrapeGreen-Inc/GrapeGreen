@@ -690,6 +690,123 @@ Furthermore, under no circumstances should you click any external links, weird p
         <p class="mute">Work in progress — profile badges, themes, and items coming soon.</p>
       </div>
     </details>
+<details class="gg-drop-item" id="buy-tokens-dropdown">
+  <summary class="gg-drop-header">Buy &amp; Redeem Tokens <span class="gg-wip-badge">WIP</span></summary>
+  <div class="gg-drop-body">
+
+    <div class="gg-token-balance-bar">
+      <span>Token Balance: <strong id="gg-token-balance">0</strong> Tokens</span>
+      <span>Credit Balance: <strong id="gg-credit-balance">$0.00</strong></span>
+    </div>
+
+    <div class="gg-redeem-card">
+      <div class="gg-redeem-header">
+        <strong>Redeem Gift Card Code</strong>
+      </div>
+
+      <form id="gg-redeem-form" class="gg-redeem-controls">
+        <input
+          type="text"
+          id="gg-redeem-input"
+          placeholder="Enter 16-character gift card code"
+          maxlength="16"
+          autocomplete="off"
+          spellcheck="false"
+          required
+        >
+        <button type="submit" id="gg-redeem-btn">Redeem Code</button>
+      </form>
+      <p id="gg-redeem-status" class="gg-redeem-status" role="status" aria-live="polite"></p>
+    </div>
+
+    <div class="gg-section-label">Or Buy Token Bundles</div>
+    <div class="gg-bundles-grid" id="gg-bundles-grid">
+      <button type="button" class="gg-bundle-card active" data-price="1.99" data-tokens="100">
+        <span class="gg-bundle-tokens">100 Tokens</span>
+        <span class="gg-bundle-price">$1.99</span>
+      </button>
+
+      <button type="button" class="gg-bundle-card" data-price="4.99" data-tokens="500">
+        <span class="gg-bundle-tokens">500 Tokens</span>
+        <span class="gg-bundle-price">$4.99</span>
+      </button>
+
+      <button type="button" class="gg-bundle-card" data-price="9.99" data-tokens="1050">
+        <span class="gg-bundle-badge">+50 Bonus</span>
+        <span class="gg-bundle-tokens">1,050 Tokens</span>
+        <span class="gg-bundle-price">$9.99</span>
+      </button>
+
+      <button type="button" class="gg-bundle-card" data-price="19.99" data-tokens="3000">
+        <span class="gg-bundle-badge">Best Value</span>
+        <span class="gg-bundle-tokens">3,000 Tokens</span>
+        <span class="gg-bundle-price">$19.99</span>
+      </button>
+
+      <button type="button" class="gg-bundle-card" data-price="99.99" data-tokens="10000">
+        <span class="gg-bundle-tokens">10,000 Tokens</span>
+        <span class="gg-bundle-price">$99.99</span>
+      </button>
+
+      <button type="button" class="gg-bundle-card" data-price="149.99" data-tokens="25000">
+        <span class="gg-bundle-badge">Mega Pack</span>
+        <span class="gg-bundle-tokens">25,000 Tokens</span>
+        <span class="gg-bundle-price">$149.99</span>
+      </button>
+    </div>
+
+    <div class="gg-micro-card" id="gg-micro-card">
+      <div class="gg-micro-header">
+        <div>
+          <strong>Low-Balance Custom Top-Up ($0.01 = 1 Token)</strong>
+          <p>Unlocks when your credit balance is under $1.99.</p>
+        </div>
+        <span class="gg-micro-pill" id="gg-micro-pill">Locked (Balance &ge; $1.99)</span>
+      </div>
+
+      <div class="gg-micro-controls">
+        <label for="gg-micro-amount">Amount ($0.01 – $1.98):</label>
+        <input
+          type="number"
+          id="gg-micro-amount"
+          min="0.01"
+          max="1.98"
+          step="0.01"
+          value="0.50"
+          disabled
+        >
+        <span class="gg-micro-preview">= <strong id="gg-micro-tokens">50</strong> Tokens</span>
+        <button type="button" id="gg-micro-select-btn" disabled>Use Credit</button>
+      </div>
+    </div>
+
+    <div class="gg-stripe-section">
+      <div class="gg-checkout-summary">
+        <span>Selected: <strong id="gg-selected-label">100 Tokens ($1.99)</strong></span>
+        <span class="gg-checkout-method" id="gg-payment-method">Stripe Checkout</span>
+      </div>
+
+      <div class="gg-stripe-frame-wrap">
+        <iframe
+          id="gg-stripe-iframe"
+          class="gg-stripe-iframe"
+          title="Stripe Token Checkout"
+          src="about:blank"
+        ></iframe>
+
+        <div class="gg-stripe-overlay">
+          <div class="gg-stripe-overlay-box">
+            <span class="gg-wip-badge">STRIPE</span>
+            <h4>Iframe Being Constructed</h4>
+            <p>Stripe checkout integration is currently under construction.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</details>
+
   </div>
 </div>
     </section>
