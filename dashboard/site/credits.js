@@ -2,7 +2,7 @@
 const getEl=id=>document.getElementById(id);
 const PROJECT_ID=typeof CFG!=="undefined"?CFG.projectId:"app-iguess-39f2f";
 const API_KEY=typeof CFG!=="undefined"?CFG.apiKey:"AIzaSyAqy6NWFJ1KD9Cfv_WyqbMJJWCqlC5P7Es";
-const BASE_DB=`https://googleapis.com{PROJECT_ID}/databases/(default)/documents`;
+const BASE_DB=`https://googleapis.com${PROJECT_ID}/databases/(default)/documents`;
 const USERS_DB=typeof DB!=="undefined"?DB:`${BASE_DB}/users`;
 const CODES_DB=typeof GIFT_CODES_DB!=="undefined"?GIFT_CODES_DB:`${BASE_DB}/giftcards`;
 const QUERY_KEY=typeof KEY!=="undefined"?KEY:`?key=${API_KEY}`;
