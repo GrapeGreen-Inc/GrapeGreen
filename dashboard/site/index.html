@@ -685,11 +685,11 @@ Furthermore, under no circumstances should you click any external links, weird p
 
     <!-- 3. Products (WIP) -->
     <details class="gg-drop-item">
-      <summary class="gg-drop-header">Products <span class="gg-wip-badge">WIP</span></summary>
-      <div class="gg-drop-body">
-        <p class="mute">Work in progress — profile badges, themes, and items coming soon.</p>
-      </div>
-    </details>
+  <summary class="gg-drop-header">Products <span class="gg-wip-badge">WIP</span></summary>
+  <div class="gg-drop-body">
+    <p class="mute">Work in progress — profile badges, themes, and items coming soon.</p>
+  </div>
+</details>
 <details class="gg-drop-item" id="buy-tokens-dropdown">
   <summary class="gg-drop-header">Buy &amp; Redeem Tokens <span class="gg-wip-badge">WIP</span></summary>
   <div class="gg-drop-body">
@@ -704,7 +704,7 @@ Furthermore, under no circumstances should you click any external links, weird p
         <strong>Redeem Gift Card Code</strong>
       </div>
 
-      <form id="gg-redeem-form" class="gg-redeem-controls">
+      <div id="gg-redeem-form" class="gg-redeem-controls">
         <input
           type="text"
           id="gg-redeem-input"
@@ -712,10 +712,9 @@ Furthermore, under no circumstances should you click any external links, weird p
           maxlength="16"
           autocomplete="off"
           spellcheck="false"
-          required
         >
-        <button type="submit" id="gg-redeem-btn">Redeem Code</button>
-      </form>
+        <button type="button" id="gg-redeem-btn">Redeem Code</button>
+      </div>
       <p id="gg-redeem-status" class="gg-redeem-status" role="status" aria-live="polite"></p>
     </div>
 
