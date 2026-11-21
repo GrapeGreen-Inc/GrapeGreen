@@ -720,3 +720,315 @@ td img{display:block;margin-top:6px;border:1px solid var(--line);border-radius:6
     padding: 24px;
   }
 }
+/* === BUY & REDEEM TOKENS === */
+.gg-token-balance-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: rgba(54, 24, 92, 0.45);
+  border: 1px solid #4e2285;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+  color: #f3ecfc;
+}
+
+.gg-token-balance-bar strong {
+  color: #84cc3b;
+}
+
+.gg-redeem-card {
+  background: #1a0e2b;
+  border: 1.5px solid #4e2285;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.gg-redeem-header {
+  margin-bottom: 10px;
+  font-size: 0.92rem;
+  color: #ffffff;
+}
+
+.gg-redeem-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gg-redeem-controls input[type="text"] {
+  flex: 1;
+  min-width: 190px;
+  background: #11071f;
+  border: 1.5px solid #5c3394;
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-family: monospace;
+  letter-spacing: 0.5px;
+}
+
+.gg-redeem-controls input[type="text"]:focus {
+  outline: none;
+  border-color: #84cc3b;
+}
+
+.gg-redeem-controls button {
+  background: #84cc3b;
+  color: #162406;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 800;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.gg-redeem-controls button:hover {
+  background: #96de4b;
+}
+
+.gg-redeem-controls button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.gg-redeem-status {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  min-height: 1.1em;
+}
+
+.gg-redeem-status.success {
+  color: #84cc3b;
+  font-weight: 700;
+}
+
+.gg-redeem-status.error {
+  color: #ff6b81;
+  font-weight: 600;
+}
+
+.gg-section-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #bfaee0;
+  margin-bottom: 10px;
+}
+
+.gg-bundles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.gg-bundle-card {
+  position: relative;
+  background: #1d1030;
+  border: 1.5px solid #452373;
+  border-radius: 10px;
+  padding: 16px 12px 14px;
+  color: #ffffff;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+
+.gg-bundle-card:hover {
+  border-color: #84cc3b;
+  transform: translateY(-2px);
+}
+
+.gg-bundle-card.active {
+  background: #2b1547;
+  border-color: #84cc3b;
+  box-shadow: 0 0 0 2px rgba(132, 204, 59, 0.25);
+}
+
+.gg-bundle-badge {
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  background: #84cc3b;
+  color: #162406;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.gg-bundle-tokens {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #f5effc;
+}
+
+.gg-bundle-price {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #84cc3b;
+}
+
+.gg-micro-card {
+  background: #180d29;
+  border: 1.5px solid #3c1f63;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+  opacity: 0.65;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.gg-micro-card.unlocked {
+  opacity: 1;
+  border-color: #7bc62d;
+}
+
+.gg-micro-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.gg-micro-header strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+}
+
+.gg-micro-header p {
+  margin: 3px 0 0;
+  font-size: 0.8rem;
+  color: #b9a7d1;
+}
+
+.gg-micro-pill {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #36185c;
+  color: #d6c5ed;
+}
+
+.gg-micro-card.unlocked .gg-micro-pill {
+  background: rgba(132, 204, 59, 0.2);
+  color: #84cc3b;
+}
+
+.gg-micro-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #e4d8f5;
+}
+
+.gg-micro-controls input[type="number"] {
+  width: 84px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #5c3394;
+  background: #120821;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.gg-micro-controls button {
+  background: #84cc3b;
+  color: #162406;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.gg-micro-controls button:disabled,
+.gg-micro-controls input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.gg-stripe-section {
+  border-top: 1px solid #3c1f63;
+  padding-top: 14px;
+}
+
+.gg-checkout-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.88rem;
+  color: #e8def5;
+}
+
+.gg-checkout-method {
+  background: #36185c;
+  color: #d9c7f2;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.gg-stripe-frame-wrap {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid #4e2285;
+  background: #130921;
+}
+
+.gg-stripe-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.gg-stripe-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(19, 9, 33, 0.88);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  z-index: 2;
+}
+
+.gg-stripe-overlay-box h4 {
+  margin: 8px 0 4px;
+  color: #ffffff;
+  font-size: 1.05rem;
+}
+
+.gg-stripe-overlay-box p {
+  margin: 0;
+  color: #bfb0d4;
+  font-size: 0.84rem;
+}
