@@ -1225,6 +1225,42 @@ byId("export-readable-button").disabled = false;
     byId("export-button").addEventListener("click", exportTrainedModel);
     byId("export-readable-button").addEventListener("click", exportReadableWeights);
 
+async function loadTrainingFiles() {
+  const files = [
+    ["code-data", "CodeTraining.txt"],
+    ["training-data", "PromptResponsePairs.txt"],
+    ["wiki-data", "WikiArtcilesTrain.txt"]
+  ];
+
+  try {
+    const loaded = await Promise.all(
+      files.map(async ([id, filename]) => {
+        const response = await fetch(filename);
+
+        if (!response.ok) {
+          throw new Error(`${filename}: HTTP ${response.status}`);
+        }
+
+        const content = await response.text();
+
+        if (!content.trim()) {
+          throw new Error(`${filename} is empty.`);
+        }
+
+        byId(id).value = content;
+
+        return `${filename}: ${content.length.toLocaleString()} characters`;
+      })
+    );
+
+    log(`Training datasets loaded:\n${loaded.join("\n")}`);
+  } catch (error) {
+    log(`Dataset loading failed: ${error.message}`, true);
+  }
+}
+
+loadTrainingFiles();
+    
     if (!window.tf) {
       byId("stats").textContent = "TensorFlow.js did not load. Check your internet connection and reload.";
       byId("stats").classList.add("error");
