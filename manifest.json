@@ -1,0 +1,22 @@
+{
+  "name": "GrapeGreen Dashboard",
+  "short_name": "GrapeGreen",
+  "description": "Your dashboard, your tabs, your memes.",
+  "start_url": "/GrapeGreen/dashboard/index.html",
+  "scope": "/GrapeGreen/",
+  "display": "standalone",
+  "background_color": "#381859",
+  "theme_color": "#381859",
+  "icons": [
+    {
+      "src": "/GrapeGreen/dashboard/site/assets/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/GrapeGreen/dashboard/site/assets/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
