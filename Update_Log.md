@@ -1,5 +1,13 @@
 # GrapeGreen Update Log
 
+## V1.11
+### App+
+* [ADD] turned GrapeGreen to have a downloadable app version PWA
+* [ADD] manifest
+* [ADD] tab logo
+
+---
+
 ## V1.10
 ### Admin+
 * [CHANGE] Fixed staff chat
@@ -42,7 +50,7 @@
 
 ## V1.7.1
 ### AI+
-* [ADD] change password feild
+* [ADD] change password field
 
 ---
 
