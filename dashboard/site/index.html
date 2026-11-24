@@ -20,27 +20,34 @@
 <!-- 🍇 GrapeGreen Imports Core: GPU-Accelerated 3D Engine Script Wrapper -->
 <!-- 🍇 GrapeGreen Imports Core: GPU-Accelerated 3D Engine Script Wrapper -->
 <script type="module">
-    // 🧠 999 IQ Import: Streaming your engine classes directly from your live distribution path URL
+    // 🧠 999 IQ Import: Streaming your v2 engine classes directly from your live distribution path URL
     import { 
         GrapeScene3D, 
         MeshObject, 
         Material, 
+        Texture,
         AllDirLight, 
         SpotLight,
+        PointLight,
+        Vector2,
         Vector3,
         Camera,
         ColliderBody,
         Raycaster,
         initializeScene
-    } from "https://grapegreen-inc.github.io/GrapeGreen-Imports/Imports/modules/Immersion/Grape_3D/v1/Three-dim.js";
+    } from "https://GrapeGreen-Imports/Imports/modules/Immersion/Grape_3D
+/v2";
 
-    // Expose modules to the window context so other app files can access them cleanly
+    // Expose v2 modules to the window context so other app files can access them cleanly
     window.Grape3D = {
         GrapeScene3D,
         MeshObject,
         Material,
+        Texture,
         AllDirLight,
         SpotLight,
+        PointLight,
+        Vector2,
         Vector3,
         Camera,
         ColliderBody,
@@ -48,7 +55,7 @@
         initializeScene
     };
 
-    console.log("🚀 GrapeGreen Imports: 3D Engine modules imported and bound to window.Grape3D!");
+    console.log("🚀 GrapeGreen Imports: 3D Engine v2.0 modules imported and bound to window.Grape3D!");
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
