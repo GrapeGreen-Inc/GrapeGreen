@@ -1,0 +1,30 @@
+.gg-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  margin: 14px 0;
+}
+
+.gg-shop-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+}
+
+.gg-shop-card h3 {
+  margin: 0 0 12px;
+  color: var(--grape);
+}
+
+.gg-shop-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.gg-shop-status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mute);
+}

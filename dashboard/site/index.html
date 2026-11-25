@@ -99,6 +99,7 @@ window.listenNotices = (user, ok) => onSnapshot(query(collection(db, "notices"),
 window.listenDM = (room, ok) => onSnapshot(query(collection(db, "dm"), where("room", "==", room), orderBy("t", "asc"), limit(100)), snap => ok(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => {});
 </script>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="shop.css">
 </head>
 <body>
 
@@ -712,21 +713,24 @@ Furthermore, under no circumstances should you click any external links, weird p
       </div>
     </details>
 
-    <!-- 2. Subscriptions (WIP) -->
-    <details class="gg-drop-item">
-      <summary class="gg-drop-header">Subscriptions <span class="gg-wip-badge">WIP</span></summary>
+    <!-- 2. Subscriptions -->
+    <details class="gg-drop-item" id="gg-subscriptions-dropdown">
+      <summary class="gg-drop-header">Subscriptions</summary>
       <div class="gg-drop-body">
-        <p class="mute">Work in progress — monthly perks and creator tiers coming soon.</p>
+        <p class="mute">Choose a weekly GrapeGreen subscription tier.</p>
+        <div id="gg-subscriptions-list" class="gg-shop-grid"></div>
+        <p class="mute">Purchases and automatic renewals are not available yet.</p>
       </div>
     </details>
 
-    <!-- 3. Products (WIP) -->
-    <details class="gg-drop-item">
-  <summary class="gg-drop-header">Products <span class="gg-wip-badge">WIP</span></summary>
-  <div class="gg-drop-body">
-    <p class="mute">Work in progress — profile badges, themes, and items coming soon.</p>
-  </div>
-</details>
+    <!-- 3. Products -->
+    <details class="gg-drop-item" id="gg-products-dropdown">
+      <summary class="gg-drop-header">Products</summary>
+      <div class="gg-drop-body">
+        <p class="mute">Available themes and account products.</p>
+        <div id="gg-products-list" class="gg-shop-grid"></div>
+      </div>
+    </details>
 <details class="gg-drop-item" id="buy-tokens-dropdown">
   <summary class="gg-drop-header">Buy &amp; Redeem Tokens <span class="gg-wip-badge">WIP</span></summary>
   <div class="gg-drop-body">
@@ -899,9 +903,11 @@ Furthermore, under no circumstances should you click any external links, weird p
 
 </main>
 <script type="module" src="meme_rotate.js"></script>
+<script src="tokens.js"></script>
 <script src="app.js"></script>
 <script src="chat.js"></script>
 <script src="code.js"></script>
 <script src="credits.js" defer></script>
+<script src="shop.js"></script>
 </body>
 </html>
